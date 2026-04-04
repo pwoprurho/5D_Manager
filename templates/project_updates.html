@@ -338,7 +338,7 @@ async function loadContext() {
             window.init3D(bimData.model_url);
         }
 
-        if (['admin', 'director', 'manager'].includes(userRole)) {
+        if (['admin','president', 'director', 'manager'].includes(userRole)) {
             const card = document.getElementById('createUpdateCard');
             if (card) card.style.display = 'block';
         }

@@ -10,6 +10,7 @@ class UserRole(str, Enum):
     manager = "manager"
     director = "director"
     admin = "admin"
+    president = "president"
 
 class StatusEnum(str, Enum):
     not_started = "not_started"

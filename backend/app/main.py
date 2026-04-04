@@ -435,7 +435,7 @@ async def register_user(
 
 @app.get("/api/v1/users/", response_model=list[models.User])
 def list_users(
-    admin: models.User = Depends(auth.check_role([models.UserRole.admin]))
+    admin: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))
 ):
     result = supabase.table("user").select("*").execute()
     return result.data
@@ -444,7 +444,7 @@ def list_users(
 @app.patch("/api/v1/users/{user_id}/toggle-active")
 def toggle_user_active(
     user_id: str,
-    admin: models.User = Depends(auth.check_role([models.UserRole.admin]))
+    admin: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))
 ):
     """Toggle a user's active status. Admin only. Cannot disable yourself."""
     if user_id == admin.id:
@@ -524,7 +524,7 @@ async def create_design(
     name: str = Form(...),
     description: Optional[str] = Form(None),
     file: UploadFile = File(...),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
 ):
     if not file.filename.lower().endswith(('.ifc', '.gltf', '.glb')):
         raise HTTPException(status_code=400, detail="Unsupported model format. Use .ifc, .gltf, or .glb")
@@ -552,7 +552,7 @@ def get_design_projects(design_id: int, user: models.User = Depends(auth.get_cur
     return [models.Project(**p) for p in result.data]
 
 @app.delete("/api/v1/designs/{design_id}")
-def delete_design(design_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin]))):
+def delete_design(design_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))):
     supabase.table("design").delete().eq("id", design_id).execute()
     api_cache.clear()
     return {"message": "Design deleted"}
@@ -567,7 +567,7 @@ async def create_project(
     description: Optional[str] = Form(None),
     design_id: Optional[int] = Form(None),
     bim_model_url: Optional[str] = Form(None),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
 ):
     project_data = {
         "name": name,
@@ -587,7 +587,7 @@ async def create_project(
 async def upload_bim_model(
     project_id: int,
     file: UploadFile = File(...),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
 ):
     """Upload an IFC BIM model directly to a project."""
     # Validate project exists
@@ -647,7 +647,7 @@ class AssignRequest(BaseModel):
 def assign_user_to_project(
     project_id: int,
     req: AssignRequest,
-    user: models.User = Depends(auth.check_role([models.UserRole.director, models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
 ):
     """Assign a user to a project. Director/Admin only."""
     # Validate project exists
@@ -682,7 +682,7 @@ def assign_user_to_project(
 def unassign_user_from_project(
     project_id: int,
     target_user_id: str,
-    user: models.User = Depends(auth.check_role([models.UserRole.director, models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
 ):
     """Remove a user's assignment from a project. Director/Admin only."""
     assignment_res = supabase.table("projectassignment").delete().eq("project_id", project_id).eq("user_id", target_user_id).execute()
@@ -697,7 +697,7 @@ def unassign_user_from_project(
 @app.get("/api/v1/projects/{project_id}/team")
 def get_project_team(
     project_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.director, models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
 ):
     """List all users assigned to a project."""
     assignments = supabase.table("projectassignment").select("*, user(*)").eq("project_id", project_id).execute()
@@ -721,7 +721,7 @@ def get_project_team(
 @app.get("/api/v1/users/{user_id}/assignments")
 def get_user_assignments(
     user_id: str,
-    user: models.User = Depends(auth.check_role([models.UserRole.director, models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
 ):
     """List all projects assigned to a specific user."""
     assignments = supabase.table("projectassignment").select("*, project(*)").eq("user_id", user_id).execute()
@@ -789,7 +789,7 @@ def get_project_stats(project_id: int):
 @app.post("/api/v1/project-updates/")
 def create_project_update(
     wp: models.WorkPackage,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
 ):
     wp_data = wp.dict(exclude={"id"})
     
@@ -839,7 +839,7 @@ def get_project_updates(project_id: int):
 def update_project_update(
     update_id: int,
     update_data: WPUpdate,
-    user: models.User = Depends(auth.check_role([models.UserRole.manager, models.UserRole.admin, models.UserRole.staff]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president, models.UserRole.staff]))
 ):
     """Partial update for a project update."""
     data = update_data.dict(exclude_unset=True)
@@ -874,7 +874,7 @@ def update_project_update(
 @app.delete("/api/v1/project-updates/{update_id}")
 def delete_project_update(
     update_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.manager, models.UserRole.admin, models.UserRole.director]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
 ):
     result = supabase.table("workpackage").delete().eq("id", update_id).execute()
     if not result.data:
@@ -1032,7 +1032,7 @@ async def submit_phase_update(
     materials_used: str = Form(""),
     cost_incurred: float = Form(0.0),
     photo: Optional[UploadFile] = File(None),
-    user: models.User = Depends(auth.check_role([models.UserRole.staff, models.UserRole.manager, models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president, models.UserRole.staff]))
 ):
     """Staff submission of work performed with optional photo evidence."""
     status_val = models.StatusEnum.completed if progress >= 100 else models.StatusEnum.in_progress
@@ -1080,7 +1080,7 @@ async def submit_phase_update(
 
 
 @app.post("/api/v1/project-updates/{update_id}/verify")
-async def verify_phase(phase_id: int, user: models.User = Depends(auth.check_role([models.UserRole.manager, models.UserRole.admin]))):
+async def verify_phase(phase_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))):
     result = supabase.table("workpackage").update({"status": "inspected", "verified_by_id": user.id}).eq("id", phase_id).execute()
     
     if not result.data:
@@ -1089,7 +1089,7 @@ async def verify_phase(phase_id: int, user: models.User = Depends(auth.check_rol
     return {"message": "Work verified by manager", "status": models.StatusEnum.inspected}
 
 @app.post("/api/v1/project-updates/{update_id}/approve")
-async def approve_phase(phase_id: int, user: models.User = Depends(auth.check_role([models.UserRole.director, models.UserRole.admin]))):
+async def approve_phase(phase_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))):
     result = supabase.table("workpackage").update({"status": "approved", "approved_by_id": user.id}).eq("id", phase_id).execute()
     
     if not result.data:
@@ -1230,7 +1230,7 @@ def get_materials():
 @app.post("/api/v1/store/materials", response_model=models.Material)
 def create_material(
     material: models.Material,
-    user: models.User = Depends(auth.check_role([models.UserRole.manager, models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
 ):
     mat_data = material.dict(exclude={"id"})
     if "unit_cost" in mat_data:
@@ -1244,7 +1244,7 @@ def create_material(
 def update_material(
     material_id: int,
     material_data: models.Material,
-    user: models.User = Depends(auth.check_role([models.UserRole.manager, models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
 ):
     mat_dict = material_data.dict(exclude={"id"}, exclude_unset=True)
     if "unit_cost" in mat_dict:
@@ -1259,7 +1259,7 @@ def update_material(
 @app.delete("/api/v1/store/materials/{material_id}")
 def delete_material(
     material_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))
 ):
     result = supabase.table("material").delete().eq("id", material_id).execute()
     if not result.data:
@@ -1328,7 +1328,7 @@ def update_material_request_status(
 @app.delete("/api/v1/store/request/{request_id}")
 def delete_material_request(
     request_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.manager, models.UserRole.admin, models.UserRole.director]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
 ):
     result = supabase.table("material_request").delete().eq("id", request_id).execute()
     if not result.data:
