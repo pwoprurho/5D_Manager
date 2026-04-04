@@ -1,126 +1,9 @@
-{% extends "layout.html" %}
+import re
 
-{% block page_title %}Project Updates{% endblock %}
+with open(r"c:\Users\Administrator\outbound-caller-python\templates\project_updates.html", "r", encoding="utf-8") as f:
+    html = f.read()
 
-{% block content %}
-<!-- Context Synchronization Header -->
-<div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 2.5rem 3rem; margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <h2 id="projectTitleHeader" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.04em; margin: 0; text-transform: uppercase; line-height: 1;">Initializing Context...</h2>
-            <p id="projectDescHeader" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.7;">Project Update Orchestration Terminal</p>
-        </div>
-        <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <div id="projectBadge" style="display: none; background: rgba(227,30,36,0.15); color: var(--brand-red); padding: 10px 24px; border-radius: 50px; font-weight: 900; font-size: 0.65rem; border: 1px solid rgba(227,30,36,0.3); letter-spacing: 0.2em;">LINK ESTABLISHED</div>
-        </div>
-    </div>
-</div>
-
-<!-- 3D Digital Twin Workspace -->
-<div class="glass-card reveal-text reveal-delay-1" style="height: 500px; margin-bottom: 2.5rem; position: relative; overflow: hidden; border: 1px solid var(--glass-border); background: #020617;">
-    <div id="bim-viewer-container" style="width: 100%; height: 100%;">
-        <div class="glass-card" style="flex: 1; min-height: 500px; position: relative; overflow: hidden; border: 1px solid var(--glass-border); background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 0.6) 100%);">
-            <div id="viewer-loading" style="position: absolute; inset: 0; background: var(--bg-navy); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;">
-                <div style="width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 1s infinite linear;"></div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.4em; text-transform: uppercase;">LOADING_DESIGN_MODEL</div>
-            </div>
-            <div id="viewer-tooltip" class="viewer-tooltip">NODE_IDENTIFIED: <span id="tooltip-text">UNKNOWN</span></div>
-            <canvas id="three-canvas" style="width: 100%; height: 100%; outline: none;"></canvas>
-        </div>
-    </div>
-    <div style="position: absolute; bottom: 2rem; left: 2rem; display: flex; gap: 1rem; z-index: 5; align-items: center;">
-        <div style="background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 4px; border: 1px solid var(--glass-border); font-size: 0.6rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.1em;">
-            Mode: Design Library Integration
-        </div>
-        <select id="viewerElementSelector" onchange="highlightElementByName(this.value)" style="background: rgba(0,0,0,0.8); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.6rem; padding: 0.5rem 1rem; border-radius: 4px; outline: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; min-width: 180px;">
-            <option value="">SELECT DESIGN COMPONENT...</option>
-        </select>
-        <button onclick="resetCamera()" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 4px; border-color: rgba(255,255,255,0.1); color: white;">RESET VIEW</button>
-    </div>
-    <div id="active-element-tag" style="position: absolute; top: 2rem; right: 2rem; background: var(--brand-red); color: white; padding: 0.5rem 1rem; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; border-radius: 2px; display: none; box-shadow: var(--glow-red);">
-        HIGHLIGHTED: <span id="selected-element-name">NONE</span>
-    </div>
-</div>
-
-{% set role_str = user.role|string %}
-{% if 'admin' in role_str or 'director' in role_str or 'manager' in role_str %}
-<!-- Create Project Update -->
-<div class="glass-card reveal-text reveal-delay-1" style="display: none; border-top: 2px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;" id="createUpdateCard">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-        <div style="width: 12px; height: 12px; background: var(--brand-red); border-radius: 3px; box-shadow: var(--glow-red);"></div>
-        <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">Initialize Project Update</h3>
-    </div>
-    
-    <form id="createUpdateForm" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
-        <div style="grid-column: span 2;">
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Update Subject</label>
-            <input type="text" name="name" placeholder="E.G. FOUNDATION_EXCAVATION" required class="modern-input" style="font-weight: 700; text-transform: uppercase;">
-        </div>
-        <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Priority</label>
-            <select name="priority" class="modern-input" style="font-weight: 700;">
-                <option value="low">LOW</option>
-                <option value="normal" selected>NORMAL</option>
-                <option value="high">HIGH</option>
-                <option value="immediate">IMMEDIATE</option>
-            </select>
-        </div>
-        <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Design Link (BIM GUID)</label>
-            <select name="bim_element_id" id="bimElementsSelect" required class="modern-input" style="font-weight: 700;">
-                <option value="">SELECT FROM DESIGN...</option>
-            </select>
-        </div>
-        <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Budget (NGN)</label>
-            <input type="number" name="budget_amount" value="0" step="0.01" class="modern-input" style="font-weight: 700;">
-        </div>
-        <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target Start</label>
-            <input type="date" name="start_date" class="modern-input" style="font-weight: 700;">
-        </div>
-        <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target End</label>
-            <input type="date" name="due_date" class="modern-input" style="font-weight: 700;">
-        </div>
-        <div style="display: flex; align-items: flex-end;">
-            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; border-radius: var(--radius-sm); font-weight: 900; width: 100%;">+ AUTHORIZE UPDATE</button>
-        </div>
-    </form>
-</div>
-{% endif %}
-
-<!-- Project Updates Registry -->
-<div class="glass-card reveal-text reveal-delay-2" style="border-color: rgba(255,255,255,0.05); padding: 3rem;">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-        <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
-        <h3 style="font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-muted);">Active Project Updates</h3>
-    </div>
-    <div id="updateGridBody" style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
-            <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
-            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.7;">Loading Terminal Data...</p>
-        </div>
-    </div>
-</div>
-
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-.progress-bar { background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, var(--brand-red), var(--brand-orange)); border-radius: 2px; }
-.viewer-tooltip {
-    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px);
-    border: 1px solid var(--brand-red); color: white; padding: 0.75rem 1.5rem;
-    border-radius: 50px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.1em;
-    text-transform: uppercase; pointer-events: none; display: none; z-index: 1000;
-    box-shadow: 0 0 20px rgba(227, 30, 36, 0.4);
-}
-#three-canvas { cursor: crosshair; }
-</style>
-{% endblock %}
-
-{% block scripts %}
+new_scripts = """{% block scripts %}
 
 <script type="importmap">
 {
@@ -413,4 +296,8 @@ window.deleteUpdate = async function(id) {
 
 loadContext();
 </script>
-{% endblock %}
+{% endblock %}"""
+
+out_html = re.sub(r'\{% block scripts %}.*?\{% endblock %\}', new_scripts, html, flags=re.DOTALL)
+with open(r"c:\Users\Administrator\outbound-caller-python\templates\project_updates.html", "w", encoding="utf-8") as f:
+    f.write(out_html)
