@@ -1,0 +1,53 @@
+{
+    "election_name": "Delta State Governorship 2023",
+    "state_total": {
+        "PDP": 360234,
+        "APC": 240229,
+        "LP": 48027,
+        "NNPP": 11021
+    },
+    "lga_data": {
+        "Ughelli North": { "PDP": 15198, "APC": 34955, "LP": 1438, "NNPP": 200 },
+        "Isoko South": { "PDP": 19963, "APC": 15954, "LP": 492, "NNPP": 100 },
+        "Oshimili North": { "PDP": 35966, "APC": 5327, "LP": 2983, "NNPP": 150 },
+        "Warri South": { "PDP": 25000, "APC": 10000, "LP": 8000, "NNPP": 500 },
+        "Ethiope East": { "PDP": 20814, "APC": 15172, "LP": 1000, "NNPP": 200 },
+        "Ethiope West": { "PDP": 18000, "APC": 12000, "LP": 500, "NNPP": 100 },
+        "Ika North East": { "PDP": 30000, "APC": 4000, "LP": 1000, "NNPP": 100 },
+        "Sapele": { "PDP": 16000, "APC": 11000, "LP": 6000, "NNPP": 300 },
+        "Uvwie": { "PDP": 12000, "APC": 8000, "LP": 9000, "NNPP": 400 },
+        "Okpe": { "PDP": 14500, "APC": 9000, "LP": 2000, "NNPP": 100 }
+    },
+    "incidents": [
+        {
+            "lga": "Ughelli North",
+            "type": "violence",
+            "severity": "critical",
+            "desc": "Evwreni: Attacks on INEC officials and destruction of materials reported."
+        },
+        {
+            "lga": "Warri South",
+            "type": "malpractice",
+            "severity": "high",
+            "desc": "Disruption of coalition at LGA center; result sheets allegedly missing."
+        },
+        {
+            "lga": "Ethiope West",
+            "type": "violence",
+            "severity": "high",
+            "desc": "Oghara: Ballot box snatching and voter intimidation recorded."
+        },
+        {
+            "lga": "Ethiope West",
+            "type": "violence",
+            "severity": "critical",
+            "desc": "Mosogar: Thugs chasing voters away from polling units."
+        },
+        {
+            "lga": "Oshimili North",
+            "type": "logistics",
+            "severity": "medium",
+            "desc": "Late arrival of BVAS machines in multiple wards."
+        }
+    ]
+}

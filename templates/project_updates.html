@@ -1,0 +1,508 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Project Updates{% endblock %}
+
+{% block content %}
+<!-- Context Synchronization Header -->
+<div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 2.5rem 3rem; margin-bottom: 2.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h2 id="projectTitleHeader" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.04em; margin: 0; text-transform: uppercase; line-height: 1;">Initializing Context...</h2>
+            <p id="projectDescHeader" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.7;">Project Update Orchestration Terminal</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div id="projectBadge" style="display: none; background: rgba(227,30,36,0.15); color: var(--brand-red); padding: 10px 24px; border-radius: 50px; font-weight: 900; font-size: 0.65rem; border: 1px solid rgba(227,30,36,0.3); letter-spacing: 0.2em;">LINK ESTABLISHED</div>
+        </div>
+    </div>
+</div>
+
+<!-- 3D Digital Twin Workspace -->
+<div class="glass-card reveal-text reveal-delay-1" style="height: 500px; margin-bottom: 2.5rem; position: relative; overflow: hidden; border: 1px solid var(--glass-border); background: #020617;">
+    <div id="bim-viewer-container" style="width: 100%; height: 100%;">
+        <div class="glass-card" style="flex: 1; min-height: 500px; position: relative; overflow: hidden; border: 1px solid var(--glass-border); background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 0.6) 100%);">
+            <div id="viewer-loading" style="position: absolute; inset: 0; background: var(--bg-navy); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;">
+                <div style="width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 1s infinite linear;"></div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.4em; text-transform: uppercase;">LOADING_DESIGN_MODEL</div>
+            </div>
+            <div id="viewer-tooltip" class="viewer-tooltip">NODE_IDENTIFIED: <span id="tooltip-text">UNKNOWN</span></div>
+            <canvas id="three-canvas" style="width: 100%; height: 100%; outline: none;"></canvas>
+        </div>
+    </div>
+    <div style="position: absolute; bottom: 2rem; left: 2rem; display: flex; gap: 1rem; z-index: 5; align-items: center;">
+        <div style="background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 4px; border: 1px solid var(--glass-border); font-size: 0.6rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.1em;">
+            Mode: Design Library Integration
+        </div>
+        <select id="viewerElementSelector" onchange="highlightElementByName(this.value)" style="background: rgba(0,0,0,0.8); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.6rem; padding: 0.5rem 1rem; border-radius: 4px; outline: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; min-width: 180px;">
+            <option value="">SELECT DESIGN COMPONENT...</option>
+        </select>
+        <button onclick="resetCamera()" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 4px; border-color: rgba(255,255,255,0.1); color: white;">RESET VIEW</button>
+    </div>
+    <div id="active-element-tag" style="position: absolute; top: 2rem; right: 2rem; background: var(--brand-red); color: white; padding: 0.5rem 1rem; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; border-radius: 2px; display: none; box-shadow: var(--glow-red);">
+        HIGHLIGHTED: <span id="selected-element-name">NONE</span>
+    </div>
+</div>
+
+{% set role_str = user.role|string %}
+{% if 'admin' in role_str or 'director' in role_str or 'manager' in role_str %}
+<!-- Create Project Update -->
+<div class="glass-card reveal-text reveal-delay-1" style="display: none; border-top: 2px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;" id="createUpdateCard">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
+        <div style="width: 12px; height: 12px; background: var(--brand-red); border-radius: 3px; box-shadow: var(--glow-red);"></div>
+        <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">Initialize Project Update</h3>
+    </div>
+    
+    <form id="createUpdateForm" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
+        <div style="grid-column: span 2;">
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Update Subject</label>
+            <input type="text" name="name" placeholder="E.G. FOUNDATION_EXCAVATION" required class="modern-input" style="font-weight: 700; text-transform: uppercase;">
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Priority</label>
+            <select name="priority" class="modern-input" style="font-weight: 700;">
+                <option value="low">LOW</option>
+                <option value="normal" selected>NORMAL</option>
+                <option value="high">HIGH</option>
+                <option value="immediate">IMMEDIATE</option>
+            </select>
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Design Link (BIM GUID)</label>
+            <select name="bim_element_id" id="bimElementsSelect" required class="modern-input" style="font-weight: 700;">
+                <option value="">SELECT FROM DESIGN...</option>
+            </select>
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Budget (NGN)</label>
+            <input type="number" name="budget_amount" value="0" step="0.01" class="modern-input" style="font-weight: 700;">
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target Start</label>
+            <input type="date" name="start_date" class="modern-input" style="font-weight: 700;">
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target End</label>
+            <input type="date" name="due_date" class="modern-input" style="font-weight: 700;">
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; border-radius: var(--radius-sm); font-weight: 900; width: 100%;">+ AUTHORIZE UPDATE</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<!-- Project Updates Registry -->
+<div class="glass-card reveal-text reveal-delay-2" style="border-color: rgba(255,255,255,0.05); padding: 3rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
+        <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
+        <h3 style="font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-muted);">Active Project Updates</h3>
+    </div>
+    <div id="updateGridBody" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
+            <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
+            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.7;">Loading Terminal Data...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-bar { background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--brand-red), var(--brand-orange)); border-radius: 2px; }
+.viewer-tooltip {
+    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px);
+    border: 1px solid var(--brand-red); color: white; padding: 0.75rem 1.5rem;
+    border-radius: 50px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.1em;
+    text-transform: uppercase; pointer-events: none; display: none; z-index: 1000;
+    box-shadow: 0 0 20px rgba(227, 30, 36, 0.4);
+}
+#three-canvas { cursor: crosshair; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<!-- Three.js core libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<!-- IFC file parser -->
+<script src="/static/vendor/web-ifc/web-ifc-browser.js"></script>
+
+<script>
+const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
+let scene, camera, renderer, modelObject, controls;
+const ifcLoader = new SimpleIFCLoader();
+
+function init3D(modelUrl) {
+    console.log("[VIEWER] Initializing with URL:", modelUrl);
+    const canvas = document.getElementById('three-canvas');
+    if (!canvas) return;
+
+    const container = canvas.parentElement;
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+
+    camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 2000);
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 2;
+    controls.maxDistance = 500;
+
+    // Raycaster for element picking
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    canvas.addEventListener('mousemove', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        if (modelObject) {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(modelObject.children, true);
+            const tooltip = document.getElementById('viewer-tooltip');
+            if (intersects.length > 0) {
+                const obj = intersects[0].object;
+                const label = obj.userData.ifcType
+                    ? obj.userData.ifcType.replace('Ifc','') + ': ' + obj.name
+                    : (obj.name || 'ELEMENT');
+                document.getElementById('tooltip-text').textContent = label.toUpperCase();
+                tooltip.style.display = 'block';
+                canvas.style.cursor = 'pointer';
+            } else {
+                tooltip.style.display = 'none';
+                canvas.style.cursor = 'crosshair';
+            }
+        }
+    });
+
+    canvas.addEventListener('click', () => {
+        if (!modelObject) return;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(modelObject.children, true);
+        if (intersects.length > 0) {
+            const obj = intersects[0].object;
+            const targetId = obj.userData.guid || obj.name;
+            window.highlightElementByName(targetId);
+        }
+    });
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+    hemiLight.position.set(0, 20, 0);
+    scene.add(hemiLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(20, 40, 20);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // Grid
+    const gridHelper = new THREE.GridHelper(100, 50, 0x1e293b, 0x0f172a);
+    scene.add(gridHelper);
+
+    camera.position.set(25, 20, 25);
+    controls.target.set(0, 4, 0);
+    controls.update();
+
+    // Determine file type and load accordingly
+    if (modelUrl) {
+        document.getElementById('viewer-loading').style.display = 'flex';
+        const urlLower = modelUrl.toLowerCase();
+
+        if (urlLower.includes('.ifc')) {
+            console.log("[VIEWER] Detected IFC format");
+            loadIFCModel(modelUrl);
+        } else if (urlLower.includes('.gltf') || urlLower.includes('.glb')) {
+            console.log("[VIEWER] Detected GLTF/GLB format");
+            loadGLTFModel(modelUrl);
+        } else {
+            // Unknown format — try IFC first since that's what the design library uploads
+            console.log("[VIEWER] Unknown format, trying IFC then GLTF");
+            loadIFCModel(modelUrl).catch(() => {
+                console.log("[VIEWER] IFC parse failed, trying GLTF");
+                loadGLTFModel(modelUrl);
+            });
+        }
+    } else {
+        showPlaceholder("AWAITING_DESIGN_LINK");
+    }
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+        const nw = container.clientWidth;
+        const nh = container.clientHeight;
+        camera.aspect = nw / nh;
+        camera.updateProjectionMatrix();
+        renderer.setSize(nw, nh);
+    });
+
+    // Animation loop
+    (function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    })();
+}
+
+async function loadIFCModel(url) {
+    try {
+        const group = await ifcLoader.loadModel(url, THREE, scene);
+        modelObject = group;
+        scene.add(modelObject);
+        fitCameraToModel();
+        populateElementSelector();
+        document.getElementById('viewer-loading').style.display = 'none';
+        console.log("[VIEWER] IFC model loaded successfully");
+    } catch (e) {
+        console.error("[VIEWER] IFC load error:", e);
+        showPlaceholder("IFC_LOAD_ERROR");
+    }
+}
+
+function loadGLTFModel(url) {
+    const loader = new THREE.GLTFLoader();
+    loader.load(url, (gltf) => {
+        modelObject = gltf.scene;
+        scene.add(modelObject);
+        fitCameraToModel();
+        document.getElementById('viewer-loading').style.display = 'none';
+        console.log("[VIEWER] GLTF model loaded");
+    }, (xhr) => {
+        if (xhr.total) console.log(Math.round(xhr.loaded / xhr.total * 100) + '% loaded');
+    }, (error) => {
+        console.error("[VIEWER] GLTF load error:", error);
+        showPlaceholder("MODEL_TRANSFER_ERROR");
+    });
+}
+
+function fitCameraToModel() {
+    if (!modelObject) return;
+    const box = new THREE.Box3().setFromObject(modelObject);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = camera.fov * (Math.PI / 180);
+    let dist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.8;
+    camera.position.set(center.x + dist * 0.7, center.y + dist * 0.5, center.z + dist * 0.7);
+    controls.target.copy(center);
+    controls.update();
+}
+
+function populateElementSelector() {
+    if (!modelObject) return;
+    const vSel = document.getElementById('viewerElementSelector');
+    const bSel = document.getElementById('bimElementsSelect');
+    if (!vSel) return;
+
+    const elements = [];
+    modelObject.traverse(child => {
+        if (child.isMesh && child.name) {
+            elements.push({
+                guid: child.userData.guid || child.name,
+                name: child.name,
+                type: child.userData.ifcType || 'Element'
+            });
+        }
+    });
+
+    if (elements.length > 0) {
+        const opts = elements.map(e =>
+            `<option value="${e.guid}">${e.name} (${e.type.replace('Ifc','')})</option>`
+        ).join('');
+        vSel.innerHTML = '<option value="">SELECT DESIGN COMPONENT...</option>' + opts;
+        if (bSel) bSel.innerHTML = '<option value="">SELECT FROM DESIGN...</option>' + opts;
+    }
+}
+
+function showPlaceholder(msg) {
+    const group = new THREE.Group();
+
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.5, roughness: 0.7 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(20, 0.5, 20), baseMat);
+    base.position.y = -0.25;
+    group.add(base);
+
+    const blockMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.3, roughness: 0.6, transparent: true, opacity: 0.8 });
+    const accentMat = new THREE.MeshStandardMaterial({ color: 0xe31e24, metalness: 0.4, roughness: 0.5, transparent: true, opacity: 0.6 });
+
+    [{w:4,h:8,d:4,x:-5,z:-5},{w:3,h:12,d:3,x:0,z:0},{w:5,h:6,d:4,x:5,z:-3},{w:3,h:10,d:3,x:-3,z:5},{w:4,h:5,d:5,x:5,z:5}]
+    .forEach((p, i) => {
+        const mat = i === 1 ? accentMat : blockMat;
+        const block = new THREE.Mesh(new THREE.BoxGeometry(p.w, p.h, p.d), mat);
+        block.position.set(p.x, p.h / 2, p.z);
+        block.name = `STRUCTURE_${String.fromCharCode(65 + i)}`;
+        block.castShadow = true;
+        group.add(block);
+    });
+
+    const wire = new THREE.Mesh(
+        new THREE.BoxGeometry(3.2, 12.2, 3.2),
+        new THREE.MeshBasicMaterial({ color: 0xe31e24, wireframe: true, transparent: true, opacity: 0.3 })
+    );
+    wire.position.set(0, 6, 0);
+    group.add(wire);
+
+    modelObject = group;
+    scene.add(modelObject);
+    camera.position.set(25, 20, 25);
+    controls.target.set(0, 4, 0);
+    controls.update();
+    document.getElementById('viewer-loading').style.display = 'none';
+    console.warn("[VIEWER] Placeholder active:", msg);
+}
+
+// --- Global functions for HTML onclick attrs ---
+window.highlightElementByName = function(name) {
+    if (!modelObject) return;
+    const tag = document.getElementById('active-element-tag');
+    const nameSpan = document.getElementById('selected-element-name');
+    let found = false;
+
+    modelObject.traverse(child => {
+        if (child.isMesh) {
+            if (!child.userData.origCol) child.userData.origCol = child.material.color.getHex();
+            if (name && (child.name === name || child.userData.guid === name)) {
+                child.material.color.setHex(0xE31E24);
+                child.material.opacity = 1.0;
+                found = true;
+            } else {
+                child.material.color.setHex(child.userData.origCol);
+            }
+        }
+    });
+
+    if (name && found) {
+        tag.style.display = 'block';
+        nameSpan.textContent = name.toUpperCase();
+    } else { tag.style.display = 'none'; }
+};
+
+window.resetCamera = function() {
+    if (controls) {
+        if (modelObject) {
+            fitCameraToModel();
+        } else {
+            camera.position.set(25, 20, 25);
+            controls.target.set(0, 4, 0);
+            controls.update();
+        }
+    }
+};
+
+// --- Page context & data loading ---
+async function loadContext() {
+    const pid = localStorage.getItem('currentProjectId');
+    if (!pid) return;
+
+    try {
+        const [projResp, elementsResp] = await Promise.all([
+            fetch('/api/v1/projects/'),
+            fetch(`/api/v1/projects/${pid}/bim-elements`)
+        ]);
+
+        const projects = await projResp.json();
+        const project = projects.find(p => p.id == pid);
+        const bimData = await elementsResp.json();
+
+        if (project) {
+            document.getElementById('projectTitleHeader').textContent = project.name.toUpperCase();
+            document.getElementById('projectBadge').style.display = 'block';
+            init3D(bimData.model_url);
+        }
+
+        if (['admin', 'director', 'manager'].includes(userRole)) {
+            const card = document.getElementById('createUpdateCard');
+            if (card) card.style.display = 'block';
+        }
+
+        loadUpdates(pid);
+    } catch (err) { console.error("CONTEXT_LOAD_ERROR", err); }
+}
+
+async function loadUpdates(pid) {
+    const container = document.getElementById('updateGridBody');
+    try {
+        const resp = await fetch(`/api/v1/projects/${pid}/project-updates`);
+        const updates = await resp.json();
+
+        if (updates.length === 0) {
+            container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.25em; opacity: 0.5;">No active project updates detected</div>';
+            return;
+        }
+
+        const statusColors = { not_started: '#94a3b8', in_progress: '#FF9800', completed: '#3B82F6', inspected: '#8B5CF6', approved: '#10B981', blocked: '#E31E24' };
+
+        container.innerHTML = updates.map((upd, idx) => `
+            <div class="glass-card update-card reveal-text reveal-delay-${(idx % 4) + 1}"
+                 data-element-id="${upd.bim_element_id}"
+                 style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border-left: 5px solid ${statusColors[upd.status] || '#94a3b8'}; padding: 2.5rem; cursor: pointer;"
+                 onclick="highlightElementByName('${upd.bim_element_id}')">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.55rem; background: rgba(227,30,36,0.1); color: var(--brand-red); padding: 4px 10px; border-radius: 4px; font-weight: 900;">STATUS_UPDATE</span>
+                        <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 800;">LINK: ${upd.bim_element_id ? upd.bim_element_id.substring(0, 12) : 'DIRECT_ENTRY'}</span>
+                    </div>
+                    <h4 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 1.5rem; color: white;">${upd.name}</h4>
+                    <div class="progress-bar" style="max-width: 400px; margin-bottom: 1rem;"><div class="progress-fill" style="width: ${upd.progress_pct}%"></div></div>
+                    <div style="display: flex; gap: 2rem; font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase;">
+                        <span>STATUS: ${upd.status.replace('_', ' ')}</span>
+                        <span>PROGRESS: ${upd.progress_pct}%</span>
+                        <span>BUDGET: ₦${Number(upd.budget_amount).toLocaleString()}</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    ${['admin','manager','director'].includes(userRole) ? `<button onclick="event.stopPropagation(); deleteUpdate(${upd.id})" class="btn-modern btn-ghost" style="padding: 0.6rem; border-color: rgba(227,30,36,0.2); color: var(--brand-red);">&times;</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (err) { console.error("UPDATE_LOAD_ERROR", err); }
+}
+
+document.getElementById('createUpdateForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pid = localStorage.getItem('currentProjectId');
+    const fd = new FormData(e.target);
+    const body = {
+        project_id: parseInt(pid),
+        name: fd.get('name').toUpperCase(),
+        bim_element_id: fd.get('bim_element_id') || null,
+        budget_amount: parseFloat(fd.get('budget_amount')) || 0,
+        priority: fd.get('priority'),
+        status: 'not_started',
+        start_date: fd.get('start_date') ? new Date(fd.get('start_date')).toISOString() : null,
+        due_date: fd.get('due_date') ? new Date(fd.get('due_date')).toISOString() : null
+    };
+
+    const r = await fetch('/api/v1/project-updates/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (r.ok) { e.target.reset(); loadContext(); } else { alert("Failed to create update."); }
+});
+
+window.deleteUpdate = async function(id) {
+    if (!confirm('Delete this project update?')) return;
+    const r = await fetch(`/api/v1/project-updates/${id}`, { method: 'DELETE' });
+    if (r.ok) { location.reload(); }
+};
+
+// Boot
+loadContext();
+</script>
+{% endblock %}

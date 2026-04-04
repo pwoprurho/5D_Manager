@@ -1,0 +1,17 @@
+cls
+{
+    "name": "Vinicius Command System",
+    "short_name": "Vinicius",
+    "description": "5D Project Management & Infrastructure Intelligence",
+    "start_url": "/signin",
+    "display": "standalone",
+    "background_color": "#020617",
+    "theme_color": "#E31E24",
+    "icons": [
+        {
+            "src": "/static/assets/logo.png",
+            "sizes": "192x192 512x512",
+            "type": "image/png"
+        }
+    ]
+}

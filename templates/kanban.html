@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Strategic Kanban{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card reveal-text" style="padding: 2rem; margin-bottom: 2rem; border-left: 5px solid var(--brand-red);">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h2 id="kanbanProjectTitle" style="font-size: 1.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; margin: 0;">Loading Context...</h2>
+            <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem;">Strategic Project Update Matrix</p>
+        </div>
+        <div id="kanbanBadge" style="display: none; background: rgba(227,30,36,0.15); color: var(--brand-red); padding: 8px 20px; border-radius: 50px; font-weight: 900; font-size: 0.65rem; letter-spacing: 0.2em; border: 1px solid rgba(227,30,36,0.3);">LIVE</div>
+    </div>
+</div>
+
+<div id="kanbanBoard" class="kanban-board reveal-text reveal-delay-1"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const projectId = localStorage.getItem('currentProjectId');
+const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
+
+const statusLabels = {
+    'not_started': 'AWAITING_ORCHESTRATION',
+    'in_progress': 'ACTIVE_CONSTRUCTION',
+    'completed': 'SUBMITTED_FOR_VERIFICATION',
+    'inspected': 'QUALITY_VAL_PENDING',
+    'approved': 'INTEGRITY_CERTIFIED',
+    'blocked': 'SYSTEM_IMPEDIMENT'
+};
+
+const statusColors = {
+    'not_started': '#94a3b8',
+    'in_progress': '#FF9800',
+    'completed': '#3B82F6',
+    'inspected': '#8B5CF6',
+    'approved': '#10B981',
+    'blocked': '#E31E24'
+};
+
+async function loadKanban() {
+    try {
+        const [projResp, kanbanResp] = await Promise.all([
+            fetch('/api/v1/projects/'),
+            fetch(`/api/v1/projects/${projectId}/kanban`)
+        ]);
+        
+        if (projResp.ok) {
+            const projects = await projResp.json();
+            const proj = projects.find(p => p.id == projectId);
+            if (proj) {
+                document.getElementById('kanbanProjectTitle').textContent = proj.name.toUpperCase();
+                document.getElementById('kanbanBadge').style.display = 'block';
+            }
+        }
+
+        if (!kanbanResp.ok) throw new Error();
+        const board = await kanbanResp.json();
+        
+        const container = document.getElementById('kanbanBoard');
+        container.innerHTML = Object.entries(board).map(([status, wps]) => {
+            const color = statusColors[status] || '#94a3b8';
+            const label = statusLabels[status] || status.toUpperCase();
+            
+            return `
+                <div class="kanban-col">
+                    <div class="kanban-col-header">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 8px; height: 8px; background: ${color}; border-radius: 2px;"></div>
+                            <span style="font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">${label}</span>
+                        </div>
+                        <span style="font-size: 0.65rem; font-weight: 900; color: ${color}; background: ${color}15; padding: 2px 8px; border-radius: 50px;">${wps.length}</span>
+                    </div>
+                    <div class="kanban-cards" data-status="${status}" id="col-${status}">
+                        ${wps.map(wp => `
+                            <div class="kanban-card" data-id="${wp.id}">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                                    <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: ${color};">${wp.type || 'TASK'}</span>
+                                    <span style="font-size: 0.55rem; font-weight: 800; color: var(--text-muted); opacity: 0.6;">PRIO: ${(wp.priority || 'normal').toUpperCase()}</span>
+                                </div>
+                                <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.3; text-transform: uppercase;">${wp.name}</h4>
+                                <div style="background: rgba(255,255,255,0.05); height: 3px; border-radius: 2px; overflow: hidden; margin-bottom: 0.75rem;">
+                                    <div style="height: 100%; width: ${wp.progress_pct || 0}%; background: ${color}; border-radius: 2px;"></div>
+                                </div>
+                                <div style="font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">${wp.progress_pct || 0}% COMPLETE</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Initialize drag and drop
+        document.querySelectorAll('.kanban-cards').forEach(col => {
+            new Sortable(col, {
+                group: 'kanban',
+                animation: 250,
+                ghostClass: 'sortable-ghost',
+                onEnd: async (evt) => {
+                    const wpId = evt.item.dataset.id;
+                    const newStatus = evt.to.dataset.status;
+                    try {
+                        await fetch(`/api/v1/project-updates/${wpId}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                    } catch(e) { console.error("Status update failed"); }
+                }
+            });
+        });
+    } catch(err) {
+        console.error("Kanban load failed", err);
+    }
+}
+
+loadKanban();
+</script>
+{% endblock %}

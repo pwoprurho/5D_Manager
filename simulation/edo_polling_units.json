@@ -1,0 +1,472 @@
+[
+    {
+        "state": "Edo",
+        "lga": "Akoko-Edo",
+        "ward": "Ibillo I",
+        "pu_code": "12-01-01-001",
+        "pu_name": "Primary School Ibillo I",
+        "registered_voters": 1250,
+        "latitude": 7.4167,
+        "longitude": 6.0833
+    },
+    {
+        "state": "Edo",
+        "lga": "Akoko-Edo",
+        "ward": "Ibillo I",
+        "pu_code": "12-01-01-002",
+        "pu_name": "Town Hall Ibillo",
+        "registered_voters": 980,
+        "latitude": 7.4170,
+        "longitude": 6.0840
+    },
+    {
+        "state": "Edo",
+        "lga": "Akoko-Edo",
+        "ward": "Ibillo II",
+        "pu_code": "12-01-02-001",
+        "pu_name": "Community Center Ibillo II",
+        "registered_voters": 1100,
+        "latitude": 7.4200,
+        "longitude": 6.0900
+    },
+    {
+        "state": "Edo",
+        "lga": "Akoko-Edo",
+        "ward": "Igarra I",
+        "pu_code": "12-01-03-001",
+        "pu_name": "Igarra Primary School",
+        "registered_voters": 1450,
+        "latitude": 7.2833,
+        "longitude": 6.1000
+    },
+    {
+        "state": "Edo",
+        "lga": "Akoko-Edo",
+        "ward": "Igarra II",
+        "pu_code": "12-01-04-001",
+        "pu_name": "Igarra Town Hall",
+        "registered_voters": 1320,
+        "latitude": 7.2850,
+        "longitude": 6.1050
+    },
+    {
+        "state": "Edo",
+        "lga": "Egor",
+        "ward": "Egor I",
+        "pu_code": "12-02-01-001",
+        "pu_name": "Uselu Market Square",
+        "registered_voters": 2100,
+        "latitude": 6.3450,
+        "longitude": 5.6200
+    },
+    {
+        "state": "Edo",
+        "lga": "Egor",
+        "ward": "Egor I",
+        "pu_code": "12-02-01-002",
+        "pu_name": "University of Benin Gate",
+        "registered_voters": 1850,
+        "latitude": 6.3980,
+        "longitude": 5.6120
+    },
+    {
+        "state": "Edo",
+        "lga": "Egor",
+        "ward": "Egor II",
+        "pu_code": "12-02-02-001",
+        "pu_name": "Ugbowo Primary School",
+        "registered_voters": 1650,
+        "latitude": 6.4000,
+        "longitude": 5.6150
+    },
+    {
+        "state": "Edo",
+        "lga": "Egor",
+        "ward": "Okhoro",
+        "pu_code": "12-02-03-001",
+        "pu_name": "Okhoro Community Hall",
+        "registered_voters": 1420,
+        "latitude": 6.3500,
+        "longitude": 5.6300
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan Central",
+        "ward": "Irrua I",
+        "pu_code": "12-03-01-001",
+        "pu_name": "Irrua Grammar School",
+        "registered_voters": 1780,
+        "latitude": 6.7500,
+        "longitude": 6.2333
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan Central",
+        "ward": "Irrua II",
+        "pu_code": "12-03-02-001",
+        "pu_name": "Irrua Specialist Hospital",
+        "registered_voters": 1560,
+        "latitude": 6.7520,
+        "longitude": 6.2350
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan Central",
+        "ward": "Ewu",
+        "pu_code": "12-03-03-001",
+        "pu_name": "Ewu Town Square",
+        "registered_voters": 1380,
+        "latitude": 6.7600,
+        "longitude": 6.2400
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan North-East",
+        "ward": "Uromi I",
+        "pu_code": "12-04-01-001",
+        "pu_name": "Uromi Central Market",
+        "registered_voters": 2200,
+        "latitude": 6.7000,
+        "longitude": 6.3333
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan North-East",
+        "ward": "Uromi II",
+        "pu_code": "12-04-02-001",
+        "pu_name": "Ambrose Alli University Gate",
+        "registered_voters": 1950,
+        "latitude": 6.7050,
+        "longitude": 6.3380
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan North-East",
+        "ward": "Ubiaja",
+        "pu_code": "12-04-03-001",
+        "pu_name": "Ubiaja Town Hall",
+        "registered_voters": 1680,
+        "latitude": 6.6500,
+        "longitude": 6.3800
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan South-East",
+        "ward": "Ubiaja East",
+        "pu_code": "12-05-01-001",
+        "pu_name": "Ubiaja Primary School",
+        "registered_voters": 1520,
+        "latitude": 6.6550,
+        "longitude": 6.3850
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan South-East",
+        "ward": "Ewohimi",
+        "pu_code": "12-05-02-001",
+        "pu_name": "Ewohimi Community Center",
+        "registered_voters": 1340,
+        "latitude": 6.6200,
+        "longitude": 6.4000
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan West",
+        "ward": "Ekpoma I",
+        "pu_code": "12-06-01-001",
+        "pu_name": "Ekpoma Market Square",
+        "registered_voters": 2050,
+        "latitude": 6.7500,
+        "longitude": 6.1333
+    },
+    {
+        "state": "Edo",
+        "lga": "Esan West",
+        "ward": "Ekpoma II",
+        "pu_code": "12-06-02-001",
+        "pu_name": "AAU Main Campus",
+        "registered_voters": 1820,
+        "latitude": 6.7550,
+        "longitude": 6.1380
+    },
+    {
+        "state": "Edo",
+        "lga": "Etsako Central",
+        "ward": "Fugar I",
+        "pu_code": "12-07-01-001",
+        "pu_name": "Fugar Primary School",
+        "registered_voters": 1420,
+        "latitude": 7.0833,
+        "longitude": 6.4500
+    },
+    {
+        "state": "Edo",
+        "lga": "Etsako Central",
+        "ward": "Fugar II",
+        "pu_code": "12-07-02-001",
+        "pu_name": "Fugar Town Hall",
+        "registered_voters": 1280,
+        "latitude": 7.0850,
+        "longitude": 6.4550
+    },
+    {
+        "state": "Edo",
+        "lga": "Etsako East",
+        "ward": "Agenebode",
+        "pu_code": "12-08-01-001",
+        "pu_name": "Agenebode River Port",
+        "registered_voters": 1650,
+        "latitude": 7.1000,
+        "longitude": 6.6833
+    },
+    {
+        "state": "Edo",
+        "lga": "Etsako East",
+        "ward": "Weppa-Wanno",
+        "pu_code": "12-08-02-001",
+        "pu_name": "Weppa Primary School",
+        "registered_voters": 1380,
+        "latitude": 7.1100,
+        "longitude": 6.7000
+    },
+    {
+        "state": "Edo",
+        "lga": "Etsako West",
+        "ward": "Auchi I",
+        "pu_code": "12-09-01-001",
+        "pu_name": "Auchi Polytechnic Gate",
+        "registered_voters": 2350,
+        "latitude": 7.0667,
+        "longitude": 6.2667
+    },
+    {
+        "state": "Edo",
+        "lga": "Etsako West",
+        "ward": "Auchi II",
+        "pu_code": "12-09-02-001",
+        "pu_name": "Auchi Central Market",
+        "registered_voters": 2100,
+        "latitude": 7.0700,
+        "longitude": 6.2700
+    },
+    {
+        "state": "Edo",
+        "lga": "Etsako West",
+        "ward": "South Ibie",
+        "pu_code": "12-09-03-001",
+        "pu_name": "South Ibie Community Hall",
+        "registered_voters": 1450,
+        "latitude": 7.0500,
+        "longitude": 6.2500
+    },
+    {
+        "state": "Edo",
+        "lga": "Igueben",
+        "ward": "Igueben I",
+        "pu_code": "12-10-01-001",
+        "pu_name": "Igueben Town Hall",
+        "registered_voters": 1280,
+        "latitude": 6.6167,
+        "longitude": 6.2000
+    },
+    {
+        "state": "Edo",
+        "lga": "Igueben",
+        "ward": "Ekekhen",
+        "pu_code": "12-10-02-001",
+        "pu_name": "Ekekhen Primary School",
+        "registered_voters": 1150,
+        "latitude": 6.6200,
+        "longitude": 6.2100
+    },
+    {
+        "state": "Edo",
+        "lga": "Ikpoba-Okha",
+        "ward": "Aduwawa",
+        "pu_code": "12-11-01-001",
+        "pu_name": "Aduwawa Market Square",
+        "registered_voters": 1980,
+        "latitude": 6.3333,
+        "longitude": 5.6500
+    },
+    {
+        "state": "Edo",
+        "lga": "Ikpoba-Okha",
+        "ward": "Idogbo",
+        "pu_code": "12-11-02-001",
+        "pu_name": "Idogbo Junction",
+        "registered_voters": 1750,
+        "latitude": 6.3200,
+        "longitude": 5.6600
+    },
+    {
+        "state": "Edo",
+        "lga": "Ikpoba-Okha",
+        "ward": "Oregbeni",
+        "pu_code": "12-11-03-001",
+        "pu_name": "Oregbeni Primary School",
+        "registered_voters": 1620,
+        "latitude": 6.3400,
+        "longitude": 5.6400
+    },
+    {
+        "state": "Edo",
+        "lga": "Oredo",
+        "ward": "Oredo I",
+        "pu_code": "12-12-01-001",
+        "pu_name": "Kings Square Benin City",
+        "registered_voters": 2800,
+        "latitude": 6.3350,
+        "longitude": 5.6270
+    },
+    {
+        "state": "Edo",
+        "lga": "Oredo",
+        "ward": "Oredo II",
+        "pu_code": "12-12-02-001",
+        "pu_name": "Ring Road Primary School",
+        "registered_voters": 2450,
+        "latitude": 6.3380,
+        "longitude": 5.6290
+    },
+    {
+        "state": "Edo",
+        "lga": "Oredo",
+        "ward": "Ogbe",
+        "pu_code": "12-12-03-001",
+        "pu_name": "Oba Palace Entrance",
+        "registered_voters": 2100,
+        "latitude": 6.3400,
+        "longitude": 5.6300
+    },
+    {
+        "state": "Edo",
+        "lga": "Oredo",
+        "ward": "Iwehen",
+        "pu_code": "12-12-04-001",
+        "pu_name": "Iwehen Community Hall",
+        "registered_voters": 1850,
+        "latitude": 6.3300,
+        "longitude": 5.6350
+    },
+    {
+        "state": "Edo",
+        "lga": "Orhionmwon",
+        "ward": "Abudu I",
+        "pu_code": "12-13-01-001",
+        "pu_name": "Abudu Market Square",
+        "registered_voters": 1680,
+        "latitude": 6.2000,
+        "longitude": 5.9500
+    },
+    {
+        "state": "Edo",
+        "lga": "Orhionmwon",
+        "ward": "Abudu II",
+        "pu_code": "12-13-02-001",
+        "pu_name": "Abudu Primary School",
+        "registered_voters": 1520,
+        "latitude": 6.2050,
+        "longitude": 5.9550
+    },
+    {
+        "state": "Edo",
+        "lga": "Ovia North-East",
+        "ward": "Okada I",
+        "pu_code": "12-14-01-001",
+        "pu_name": "Igbinedion University Gate",
+        "registered_voters": 2200,
+        "latitude": 6.7333,
+        "longitude": 5.3833
+    },
+    {
+        "state": "Edo",
+        "lga": "Ovia North-East",
+        "ward": "Okada II",
+        "pu_code": "12-14-02-001",
+        "pu_name": "Okada Town Hall",
+        "registered_voters": 1850,
+        "latitude": 6.7350,
+        "longitude": 5.3850
+    },
+    {
+        "state": "Edo",
+        "lga": "Ovia South-West",
+        "ward": "Iguobazuwa",
+        "pu_code": "12-15-01-001",
+        "pu_name": "Iguobazuwa Primary School",
+        "registered_voters": 1450,
+        "latitude": 6.5500,
+        "longitude": 5.3000
+    },
+    {
+        "state": "Edo",
+        "lga": "Ovia South-West",
+        "ward": "Siluko",
+        "pu_code": "12-15-02-001",
+        "pu_name": "Siluko Community Center",
+        "registered_voters": 1280,
+        "latitude": 6.5600,
+        "longitude": 5.3100
+    },
+    {
+        "state": "Edo",
+        "lga": "Owan East",
+        "ward": "Afuze",
+        "pu_code": "12-16-01-001",
+        "pu_name": "Afuze Town Hall",
+        "registered_voters": 1580,
+        "latitude": 7.0500,
+        "longitude": 6.0500
+    },
+    {
+        "state": "Edo",
+        "lga": "Owan East",
+        "ward": "Otuo",
+        "pu_code": "12-16-02-001",
+        "pu_name": "Otuo Primary School",
+        "registered_voters": 1320,
+        "latitude": 7.0600,
+        "longitude": 6.0600
+    },
+    {
+        "state": "Edo",
+        "lga": "Owan West",
+        "ward": "Sabongida-Ora",
+        "pu_code": "12-17-01-001",
+        "pu_name": "Sabongida-Ora Market",
+        "registered_voters": 1750,
+        "latitude": 6.9500,
+        "longitude": 5.9000
+    },
+    {
+        "state": "Edo",
+        "lga": "Owan West",
+        "ward": "Uhonmora",
+        "pu_code": "12-17-02-001",
+        "pu_name": "Uhonmora Community Hall",
+        "registered_voters": 1420,
+        "latitude": 6.9600,
+        "longitude": 5.9100
+    },
+    {
+        "state": "Edo",
+        "lga": "Uhunmwonde",
+        "ward": "Ehor",
+        "pu_code": "12-18-01-001",
+        "pu_name": "Ehor Town Square",
+        "registered_voters": 1380,
+        "latitude": 6.6000,
+        "longitude": 5.8500
+    },
+    {
+        "state": "Edo",
+        "lga": "Uhunmwonde",
+        "ward": "Ugbogui",
+        "pu_code": "12-18-02-001",
+        "pu_name": "Ugbogui Primary School",
+        "registered_voters": 1250,
+        "latitude": 6.6100,
+        "longitude": 5.8600
+    }
+]

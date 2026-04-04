@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Vinicius Command — Register{% endblock %}
+
+{% block body %}
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="glass-card reveal-text" style="max-width: 520px; width: 100%; padding: 4rem; border-top: 6px solid var(--brand-red);">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <div style="width: 20px; height: 20px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red); margin: 0 auto 1.5rem;"></div>
+            <h1 style="font-size: 2rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.04em; margin-bottom: 0.5rem;">Create Account</h1>
+            <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.25em;">Provision new credentials</p>
+        </div>
+
+        {% if error %}
+        <div style="margin-bottom: 2rem; color: white; background: rgba(227,30,36,0.2); border: 1px solid rgba(227,30,36,0.3); padding: 1rem 1.5rem; border-radius: var(--radius-sm); text-align: center; font-size: 0.85rem; font-weight: 700;">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/register" style="display: flex; flex-direction: column; gap: 2rem;">
+            <div>
+                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Operational ID</label>
+                <input type="text" name="username" required class="modern-input" style="font-weight: 700; padding: 1.25rem;" placeholder="AGENT_IDENTIFIER...">
+            </div>
+            <div>
+                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Comms Address (Email)</label>
+                <input type="email" name="email" required class="modern-input" style="font-weight: 700; padding: 1.25rem;" placeholder="EMAIL@PROTOCOL.COM">
+            </div>
+            <div>
+                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Secure Passphrase</label>
+                <div style="position: relative;">
+                    <input type="password" id="register_pass" name="password" required minlength="8" class="modern-input" style="font-weight: 700; padding: 1.25rem; padding-right: 3rem; width: 100%; box-sizing: border-box;" placeholder="••••••••">
+                    <button type="button" onclick="const p=document.getElementById('register_pass'); p.type=p.type==='password'?'text':'password'; this.querySelector('i').classList.toggle('fa-eye'); this.querySelector('i').classList.toggle('fa-eye-slash');" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.5rem; outline: none;"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <button type="submit" class="btn-modern btn-primary" style="width: 100%; padding: 1.25rem; justify-content: center; font-weight: 900; margin-top: 1rem;">PROVISION ACCOUNT</button>
+        </form>
+
+        <p style="text-align: center; margin-top: 2.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 700;">
+            Already provisioned? <a href="/signin" style="color: var(--brand-red); text-decoration: none; font-weight: 900;">Sign In here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

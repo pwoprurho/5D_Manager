@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Project Timeline{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="glass-card reveal-text" style="padding: 2rem; margin-bottom: 2rem; border-left: 5px solid var(--brand-red);">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h2 id="ganttProjectTitle" style="font-size: 1.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; margin: 0;">Loading Timeline...</h2>
+            <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem;">Infrastructure Execution Chronology</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+            <button onclick="ganttChart && ganttChart.change_view_mode('Day')" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">DAY</button>
+            <button onclick="ganttChart && ganttChart.change_view_mode('Week')" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">WEEK</button>
+            <button onclick="ganttChart && ganttChart.change_view_mode('Month')" class="btn-modern btn-primary" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">MONTH</button>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card reveal-text reveal-delay-1" style="padding: 2rem; overflow-x: auto; border-color: rgba(255,255,255,0.05);">
+    <div id="ganttContainer">
+        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
+            <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
+            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.7;">Loading Timeline Data...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+/* Gantt theme overrides */
+.gantt .grid-header { fill: var(--bg-navy); stroke: var(--glass-border); }
+.gantt .grid-row { fill: transparent; }
+.gantt .grid-row:nth-child(even) { fill: rgba(255,255,255,0.01); }
+.gantt .row-line { stroke: var(--glass-border); }
+.gantt .tick { stroke: var(--glass-border); }
+.gantt .today-highlight { fill: rgba(227, 30, 36, 0.08); }
+.gantt .bar { fill: var(--brand-red); rx: 4; ry: 4; }
+.gantt .bar-progress { fill: var(--brand-orange); }
+.gantt .bar-label { fill: white; font-weight: 700; font-size: 0.7rem; }
+.gantt .handle { fill: var(--brand-red); }
+.gantt .header-text, .gantt .lower-text, .gantt .upper-text { fill: var(--text-muted); font-weight: 600; font-size: 0.7rem; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+<script>
+const projectId = "{{ project_id }}";
+let ganttChart = null;
+
+async function loadGantt() {
+    try {
+        // Load project name
+        const projResp = await fetch('/api/v1/projects/');
+        if (projResp.ok) {
+            const projects = await projResp.json();
+            const proj = projects.find(p => p.id == projectId);
+            if (proj) document.getElementById('ganttProjectTitle').textContent = proj.name.toUpperCase();
+        }
+
+        const resp = await fetch(`/api/v1/projects/${projectId}/gantt`);
+        if (!resp.ok) throw new Error();
+        const tasks = await resp.json();
+        
+        if (tasks.length === 0) {
+            document.getElementById('ganttContainer').innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">No timeline data available for this context</div>';
+            return;
+        }
+        
+        document.getElementById('ganttContainer').innerHTML = '<svg id="ganttSvg"></svg>';
+        
+        ganttChart = new Gantt("#ganttSvg", tasks, {
+            view_mode: 'Month',
+            language: 'en',
+            bar_height: 30,
+            bar_corner_radius: 4,
+            padding: 20,
+        });
+    } catch(err) {
+        console.error("Gantt load failed", err);
+        document.getElementById('ganttContainer').innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--brand-red); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">TIMELINE_SYNC_ERROR</div>';
+    }
+}
+
+loadGantt();
+</script>
+{% endblock %}

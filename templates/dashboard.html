@@ -1,0 +1,175 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Operational Dashboard{% endblock %}
+
+{% block content %}
+<!-- System Telemetry Grid -->
+<div class="grid grid-cols-4 gap-6 mb-10" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem;">
+    <div class="glass-card reveal-text" style="padding: 2rem; border-top: 3px solid var(--brand-red);">
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem;">Active Projects</div>
+        <div id="statProjects" style="font-size: 2.75rem; font-weight: 900; color: white; line-height: 1;">—</div>
+    </div>
+    <div class="glass-card reveal-text reveal-delay-1" style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--accent-blue);">
+        <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">Active Project Updates</div>
+        <div id="statWPs" style="font-size: 2.25rem; font-weight: 900; color: white;">0</div>
+    </div>
+    <div class="glass-card reveal-text reveal-delay-2" style="padding: 2rem; border-top: 3px solid #10B981;">
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem;">Completion Rate</div>
+        <div id="statCompletion" style="font-size: 2.75rem; font-weight: 900; color: white; line-height: 1;">—</div>
+    </div>
+    <div class="glass-card reveal-text reveal-delay-3" style="padding: 2rem; border-top: 3px solid var(--brand-orange);">
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem;">Budget Allocated</div>
+        <div id="statBudget" style="font-size: 2.75rem; font-weight: 900; color: white; line-height: 1;">—</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem;">
+    <!-- Project Health Monitor -->
+    <div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem; border-color: rgba(255,255,255,0.05);">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
+            <div style="width: 12px; height: 12px; background: var(--brand-red); border-radius: 3px; box-shadow: var(--glow-red);"></div>
+            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">Project Health Monitor</h3>
+        </div>
+        <div id="projectHealthList" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="padding: 4rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
+                <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
+                <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase;">Scanning Telemetry...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Feed -->
+    <div class="glass-card reveal-text reveal-delay-3" style="padding: 3rem; border-color: rgba(255,255,255,0.05);">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
+            <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
+            <h3 style="font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-secondary);">Activity Log</h3>
+        </div>
+        <div id="activityFeed" style="display: flex; flex-direction: column; gap: 1rem;">
+            <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 3rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.5;">Awaiting telemetry data...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadDashboard() {
+    try {
+        const projResp = await fetch('/api/v1/projects/');
+        const projects = projResp.ok ? await projResp.json() : [];
+        
+        let globalBAC = 0, globalAC = 0, globalEV = 0, totalWPs = 0;
+        const projectDetailedHealth = [];
+
+        // Fetch detailed data for each project
+        for (const p of projects) {
+            try {
+                const [perfResp, wpResp] = await Promise.all([
+                    fetch(`/api/v1/projects/${p.id}/performance`),
+                    fetch(`/api/v1/projects/${p.id}/project-updates`)
+                ]);
+                
+                const perf = perfResp.ok ? await perfResp.json() : { cpi: 1, eac: 0, bac: 0, ev: 0, ac: 0 };
+                const wps = wpResp.ok ? await wpResp.json() : [];
+                
+                globalBAC += perf.bac;
+                globalAC += perf.ac;
+                globalEV += perf.ev;
+                totalWPs += wps.length;
+                
+                projectDetailedHealth.push({ ...p, perf, wps });
+            } catch(e) { console.error("Project fetch error", e); }
+        }
+
+        const globalCPI = globalAC > 0 ? (globalEV / globalAC) : 1.0;
+        const globalEAC = globalCPI > 0 ? (globalBAC / globalCPI) : globalBAC;
+
+        document.getElementById('statProjects').textContent = globalCPI.toFixed(2);
+        document.querySelector('#statProjects').parentElement.querySelector('div').textContent = 'Global Efficiency (CPI)';
+        
+        document.getElementById('statWPs').textContent = totalWPs;
+        
+        const completionRate = globalBAC > 0 ? Math.round((globalEV / globalBAC) * 100) : 0;
+        document.getElementById('statCompletion').textContent = completionRate + '%';
+        
+        document.getElementById('statBudget').textContent = '₦' + globalEAC.toLocaleString();
+        document.querySelector('#statBudget').parentElement.querySelector('div').textContent = 'Estimated at Completion (EAC)';
+
+        // Build project health list
+        const healthContainer = document.getElementById('projectHealthList');
+        if (projects.length === 0) {
+            healthContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 3rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">No active projects</p>';
+            return;
+        }
+        
+        healthContainer.innerHTML = projectDetailedHealth.map(p => {
+            const cpiColor = p.perf.cpi < 0.9 ? 'var(--brand-red)' : (p.perf.cpi < 1.0 ? 'var(--brand-orange)' : '#10B981');
+            return `
+                <div class="glass-card" style="padding: 2rem; background: rgba(255,255,255,0.02); border-left: 5px solid ${cpiColor}; cursor: pointer;" onclick="switchProject(${p.id})">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em;">${p.name}</h4>
+                        <div style="text-align: right;">
+                            <span style="font-size: 1.5rem; font-weight: 900; color: ${cpiColor};">${Math.round((p.perf.ev / (p.perf.bac || 1)) * 100)}%</span>
+                            <div style="font-size: 0.6rem; font-weight: 900; color: var(--text-muted);">CPI: ${p.perf.cpi}</div>
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden;">
+                        <div style="height: 100%; width: ${(p.perf.ev / (p.perf.bac || 1)) * 100}%; background: linear-gradient(90deg, ${cpiColor}, var(--brand-orange)); border-radius: 2px; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+                    </div>
+                    <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; gap: 1.5rem; font-size: 0.7rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">
+                            <span>UPDATES: ${p.wps.length}</span>
+                            <span>EAC: ₦${p.perf.eac.toLocaleString()}</span>
+                        </div>
+                        <button onclick="generateReport(event, ${p.id})" class="btn-modern btn-ghost" style="padding: 0.4rem 1rem; font-size: 0.55rem; font-weight: 900; border-color: rgba(227,30,36,0.3); color: var(--brand-red);">GEN_REPORT</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Load recent updates for activity feed
+        try {
+            const updResp = await fetch('/api/v1/site-updates/');
+            if (updResp.ok) {
+                const updates = await updResp.json();
+                const feed = document.getElementById('activityFeed');
+                if (updates.length === 0) {
+                    feed.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 3rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.5;">No recent transmissions</p>';
+                } else {
+                    feed.innerHTML = updates.slice(0, 8).map(u => `
+                        <div style="padding: 1rem; border-left: 3px solid var(--brand-red); background: rgba(255,255,255,0.02); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+                            <div style="font-size: 0.75rem; color: white; font-weight: 800; margin-bottom: 0.25rem;">${u.notes || 'Status update'}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">${new Date(u.timestamp).toLocaleDateString()} — TRANS_ID: ${u.id}</div>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch(e) {}
+        
+    } catch(err) {
+        console.error("Dashboard load failed", err);
+    }
+}
+
+async function generateReport(event, projectId) {
+    if (event) event.stopPropagation();
+    try {
+        const resp = await fetch(`/api/v1/projects/${projectId}/report`);
+        if (resp.ok) {
+            const data = await resp.json();
+            window.open(data.report_url);
+        } else {
+            alert("REPORT_GENERATION_FAILED");
+        }
+    } catch (e) {
+        alert("TERMINAL_ERROR: Protocol mismatch");
+    }
+}
+
+loadDashboard();
+</script>
+{% endblock %}

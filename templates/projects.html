@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Projects{% endblock %}
+
+{% block content %}
+{% set role_str = user.role|string %}
+{% if 'admin' in role_str or 'director' in role_str %}
+<!-- Create Project Form -->
+<div class="glass-card reveal-text mb-10" style="border-top: 2px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
+        <div style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);"></div>
+        <h3 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0;">Create Project</h3>
+    </div>
+    
+    <form id="createProjectForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Project Name</label>
+            <input type="text" name="name" placeholder="E.G. ALPHA TOWER" required class="modern-input" style="font-weight: 700; text-transform: uppercase;">
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Description</label>
+            <input type="text" name="description" placeholder="Project details..." class="modern-input" style="font-weight: 700;">
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">BIM Design Library</label>
+            <select name="design_id" id="designSelect" class="modern-input" style="font-weight: 700;">
+                <option value="">SELECT ARCHITECTURAL DESIGN...</option>
+            </select>
+        </div>
+
+        <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; font-weight: 900; border-radius: var(--radius-sm); width: 100%;">+ CREATE PROJECT</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<!-- Active Projects -->
+<div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem; border-color: rgba(255,255,255,0.05);">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
+            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-secondary);">Active Projects</h3>
+        </div>
+        <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6;">Live Feed</div>
+    </div>
+    
+    <div id="projectsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 2rem;">
+        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md); grid-column: 1 / -1;">
+            <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
+            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.7;">Loading Data...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadProjects() {
+    try {
+        // Load Designs first for the dropdown
+        const dResp = await fetch('/api/v1/designs/');
+        const designs = await dResp.json();
+        const dSelect = document.getElementById('designSelect');
+        if (dSelect) {
+            dSelect.innerHTML = '<option value="">SELECT ARCHITECTURAL DESIGN...</option>' + 
+                designs.map(d => `<option value="${d.id}">${d.name.toUpperCase()}</option>`).join('');
+        }
+
+        const resp = await fetch('/api/v1/projects/');
+        if (!resp.ok) throw new Error();
+        const projects = await resp.json();
+        const container = document.getElementById('projectsList');
+        
+        if (projects.length === 0) {
+            container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5; grid-column: 1 / -1;">No active projects found</div>';
+            return;
+        }
+        
+        container.innerHTML = projects.map((p, idx) => `
+            <div class="glass-card reveal-text reveal-delay-${(idx % 4) + 1}" style="padding: 2.5rem; background: rgba(255,255,255,0.02); border-left: 5px solid var(--brand-red); cursor: pointer;" onclick="selectProject(${p.id})">
+                <h4 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 0.5rem; color: white;">${p.name}</h4>
+                <div style="font-size: 0.6rem; color: var(--accent-blue); font-weight: 900; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    ${p.design_id ? `LINKED_DESIGN_ID: ${p.design_id}` : 'NO DESIGN LINKED'}
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; font-weight: 600; opacity: 0.8; line-height: 1.5;">${p.description || 'No description provided.'}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.6;">ID: ${p.id}</span>
+                    <span style="font-size: 0.65rem; background: rgba(227, 30, 36, 0.1); color: var(--brand-red); padding: 4px 12px; border-radius: 50px; font-weight: 900; letter-spacing: 0.1em;">SELECT →</span>
+                </div>
+            </div>
+        `).join('');
+    } catch(err) {
+        console.error("Failed to load projects", err);
+    }
+}
+
+function selectProject(id) {
+    localStorage.setItem('currentProjectId', id);
+    window.location.href = `/projects/${id}/project-updates`;
+}
+
+const createForm = document.getElementById('createProjectForm');
+if (createForm) {
+    createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(createForm);
+        try {
+            const resp = await fetch('/api/v1/projects/', { method: 'POST', body: fd });
+            if (resp.ok) { createForm.reset(); loadProjects(); }
+            else { const err = await resp.json(); alert('INIT_ERROR: ' + (err.detail || 'Failed')); }
+        } catch(err) { alert('PROTOCOL_FAILURE: Terminal connection lost.'); }
+    });
+}
+
+loadProjects();
+</script>
+{% endblock %}

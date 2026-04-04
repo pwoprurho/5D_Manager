@@ -1,0 +1,291 @@
+﻿.venv\Scripts\python.exe : C
+:\Users\Administrator\democr
+at\ai_agent.py:2: 
+FutureWarning: 
+At line:1 char:1
++ .venv\Scripts\python.exe 
+simulate_election.py 2>&1 | 
+Out-File sim_log ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (C:\Us  
+  ers\Admini...FutureWarn   
+ ing: :String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+
+All support for the 
+`google.generativeai` 
+package has ended. It will 
+no longer be receiving 
+updates or bug fixes. 
+Please switch to the 
+`google.genai` package as 
+soon as possible.
+See README for more details:
+
+https://github.com/google-ge
+mini/deprecated-generative-a
+i-python/blob/main/README.md
+
+  import 
+google.generativeai as genai
+[INIT] Performing initial news crawl...
+External news monitoring started
+[*] Starting Delta State 2023 Governorship Simulation...
+Traceback (most recent call 
+last):
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\ba
+se.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, 
+str_statement, 
+effective_parameters, 
+context
+        ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+    )
+    ^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\de
+fault.py", line 952, in 
+do_execute
+    
+cursor.execute(statement, 
+parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^
+^^^^^^^^^^^^^
+sqlite3.IntegrityError: 
+UNIQUE constraint failed: 
+state.code
+
+The above exception was the 
+direct cause of the 
+following exception:
+
+Traceback (most recent call 
+last):
+  File "C:\Users\Administrat
+or\democrat\simulate_electio
+n.py", line 193, in <module>
+    run_simulation()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\Administrat
+or\democrat\simulate_electio
+n.py", line 17, in 
+run_simulation
+    db.session.flush()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\scopi
+ng.py", line 924, in flush
+    return self._proxied.flu
+sh(objects=objects)
+           ~~~~~~~~~~~~~~~~~
+~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\sessi
+on.py", line 4331, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\sessi
+on.py", line 4466, in _flush
+    with 
+util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\util\lang
+helpers.py", line 224, in 
+__exit__
+    raise exc_value.with_tra
+ceback(exc_tb)
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\sessi
+on.py", line 4427, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\unito
+fwork.py", line 466, in 
+execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\unito
+fwork.py", line 642, in 
+execute
+    util.preloaded.orm_persi
+stence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mappe
+r_hierarchy(self.mapper, 
+False, False),
+        ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\persi
+stence.py", line 93, in 
+save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\orm\persi
+stence.py", line 1233, in 
+_emit_insert_statements
+    result = 
+connection.execute(
+        statement,
+        params,
+        execution_options=ex
+ecution_options,
+    )
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\ba
+se.py", line 1419, in 
+execute
+    return meth(
+        self,
+        
+distilled_parameters,
+        execution_options 
+or NO_OPTIONS,
+    )
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\sql\eleme
+nts.py", line 527, in 
+_execute_on_connection
+    return connection._execu
+te_clauseelement(
+           ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~^
+        self, 
+distilled_params, 
+execution_options
+        ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\ba
+se.py", line 1641, in 
+_execute_clauseelement
+    ret = 
+self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\ba
+se.py", line 1846, in 
+_execute_context
+    return 
+self._exec_single_context(
+           
+~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, 
+statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\ba
+se.py", line 1986, in 
+_exec_single_context
+    self._handle_dbapi_excep
+tion(
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~^
+        e, str_statement, 
+effective_parameters, 
+cursor, context
+        ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+    )
+    ^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\ba
+se.py", line 2363, in 
+_handle_dbapi_exception
+    raise sqlalchemy_excepti
+on.with_traceback(exc_info[2
+]) from e
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\ba
+se.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, 
+str_statement, 
+effective_parameters, 
+context
+        ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+    )
+    ^
+  File "C:\Users\Administrat
+or\democrat\.venv\Lib\site-p
+ackages\sqlalchemy\engine\de
+fault.py", line 952, in 
+do_execute
+    
+cursor.execute(statement, 
+parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^
+^^^^^^^^^^^^^
+sqlalchemy.exc.IntegrityErro
+r: (sqlite3.IntegrityError) 
+UNIQUE constraint failed: 
+state.code
+[SQL: INSERT INTO state 
+(name, code) VALUES (?, ?)]
+[parameters: ('Delta', 
+'DEL')]
+(Background on this error 
+at: https://sqlalche.me/e/20
+/gkpj)
