@@ -1378,17 +1378,24 @@ def create_material(
     return models.Material(**result.data[0])
 
 
-@app.put("/api/v1/store/materials/{material_id}", response_model=models.Material)
+@app.patch("/api/v1/store/materials/{material_id}", response_model=models.Material)
 def update_material(
     material_id: int,
-    material_data: models.Material,
+    material_data: dict, # Support raw partial JSON
     user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
 ):
-    mat_dict = material_data.dict(exclude={"id"}, exclude_unset=True)
-    if "unit_cost" in mat_dict:
-        mat_dict["unit_cost"] = float(mat_dict["unit_cost"])
+    # Ensure decimals/floats converted if present
+    if "unit_cost" in material_data:
+        material_data["unit_cost"] = float(material_data["unit_cost"])
+    if "current_stock" in material_data:
+        material_data["current_stock"] = float(material_data["current_stock"])
+    if "low_stock_threshold" in material_data:
+        material_data["low_stock_threshold"] = float(material_data["low_stock_threshold"])
         
-    result = supabase.table("material").update(mat_dict).eq("id", material_id).execute()
+    # Clean up any id sent in body
+    if "id" in material_data: del material_data["id"]
+
+    result = supabase.table("material").update(material_data).eq("id", material_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Material not found")
             

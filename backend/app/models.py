@@ -107,6 +107,7 @@ class Material(BaseModel):
     unit: str
     current_stock: float = 0
     unit_cost: Decimal = Decimal("0")
+    low_stock_threshold: float = 10.0
 
 
 class MaterialRequest(BaseModel):
