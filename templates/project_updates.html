@@ -32,8 +32,8 @@
         <div style="background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 4px; border: 1px solid var(--glass-border); font-size: 0.6rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.1em;">
             Mode: Design Library Integration
         </div>
-        <select id="viewerElementSelector" onchange="highlightElementByName(this.value)" style="background: rgba(0,0,0,0.8); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.6rem; padding: 0.5rem 1rem; border-radius: 4px; outline: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; min-width: 180px;">
-            <option value="">SELECT DESIGN COMPONENT...</option>
+        <select id="viewerElementSelector" onchange="selectWorkPackage(this.value)" style="background: rgba(0,0,0,0.8); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.6rem; padding: 0.5rem 1rem; border-radius: 4px; outline: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; min-width: 220px;">
+            <option value="">SELECT WORK PACKAGE...</option>
         </select>
         <button onclick="resetCamera()" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 4px; border-color: rgba(255,255,255,0.1); color: white;">RESET VIEW</button>
     </div>
@@ -66,9 +66,9 @@
             </select>
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Design Link (BIM GUID)</label>
-            <select name="bim_element_id" id="bimElementsSelect" required class="modern-input" style="font-weight: 700;">
-                <option value="">SELECT FROM DESIGN...</option>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Design File</label>
+            <select name="bim_element_id" id="bimElementsSelect" class="modern-input" style="font-weight: 700;">
+                <option value="">NO DESIGN LINKED</option>
             </select>
         </div>
         <div>
@@ -83,8 +83,27 @@
             <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target End</label>
             <input type="date" name="due_date" class="modern-input" style="font-weight: 700;">
         </div>
-        <div style="display: flex; align-items: flex-end;">
-            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; border-radius: var(--radius-sm); font-weight: 900; width: 100%;">+ AUTHORIZE UPDATE</button>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Phase Type</label>
+            <select name="type" class="modern-input" style="font-weight: 700;">
+                <option value="task" selected>TASK</option>
+                <option value="phase">PHASE</option>
+                <option value="milestone">MILESTONE</option>
+                <option value="bug">BUG</option>
+            </select>
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Est. Hours</label>
+            <input type="number" name="estimated_hours" value="0" step="0.5" class="modern-input" style="font-weight: 700;">
+        </div>
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Assignee</label>
+            <select name="assignee_id" id="assigneeSelect" class="modern-input" style="font-weight: 700;">
+                <option value="">UNASSIGNED</option>
+            </select>
+        </div>
+        <div style="display: flex; align-items: flex-end; grid-column: span 1;">
+            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 2rem; border-radius: var(--radius-sm); font-weight: 900; width: 100%;">+ AUTHORIZE</button>
         </div>
     </form>
 </div>
@@ -318,6 +337,22 @@ window.resetCamera = function() {
     window.fitCameraToModel();
 };
 
+window.selectWorkPackage = function(bimElementId) {
+    // Highlight the associated BIM element in the 3D viewer
+    if (bimElementId) {
+        window.highlightElementByName(bimElementId);
+    }
+    // Scroll to the matching update card below the viewer
+    const cards = document.querySelectorAll('.update-card[data-element-id]');
+    cards.forEach(card => {
+        card.style.outline = 'none';
+        if (bimElementId && card.dataset.elementId === bimElementId) {
+            card.style.outline = '2px solid var(--brand-red)';
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+};
+
 async function loadContext() {
     const pid = localStorage.getItem('currentProjectId');
     if (!pid) return;
@@ -336,6 +371,44 @@ async function loadContext() {
             document.getElementById('projectTitleHeader').textContent = project.name.toUpperCase();
             document.getElementById('projectBadge').style.display = 'block';
             window.init3D(bimData.model_url);
+        }
+
+        // Populate design files dropdown in create form
+        try {
+            const [designsResp, usersResp] = await Promise.all([
+                fetch('/api/v1/designs/'),
+                fetch('/api/v1/users/')
+            ]);
+            const designs = await designsResp.json();
+            const users = await usersResp.json();
+
+            const bSel = document.getElementById('bimElementsSelect');
+            if (bSel && designs.length > 0) {
+                const dOpts = designs.map(d =>
+                    `<option value="${d.id}">${d.name}${d.description ? ' — ' + d.description : ''}</option>`
+                ).join('');
+                bSel.innerHTML = '<option value="">NO DESIGN LINKED</option>' + dOpts;
+            }
+
+            const uSel = document.getElementById('assigneeSelect');
+            if (uSel && users.length > 0) {
+                const uOpts = users.map(u =>
+                    `<option value="${u.id}">${u.username.toUpperCase()} (${u.role})</option>`
+                ).join('');
+                uSel.innerHTML = '<option value="">UNASSIGNED</option>' + uOpts;
+            }
+        } catch (e) { console.warn('Could not load designs/users:', e); }
+
+        // Populate viewer dropdown with work packages
+        const wpResp = await fetch(`/api/v1/projects/${pid}/project-updates`);
+        const workPackages = await wpResp.json();
+        const vSel = document.getElementById('viewerElementSelector');
+        if (vSel && workPackages.length > 0) {
+            const statusIcons = { not_started: '⬜', in_progress: '🔶', completed: '✅', inspected: '🔍', approved: '✔️', blocked: '🔴', critical: '🚨' };
+            const wpOpts = workPackages.map(wp =>
+                `<option value="${wp.bim_element_id || ''}" data-wp-id="${wp.id}">${statusIcons[wp.status] || '⬜'} ${wp.name} (${Math.round(wp.progress_pct || 0)}%)</option>`
+            ).join('');
+            vSel.innerHTML = '<option value="">SELECT WORK PACKAGE...</option>' + wpOpts;
         }
 
         if (['admin','president', 'director', 'manager'].includes(userRole)) {
@@ -369,10 +442,12 @@ async function loadUpdates(pid) {
                     </div>
                     <h4 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 1.5rem; color: white;">${upd.name}</h4>
                     <div class="progress-bar" style="max-width: 400px; margin-bottom: 1rem;"><div class="progress-fill" style="width: ${upd.progress_pct}%"></div></div>
-                    <div style="display: flex; gap: 2rem; font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase;">
+                    <div style="display: flex; gap: 2rem; font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; flex-wrap: wrap;">
+                        <span>TYPE: ${upd.type}</span>
                         <span>STATUS: ${upd.status.replace('_', ' ')}</span>
                         <span>PROGRESS: ${upd.progress_pct}%</span>
                         <span>BUDGET: ₦${Number(upd.budget_amount).toLocaleString()}</span>
+                        <span>HOURS: ${upd.estimated_hours}H</span>
                     </div>
                 </div>
                 <div style="display: flex; gap: 1rem;">
@@ -386,12 +461,20 @@ async function loadUpdates(pid) {
 document.getElementById('createUpdateForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pid = localStorage.getItem('currentProjectId');
+    if (!pid || isNaN(parseInt(pid))) {
+        alert("ERROR: Current project ID not detected in session.");
+        return;
+    }
     const fd = new FormData(e.target);
     const body = {
         project_id: parseInt(pid),
         name: fd.get('name').toUpperCase(),
+        bim_element_id: fd.get('bim_element_id') || "NONE",
         budget_amount: parseFloat(fd.get('budget_amount')) || 0,
+        type: fd.get('type'),
         priority: fd.get('priority'),
+        estimated_hours: parseFloat(fd.get('estimated_hours')) || 0,
+        assignee_id: fd.get('assignee_id') || null,
         status: 'not_started',
         start_date: fd.get('start_date') ? new Date(fd.get('start_date')).toISOString() : null,
         due_date: fd.get('due_date') ? new Date(fd.get('due_date')).toISOString() : null
@@ -402,7 +485,13 @@ document.getElementById('createUpdateForm')?.addEventListener('submit', async (e
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
-    if (r.ok) { e.target.reset(); loadContext(); } else { alert("Failed to create update."); }
+    if (r.ok) { 
+        e.target.reset(); 
+        loadContext(); 
+    } else { 
+        const err = await r.json();
+        alert("Failed to create update: " + JSON.stringify(err.detail)); 
+    }
 });
 
 window.deleteUpdate = async function(id) {

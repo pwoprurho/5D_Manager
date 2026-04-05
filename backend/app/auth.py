@@ -3,6 +3,9 @@ from typing import Optional, List
 from .database import supabase
 from . import models
 
+from cachetools import TTLCache
+auth_cache = TTLCache(maxsize=500, ttl=300)
+
 async def get_current_user(request: Request, response: Response = None) -> Optional[models.User]:
     """Get the currently authenticated user from Supabase Auth."""
     token = request.cookies.get("access_token")
@@ -32,6 +35,9 @@ async def get_current_user(request: Request, response: Response = None) -> Optio
     if not token:
         return None
 
+    if token in auth_cache:
+        return auth_cache[token]
+
     try:
         # Validate the token with Supabase
         auth_response = supabase.auth.get_user(token)
@@ -45,7 +51,9 @@ async def get_current_user(request: Request, response: Response = None) -> Optio
         if not result.data:
             return None
             
-        return models.User(**result.data)
+        user = models.User(**result.data)
+        auth_cache[token] = user
+        return user
         
     except Exception as e:
         print(f"Auth error: {str(e)}")

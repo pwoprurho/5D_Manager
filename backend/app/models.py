@@ -58,7 +58,7 @@ class Project(BaseModel):
 class WorkPackage(BaseModel):
     id: Optional[int] = None
     project_id: int
-    bim_element_id: str
+    bim_element_id: Optional[str] = None
     name: str
     status: StatusEnum = StatusEnum.not_started
     progress_pct: int = 0

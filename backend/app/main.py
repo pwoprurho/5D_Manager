@@ -545,6 +545,47 @@ async def create_design(
     api_cache.clear()
     return models.Design(**result.data[0])
 
+@app.patch("/api/v1/designs/{design_id}", response_model=models.Design)
+async def update_design(
+    design_id: int,
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+):
+    """Allows updating design metadata and optionally replacing the BIM model file."""
+    # 1. Verify existence
+    existing = supabase.table("design").select("*").eq("id", design_id).single().execute()
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Design not found")
+        
+    update_data = {}
+    if name is not None:
+        update_data["name"] = name
+    if description is not None:
+        update_data["description"] = description
+        
+    # 2. Handle file replacement
+    if file:
+        if not file.filename.lower().endswith(('.ifc', '.gltf', '.glb')):
+            raise HTTPException(status_code=400, detail="Unsupported model format")
+            
+        from .services.supabase_client import upload_file
+        file_bytes = await file.read()
+        model_url = upload_file(file_bytes, file.filename, "designs")
+        update_data["model_url"] = model_url
+        
+    if not update_data:
+        return models.Design(**existing.data)
+        
+    # 3. Update in DB
+    result = supabase.table("design").update(update_data).eq("id", design_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Update operation failed")
+        
+    api_cache.clear()
+    return models.Design(**result.data[0])
+
 @app.get("/api/v1/designs/{design_id}/projects")
 def get_design_projects(design_id: int, user: models.User = Depends(auth.get_current_user)):
     """List all projects associated with a specific design."""
@@ -580,8 +621,32 @@ async def create_project(
         raise HTTPException(status_code=500, detail="Failed to create project")
     
     api_cache.clear()
+    api_cache.clear()
     return models.Project(**result.data[0])
 
+@app.patch("/api/v1/projects/{project_id}", response_model=models.Project)
+async def update_project(
+    project_id: int,
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    design_id: Optional[int] = Form(None),
+    bim_model_url: Optional[str] = Form(None),
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+):
+    """Updates project metadata. Required to attach/detach designs."""
+    update_data = {}
+    if name is not None: update_data["name"] = name
+    if description is not None: update_data["description"] = description
+    if design_id is not None: 
+        update_data["design_id"] = design_id if design_id > 0 else None
+    if bim_model_url is not None: update_data["bim_model_url"] = bim_model_url
+
+    res = supabase.table("project").update(update_data).eq("id", project_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    api_cache.clear()
+    return models.Project(**res.data[0])
 
 @app.post("/api/v1/projects/{project_id}/upload-bim")
 async def upload_bim_model(
@@ -899,11 +964,22 @@ async def get_project_bim_elements(project_id: int):
     
     # MISSION CRITICAL: Resolve public URL for Supabase storage if needed
     if model_url and not model_url.startswith("http"):
-        # Assume it's in the 'designs' bucket
         storage_res = supabase.storage.from_("designs").get_public_url(model_url)
         model_url = storage_res
     
-    return {"elements": [], "model_url": model_url}
+    # Parse IFC elements from the model file
+    elements = []
+    if model_url and model_url.lower().endswith('.ifc'):
+        try:
+            import requests as req
+            from .services.ifc_parser import get_bim_elements_from_bytes
+            dl = req.get(model_url, timeout=30)
+            if dl.status_code == 200:
+                elements = get_bim_elements_from_bytes(dl.content, "model.ifc")
+        except Exception as parse_err:
+            print(f"BIM element parsing skipped: {parse_err}")
+    
+    return {"elements": elements, "model_url": model_url}
 
 
 @app.get("/api/v1/projects/{project_id}/kanban")
@@ -1026,7 +1102,7 @@ def get_gantt_data(project_id: int):
 
 @app.post("/api/v1/project-updates/{update_id}/submit")
 async def submit_phase_update(
-    phase_id: int,
+    update_id: int,
     progress: int = Form(...), 
     notes: str = Form(""),
     materials_used: str = Form(""),
@@ -1038,7 +1114,7 @@ async def submit_phase_update(
     status_val = models.StatusEnum.completed if progress >= 100 else models.StatusEnum.in_progress
     
     # 1. Fetch WP for context (project_id)
-    wp_current = supabase.table("workpackage").select("project_id, actual_cost").eq("id", phase_id).single().execute()
+    wp_current = supabase.table("workpackage").select("project_id, actual_cost").eq("id", update_id).single().execute()
     if not wp_current.data:
         raise HTTPException(status_code=404, detail="Work package not found")
     project_id = wp_current.data["project_id"]
@@ -1051,7 +1127,7 @@ async def submit_phase_update(
         try:
             from .services.supabase_client import upload_photo
             file_bytes = await photo.read()
-            photo_url = upload_photo(file_bytes, photo.filename, project_id, phase_id)
+            photo_url = upload_photo(file_bytes, photo.filename, project_id, update_id)
         except Exception as e:
             print(f"Submission Photo Upload Failed: {str(e)}")
             # We continue even if photo fails, but ideally we'd log this
@@ -1061,11 +1137,11 @@ async def submit_phase_update(
         "progress_pct": progress,
         "status": status_val,
         "actual_cost": new_cost
-    }).eq("id", phase_id).execute()
+    }).eq("id", update_id).execute()
     
     # 4. Create site update record
     update_data = {
-        "work_package_id": phase_id,
+        "work_package_id": update_id,
         "submitted_by_id": user.id,
         "notes": notes,
         "photo_url": photo_url,
@@ -1080,8 +1156,8 @@ async def submit_phase_update(
 
 
 @app.post("/api/v1/project-updates/{update_id}/verify")
-async def verify_phase(phase_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))):
-    result = supabase.table("workpackage").update({"status": "inspected", "verified_by_id": user.id}).eq("id", phase_id).execute()
+async def verify_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))):
+    result = supabase.table("workpackage").update({"status": "inspected", "verified_by_id": user.id}).eq("id", update_id).execute()
     
     if not result.data:
         raise HTTPException(status_code=404, detail="Work package not found")
@@ -1089,8 +1165,8 @@ async def verify_phase(phase_id: int, user: models.User = Depends(auth.check_rol
     return {"message": "Work verified by manager", "status": models.StatusEnum.inspected}
 
 @app.post("/api/v1/project-updates/{update_id}/approve")
-async def approve_phase(phase_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))):
-    result = supabase.table("workpackage").update({"status": "approved", "approved_by_id": user.id}).eq("id", phase_id).execute()
+async def approve_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))):
+    result = supabase.table("workpackage").update({"status": "approved", "approved_by_id": user.id}).eq("id", update_id).execute()
     
     if not result.data:
         raise HTTPException(status_code=404, detail="Work package not found")
@@ -1167,7 +1243,7 @@ async def upload_site_photo(
     photo: UploadFile = File(...),
     notes: str = Form(""),
     user: models.User = Depends(auth.check_role([
-        models.UserRole.staff, models.UserRole.manager, models.UserRole.admin
+        models.UserRole.staff, models.UserRole.manager, models.UserRole.director, models.UserRole.admin, models.UserRole.president
     ]))
 ):
     """Upload a site photo and create a site update record."""
