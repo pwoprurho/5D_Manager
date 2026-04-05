@@ -598,6 +598,30 @@ def delete_design(design_id: int, user: models.User = Depends(auth.check_role([m
     api_cache.clear()
     return {"message": "Design deleted"}
 
+@app.get("/api/v1/designs/{design_id}/elements")
+async def get_design_elements(design_id: int, user: models.User = Depends(auth.get_current_user)):
+    """Retrieve detailed elements from the design's IFC model."""
+    result = supabase.table("design").select("*").eq("id", design_id).single().execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    model_url = result.data.get("model_url")
+    if not model_url or not model_url.lower().endswith(".ifc"):
+        return []
+        
+    try:
+        import httpx
+        from .services.ifc_parser import get_bim_elements_from_bytes
+        async with httpx.AsyncClient() as client:
+            model_resp = await client.get(model_url)
+            if model_resp.status_code == 200:
+                elements = get_bim_elements_from_bytes(model_resp.content, "model.ifc")
+                return elements
+    except Exception as e:
+        print(f"BIM element extraction error: {e}")
+        
+    return []
+
 # ============================================================
 # PROJECT ENDPOINTS
 # ============================================================
@@ -700,6 +724,14 @@ def read_projects(
     
     result = supabase.table("project").select("*").in_("id", project_ids).execute()
     return result.data
+
+@app.get("/api/v1/projects/{project_id}", response_model=models.Project)
+def get_project(project_id: int, user: models.User = Depends(auth.get_current_user)):
+    """Fetch detail for a specific project."""
+    res = supabase.table("project").select("*").eq("id", project_id).single().execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return models.Project(**res.data)
 
 
 # --- Project Assignment Endpoints ---
@@ -1242,13 +1274,17 @@ async def upload_site_photo(
     wp_id: int,
     photo: UploadFile = File(...),
     notes: str = Form(""),
+    gps_lat: Optional[float] = Form(None),
+    gps_long: Optional[float] = Form(None),
+    material_id: Optional[int] = Form(None),
+    quantity_used: Optional[float] = Form(None),
     user: models.User = Depends(auth.check_role([
         models.UserRole.staff, models.UserRole.manager, models.UserRole.director, models.UserRole.admin, models.UserRole.president
     ]))
 ):
     """Upload a site photo and create a site update record."""
-    # Validate WP exists and get project_id
-    wp_res = supabase.table("workpackage").select("project_id").eq("id", wp_id).single().execute()
+    # Validate WP exists and get context
+    wp_res = supabase.table("workpackage").select("project_id, actual_cost").eq("id", wp_id).single().execute()
     if not wp_res.data:
         raise HTTPException(status_code=404, detail="Work package not found")
     project_id = wp_res.data["project_id"]
@@ -1260,11 +1296,37 @@ async def upload_site_photo(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Photo upload failed: {str(e)}")
     
+    # 3. Handle Material Usage and Costing
+    mat_summary = ""
+    cost_calc = 0.0
+    
+    if material_id and quantity_used and quantity_used > 0:
+        try:
+            mat_res = supabase.table("material").select("*").eq("id", material_id).single().execute()
+            if mat_res.data:
+                m = mat_res.data
+                mat_summary = f"{m['name']}: {quantity_used} {m['unit']}"
+                cost_calc = float(m['unit_cost']) * quantity_used
+                
+                # Update Inventory Stock
+                new_stock = m['current_stock'] - quantity_used
+                supabase.table("material").update({"current_stock": new_stock}).eq("id", material_id).execute()
+                
+                # Update WP Actual Cost (AC) locally for this update
+                current_ac = float(wp_res.data.get("actual_cost") or 0)
+                supabase.table("workpackage").update({"actual_cost": current_ac + cost_calc}).eq("id", wp_id).execute()
+        except Exception as e:
+            print(f"Material processing warning: {e}")
+
     update_data = {
         "work_package_id": wp_id,
         "submitted_by_id": user.id,
         "notes": notes,
         "photo_url": photo_url,
+        "gps_lat": gps_lat,
+        "gps_long": gps_long,
+        "materials_used": mat_summary,
+        "cost_incurred": cost_calc,
         "timestamp": datetime.utcnow().isoformat()
     }
     

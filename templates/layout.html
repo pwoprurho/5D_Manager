@@ -17,36 +17,36 @@
                     <li class="reveal-text reveal-delay-1">
                         <a href="/" class="nav-link">
                             <span style="width: 8px; height: 8px; background: currentColor; border-radius: 2px; margin-right: 12px; opacity: 0.5;"></span>
-                            <span>Operational Dashboard</span>
+                            <span>Projects Dashboard</span>
                         </a>
                     </li>
                     <li class="reveal-text reveal-delay-1">
                         <a href="/projects" class="nav-link">
                             <span style="width: 8px; height: 8px; background: currentColor; border-radius: 2px; margin-right: 12px; opacity: 0.5;"></span>
-                            <span>Project Registry</span>
+                            <span>Projects</span>
                         </a>
                     </li>
                     <li class="reveal-text reveal-delay-1">
                         <a href="/designs" class="nav-link">
                             <span style="width: 8px; height: 8px; background: var(--accent-blue); border-radius: 2px; margin-right: 12px; opacity: 0.8;"></span>
-                            <span>Design Library</span>
+                            <span>Blueprints</span>
                         </a>
                     </li>
                     
                     <div id="projectContextNav" class="contextual-nav" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); display: none;">
-                        <li class="reveal-text reveal-delay-2" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; padding-left: 1.25rem; letter-spacing: 0.25em;">Contextual Node</li>
-                        <li class="reveal-text reveal-delay-2"><a id="navKanban" href="#" class="nav-link"><span>Strategic Kanban</span></a></li>
-                        <li class="reveal-text reveal-delay-2"><a id="navGantt" href="#" class="nav-link"><span>Project Timeline</span></a></li>
-                        <li class="reveal-text reveal-delay-2"><a id="navProjectUpdate" href="#" class="nav-link"><span>Project Updates</span></a></li>
+                        <li class="reveal-text reveal-delay-2" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; padding-left: 1.25rem; letter-spacing: 0.25em;">Current Site</li>
+                        <li class="reveal-text reveal-delay-2"><a id="navKanban" href="#" class="nav-link"><span>Work Board</span></a></li>
+                        <li class="reveal-text reveal-delay-2"><a id="navGantt" href="#" class="nav-link"><span>Schedule</span></a></li>
+                        <li class="reveal-text reveal-delay-2"><a id="navProjectUpdate" href="#" class="nav-link"><span>Tasks</span></a></li>
                     </div>
 
                     <div style="margin-top: 3rem; border-top: 1px solid var(--glass-border); padding-top: 2rem;">
-                        <li class="reveal-text reveal-delay-3" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; padding-left: 1.25rem; letter-spacing: 0.25em;">Administrative</li>
-                        <li class="reveal-text reveal-delay-3"><a href="/store" class="nav-link"><span>Supply Chain</span></a></li>
-                        <li class="reveal-text reveal-delay-3"><a href="/site-updates" class="nav-link"><span>Terminal Feed</span></a></li>
+                        <li class="reveal-text reveal-delay-3" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; padding-left: 1.25rem; letter-spacing: 0.25em;">Logistics</li>
+                        <li class="reveal-text reveal-delay-3"><a href="/store" class="nav-link"><span>Inventory</span></a></li>
+                        <li class="reveal-text reveal-delay-3"><a href="/site_updates" class="nav-link"><span>Daily Logs</span></a></li>
                         {% set role_str = user.role|string if user else '' %}
                         {% if user and ('admin' in role_str or 'director' in role_str) %}
-                        <li class="reveal-text reveal-delay-3" style="margin-top: 1rem;"><a href="/admin/users" class="nav-link"><span>Personnel Matrix</span></a></li>
+                        <li class="reveal-text reveal-delay-3" style="margin-top: 1rem;"><a href="/admin/users" class="nav-link"><span>Team</span></a></li>
                         {% endif %}
                     </div>
                 </ul>
@@ -65,10 +65,10 @@
                 <div class="flex items-center gap-6">
                     <button onclick="toggleSidebar()" class="mobile-toggle">&#9776;</button>
                     <div class="project-switcher" style="display: flex; align-items: center; gap: 1.5rem;">
-                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">Active Node</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">Active Site</span>
                         <div style="position: relative;">
                             <select id="globalProjectSwitcher" onchange="switchProject(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; font-weight: 800; outline: none; cursor: pointer; font-size: 0.8rem; padding: 0.5rem 2.5rem 0.5rem 1.25rem; border-radius: 50px; appearance: none; min-width: 200px;">
-                                <option value="" style="background: var(--bg-navy);">Select Context...</option>
+                                <option value="" style="background: var(--bg-navy);">Switch Project...</option>
                             </select>
                             <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--brand-red); font-size: 0.6rem;">&#9660;</div>
                         </div>
@@ -92,8 +92,8 @@
 
             <div class="content-body">
                 <div class="reveal-text" style="margin-bottom: 4rem; border-left: 5px solid var(--brand-red); padding: 0.5rem 0 0.5rem 2rem;">
-                    <h1 class="text-gradient" style="font-size: 3rem; text-transform: uppercase; line-height: 0.9; margin-bottom: 0.75rem;">{% block page_title %}Summary{% endblock %}</h1>
-                    <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.8;">Infrastructure Integrity & Real-time Site Intelligence</p>
+                    <h1 class="text-gradient" style="font-size: 3rem; text-transform: uppercase; line-height: 0.9; margin-bottom: 0.75rem;">{% block page_title %}Overview{% endblock %}</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.8;">Project Management & Site Logistics</p>
                 </div>
                 
                 <main class="reveal-text reveal-delay-1">

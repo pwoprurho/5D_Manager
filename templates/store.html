@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block page_title %}Warehouse & Logistics Terminal{% endblock %}
+{% block page_title %}Inventory{% endblock %}
 
 {% block content %}
 <div style="display: flex; flex-direction: column; gap: 2.5rem;">
@@ -102,7 +102,7 @@
                     <input type="text" id="mat-unit" required class="modern-input" placeholder="BAGS, UNITS..." style="font-weight: 700;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Unit Cost (USD)</label>
+                    <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Unit Cost (NGN)</label>
                     <input type="number" id="mat-cost" required step="0.01" class="modern-input" style="font-weight: 800;">
                 </div>
             </div>
@@ -307,7 +307,7 @@ function openAuthModal(reqId, type) {
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="font-size:0.7rem; color:var(--text-muted); font-weight:900;">TOTAL VALUE</div>
-                    <div style="font-size:0.9rem; color:white; font-weight:900;">$${Number(totalCost).toLocaleString()}</div>
+                    <div style="font-size:0.9rem; color:white; font-weight:900;">₦${Number(totalCost).toLocaleString()}</div>
                 </div>
                 <hr style="border:none; border-top: 1px solid var(--glass-border);">
                 <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(227,30,36,0.1); padding: 0.75rem; border-radius: 4px;">

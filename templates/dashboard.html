@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block page_title %}Operational Dashboard{% endblock %}
+{% block page_title %}Projects Dashboard{% endblock %}
 
 {% block content %}
 <!-- System Telemetry Grid -->
@@ -20,6 +20,28 @@
     <div class="glass-card reveal-text reveal-delay-3" style="padding: 2rem; border-top: 3px solid var(--brand-orange);">
         <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem;">Budget Allocated</div>
         <div id="statBudget" style="font-size: 2.75rem; font-weight: 900; color: white; line-height: 1;">—</div>
+    </div>
+</div>
+
+<!-- 3D Site Monitoring Node -->
+<div class="glass-card reveal-text reveal-delay-1" style="height: 600px; margin-bottom: 2.5rem; position: relative; overflow: hidden; border: 1px solid var(--glass-border); background: #020617;">
+    <div id="bim-viewer-container" style="width: 100%; height: 100%;">
+        <div class="glass-card" style="flex: 1; min-height: 600px; position: relative; overflow: hidden; border: 1px solid var(--glass-border); background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 0.6) 100%);">
+            <div id="viewer-loading" style="position: absolute; inset: 0; background: var(--bg-navy); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;">
+                <div style="width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 1s infinite linear;"></div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.4em; text-transform: uppercase;">SYNCING_BIM_ARCHITECTURE</div>
+            </div>
+            <canvas id="three-canvas" style="width: 100%; height: 100%; outline: none;"></canvas>
+        </div>
+    </div>
+    <div style="position: absolute; bottom: 2rem; left: 2rem; display: flex; gap: 1rem; z-index: 5; align-items: center;">
+        <div style="background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 4px; border: 1px solid var(--glass-border); font-size: 0.6rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.15em;">
+            Mode: Site Visualization
+        </div>
+        <button onclick="resetCamera()" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 4px; border-color: rgba(255,255,255,0.1); color: white;">RESET VIEW</button>
+    </div>
+    <div id="active-element-tag" style="position: absolute; top: 2rem; right: 2rem; background: var(--brand-red); color: white; padding: 0.5rem 1rem; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; border-radius: 2px; display: none; box-shadow: var(--glow-red);">
+        ACTIVE SITE: <span id="selected-element-name">NONE</span>
     </div>
 </div>
 
@@ -150,6 +172,29 @@ async function loadDashboard() {
             }
         } catch(e) {}
         
+        // Initialize 3D Viewer for selected project
+        const currentProjId = localStorage.getItem('currentProjectId');
+        if (currentProjId) {
+            const activeProj = projects.find(p => p.id == currentProjId);
+            if (activeProj) {
+                document.getElementById('selected-element-name').textContent = activeProj.name;
+                document.getElementById('active-element-tag').style.display = 'block';
+                
+                if (activeProj.design_id) {
+                    const dResp = await fetch(`/api/v1/designs/`);
+                    const designs = await dResp.json();
+                    const design = designs.find(d => d.id == activeProj.design_id);
+                    if (design && window.init3D) window.init3D(design.model_url);
+                } else if (activeProj.bim_model_url) {
+                    if (window.init3D) window.init3D(activeProj.bim_model_url);
+                } else {
+                    if (window.init3D) window.init3D(null);
+                }
+            }
+        } else {
+            if (window.init3D) window.init3D(null);
+        }
+        
     } catch(err) {
         console.error("Dashboard load failed", err);
     }
@@ -171,5 +216,126 @@ async function generateReport(event, projectId) {
 }
 
 loadDashboard();
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.135.0/build/three.module.js",
+    "orbit-controls": "https://unpkg.com/three@0.135.0/examples/jsm/controls/OrbitControls.js",
+    "gltf-loader": "https://unpkg.com/three@0.135.0/examples/jsm/loaders/GLTFLoader.js",
+    "ifc-loader": "https://unpkg.com/three@0.135.0/examples/jsm/loaders/IFCLoader.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'orbit-controls';
+import { GLTFLoader } from 'gltf-loader';
+import { IFCLoader } from 'ifc-loader';
+
+let scene, camera, renderer, modelObject, controls;
+const ifcLoader = new IFCLoader();
+ifcLoader.ifcManager.setWasmPath('https://unpkg.com/three@0.135.0/examples/jsm/loaders/ifc/');
+
+window.init3D = function(modelUrl) {
+    const canvas = document.getElementById('three-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+    camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 2000);
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+    hemiLight.position.set(0, 20, 0);
+    scene.add(hemiLight);
+    scene.add(new THREE.GridHelper(100, 50, 0x1e293b, 0x0f172a));
+
+    camera.position.set(20, 20, 20);
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    if (modelUrl) {
+        document.getElementById('viewer-loading').style.display = 'flex';
+        const urlLower = modelUrl.toLowerCase();
+        if (urlLower.includes('.ifc')) {
+            window.loadIFCModel(modelUrl);
+        } else {
+            window.loadGLTFModel(modelUrl);
+        }
+    } else {
+        window.showPlaceholder("SELECT_SITE_TO_MONITOR");
+    }
+
+    window.addEventListener('resize', () => {
+        const nw = container.clientWidth;
+        const nh = container.clientHeight;
+        camera.aspect = nw / nh;
+        camera.updateProjectionMatrix();
+        renderer.setSize(nw, nh);
+    });
+
+    (function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    })();
+};
+
+window.loadIFCModel = async function(url) {
+    ifcLoader.load(url, (ifcModel) => {
+        modelObject = ifcModel;
+        scene.add(modelObject);
+        window.fitCameraToModel();
+        document.getElementById('viewer-loading').style.display = 'none';
+    });
+};
+
+window.loadGLTFModel = function(url) {
+    const loader = new GLTFLoader();
+    loader.load(url, (gltf) => {
+        modelObject = gltf.scene;
+        scene.add(modelObject);
+        window.fitCameraToModel();
+        document.getElementById('viewer-loading').style.display = 'none';
+    });
+};
+
+window.fitCameraToModel = function() {
+    if (!modelObject) return;
+    const box = new THREE.Box3().setFromObject(modelObject);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = camera.fov * (Math.PI / 180);
+    let dist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+    camera.position.set(center.x + dist, center.y + dist, center.z + dist);
+    controls.target.copy(center);
+    controls.update();
+};
+
+window.showPlaceholder = function(msg) {
+    const group = new THREE.Group();
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(20, 0.5, 20), baseMat);
+    group.add(base);
+    modelObject = group;
+    scene.add(modelObject);
+    window.fitCameraToModel();
+    document.getElementById('viewer-loading').style.display = 'none';
+};
+
+window.resetCamera = () => window.fitCameraToModel();
 </script>
 {% endblock %}
