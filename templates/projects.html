@@ -4,7 +4,7 @@
 
 {% block content %}
 {% set role_str = user.role|string %}
-{% if 'admin' in role_str or 'director' in role_str %}
+{% if 'admin' in role_str or 'director' in role_str or 'president' in role_str or 'manager' in role_str %}
 <!-- Create Project Form -->
 <div class="glass-card reveal-text mb-10" style="border-top: 2px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
