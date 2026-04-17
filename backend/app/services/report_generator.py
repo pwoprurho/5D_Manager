@@ -119,3 +119,94 @@ class ReportGenerator:
         self.pdf.output(filepath)
         
         return f"/static/reports/{filename}"
+
+    def generate_requisition_pdf(self, request_data: dict, project: dict, material: dict, requester: dict) -> str:
+        """Generates a formal Material Requisition Form."""
+        
+        # Header (Red Stripe)
+        self.pdf.set_fill_color(*self.BRAND_RED)
+        self.pdf.rect(0, 0, 210, 30, 'F')
+        
+        self.pdf.set_text_color(255, 255, 255)
+        self.pdf.set_font("helvetica", "B", 18)
+        self.pdf.text(15, 15, "MATERIAL_REQUISITION_FORM")
+        
+        self.pdf.set_font("helvetica", "B", 8)
+        self.pdf.text(15, 22, f"REQ_ID: {request_data['id']} | DISPATCH_PROTOCOL_V12")
+        self.pdf.text(150, 22, f"DATE: {request_data['request_date'][:10]}")
+
+        self.pdf.ln(35)
+
+        # 1. Project Context
+        self.pdf.set_font("helvetica", "B", 12)
+        self.pdf.set_text_color(*self.NAVY_DEEP)
+        self.pdf.cell(0, 10, "01 PROJECT INFORMATION", 0, 1)
+        self.pdf.set_draw_color(*self.BRAND_RED)
+        self.pdf.line(10, self.pdf.get_y(), 200, self.pdf.get_y())
+        self.pdf.ln(5)
+
+        self.pdf.set_font("helvetica", "B", 10)
+        self.pdf.cell(40, 8, "Project Name:", 0, 0)
+        self.pdf.set_font("helvetica", "", 10)
+        self.pdf.cell(0, 8, project['name'].upper(), 0, 1)
+
+        self.pdf.set_font("helvetica", "B", 10)
+        self.pdf.cell(40, 8, "Requester:", 0, 0)
+        self.pdf.set_font("helvetica", "", 10)
+        self.pdf.cell(0, 8, f"{requester['username']} ({requester['role'].upper()})", 0, 1)
+
+        self.pdf.ln(10)
+
+        # 2. Resource Specifications
+        self.pdf.set_font("helvetica", "B", 12)
+        self.pdf.cell(0, 10, "02 RESOURCE SPECIFICATIONS", 0, 1)
+        self.pdf.line(10, self.pdf.get_y(), 200, self.pdf.get_y())
+        self.pdf.ln(5)
+
+        # Table Header
+        self.pdf.set_font("helvetica", "B", 10)
+        self.pdf.set_fill_color(241, 245, 249)
+        self.pdf.cell(80, 10, "MATERIAL DESCRIPTION", 1, 0, 'C', True)
+        self.pdf.cell(30, 10, "UNIT", 1, 0, 'C', True)
+        self.pdf.cell(40, 10, "QTY REQUESTED", 1, 0, 'C', True)
+        self.pdf.cell(40, 10, "STATUS", 1, 1, 'C', True)
+
+        # Table Data
+        self.pdf.set_font("helvetica", "", 10)
+        self.pdf.cell(80, 12, f" {material['name'].upper()}", 1)
+        self.pdf.cell(30, 12, f" {material['unit'].upper()}", 1, 0, 'C')
+        self.pdf.cell(40, 12, f" {request_data['quantity_requested']}", 1, 0, 'C')
+        self.pdf.cell(40, 12, f" {request_data['status'].upper()}", 1, 1, 'C')
+
+        self.pdf.ln(20)
+
+        # 3. Authorization Signatures
+        self.pdf.set_font("helvetica", "B", 12)
+        self.pdf.cell(0, 10, "03 LOGISTICS AUTHORIZATION", 0, 1)
+        self.pdf.line(10, self.pdf.get_y(), 200, self.pdf.get_y())
+        self.pdf.ln(15)
+
+        y_sig = self.pdf.get_y()
+        self.pdf.line(15, y_sig, 75, y_sig)
+        self.pdf.line(115, y_sig, 175, y_sig)
+
+        self.pdf.set_font("helvetica", "I", 8)
+        self.pdf.text(15, y_sig + 5, "REQUESTED BY (PROJECT MANAGER)")
+        self.pdf.text(115, y_sig + 5, "AUTHORIZED BY (DIRECTOR/ADMIN)")
+
+        self.pdf.ln(20)
+        self.pdf.set_font("helvetica", "B", 7)
+        self.pdf.set_text_color(150, 150, 150)
+        self.pdf.multi_cell(0, 4, "NOTICE: This is an automatically generated site document from the Vinicius Command System. "
+                               "Electronic authorization is verified. Physical signature is required for site dispatch logs.", align='C')
+
+        # Save
+        output_dir = os.path.join("static", "reports")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+        filename = f"requisition_{request_data['id']}_{datetime.utcnow().strftime('%H%M%S')}.pdf"
+        filepath = os.path.join(output_dir, filename)
+        self.pdf.output(filepath)
+        
+        return f"/static/reports/{filename}"

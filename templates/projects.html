@@ -1,122 +1,442 @@
 {% extends "layout.html" %}
 
-{% block page_title %}Projects{% endblock %}
+{% block page_title %}Projects Registry{% endblock %}
 
 {% block content %}
 {% set role_str = user.role|string %}
-{% if 'admin' in role_str or 'director' in role_str %}
-<!-- Create Project Form -->
-<div class="glass-card reveal-text mb-10" style="border-top: 2px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;">
+{% if 'admin' in role_str or 'director' in role_str or 'president' in role_str or 'manager' in role_str %}
+<!-- Project Initialization Terminal -->
+<div class="glass-card reveal-text"
+    style="border-top: 5px solid var(--brand-red); padding: 3rem; margin-bottom: 3rem; background: var(--bg-card);">
     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-        <div style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);"></div>
-        <h3 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0;">Create Project</h3>
+        <div
+            style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg);">
+        </div>
+        <h3 class="serif-brand" style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--text-primary);">
+            INITIALIZE_SITE_STATION</h3>
     </div>
-    
-    <form id="createProjectForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+    <form id="createProjectForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;"
+        enctype="multipart/form-data">
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Project Name</label>
-            <input type="text" name="name" placeholder="E.G. ALPHA TOWER" required class="modern-input" style="font-weight: 700; text-transform: uppercase;">
+            <label
+                style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem;">Project
+                Designation</label>
+            <input type="text" name="name" placeholder="E.G. ALPHA_CLUSTER" required class="modern-input"
+                style="font-weight: 800; text-transform: uppercase; background: var(--bg-deep);">
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Description</label>
-            <input type="text" name="description" placeholder="Project details..." class="modern-input" style="font-weight: 700;">
+            <label
+                style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem;">Operational
+                Summary</label>
+            <input type="text" name="description" placeholder="Technical objectives..." class="modern-input"
+                style="font-weight: 700; background: var(--bg-deep);">
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">BIM Design Library</label>
-            <select name="design_id" id="designSelect" class="modern-input" style="font-weight: 700;">
-                <option value="">SELECT ARCHITECTURAL DESIGN...</option>
+            <label
+                style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem;">Primary
+                Document (PDF/CAD/IMAGERY)</label>
+            <input type="file" name="file" class="modern-input"
+                style="font-size: 0.7rem; padding: 0.6rem; background: var(--bg-deep);"
+                accept=".pdf,.pptx,.jpg,.jpeg,.png,.mp4,.webm,.ogg">
+        </div>
+
+        <div>
+            <label
+                style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem;">Assigned
+                Site Manager</label>
+            <select name="assignee_id" id="assigneeSelect" class="modern-input"
+                style="font-weight: 800; background: var(--bg-deep);">
+                <option value="">SYNCING_PERSONNEL...</option>
             </select>
         </div>
 
-        <div style="display: flex; align-items: flex-end;">
-            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; font-weight: 900; border-radius: var(--radius-sm); width: 100%;">+ CREATE PROJECT</button>
+        <!-- NEW: Material Attachment Interface -->
+        <div style="grid-column: span 2; padding: 2.5rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                <div style="width: 8px; height: 8px; background: var(--brand-red); border-radius: 50%;"></div>
+                <h4 style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted);">EQUIP_STATION_INVENTORY</h4>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 2fr 1fr button; gap: 1.5rem; align-items: flex-end; margin-bottom: 2rem;">
+                <div>
+                    <label style="color: var(--text-muted); font-size: 0.55rem; font-weight: 900; text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Select Resource</label>
+                    <select id="project-material-catalog" class="modern-input" style="font-size: 0.75rem; font-weight: 800;">
+                        <option value="">Awaiting Registry Sync...</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="color: var(--text-muted); font-size: 0.55rem; font-weight: 900; text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Localized Unit Cost (NGN)</label>
+                    <input type="number" id="project-material-cost" step="0.01" class="modern-input" placeholder="0.00" style="font-size: 0.75rem; font-weight: 900;">
+                </div>
+                <button type="button" onclick="addMaterialToInitList()" class="btn-modern btn-ghost" style="padding: 1.1rem 1.5rem; font-size: 0.7rem; font-weight: 900;">+ ADD</button>
+            </div>
+
+            <div id="init-material-basket" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                <!-- Selected materials will appear here -->
+            </div>
+        </div>
+
+        <div
+            style="grid-column: span 2; display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 1.5rem; gap: 2.5rem; flex-wrap: wrap;">
+            <!-- Site Station Progress Monitor -->
+            <div id="initProgressWrapper" style="display: none; flex: 1; max-width: 400px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span id="initStatusText"
+                        style="font-size: 0.55rem; color: var(--brand-red); font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;">Station_Init...</span>
+                    <span id="initPercentText" style="font-size: 0.65rem; color: white; font-weight: 900;">0%</span>
+                </div>
+                <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                    <div id="initProgressBar"
+                        style="width: 0%; height: 100%; background: linear-gradient(90deg, #E31E24, #FF9800); box-shadow: 0 0 10px rgba(227,30,36,0.3); transition: width 0.3s ease;">
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn-modern btn-primary"
+                style="padding: 1.25rem 4rem; font-weight: 900; letter-spacing: 0.1em; border-radius: 4px;">+
+                INITIALIZE_STATION</button>
         </div>
     </form>
 </div>
 {% endif %}
 
-<!-- Active Projects -->
-<div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem; border-color: rgba(255,255,255,0.05);">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
-            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-secondary);">Active Projects</h3>
+<!-- Active Projects Grid -->
+<div class="reveal-text">
+    <div
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 3rem; padding: 0 1rem;">
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="width: 10px; height: 10px; background: var(--brand-red); border-radius: 2px;"></div>
+            <h3 class="serif-brand" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                INFRASTRUCTURE_PROJECTS</h3>
         </div>
-        <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6;">Live Feed</div>
+        <div
+            style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.25em; text-transform: uppercase; background: var(--bg-panel); padding: 0.5rem 1.5rem; border-radius: 50px; border: 1px solid var(--glass-border);">
+            LIVE_TELEMETRY</div>
     </div>
-    
-    <div id="projectsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 2rem;">
-        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md); grid-column: 1 / -1;">
-            <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
-            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.7;">Loading Data...</p>
+
+    <div id="projectsList"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 2.5rem;">
+        <div
+            style="padding: 10rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md); grid-column: 1 / -1;">
+            <div
+                style="width: 40px; height: 40px; border: 4px solid var(--bg-deep); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2.5rem;">
+            </div>
+            <p
+                style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase;">
+                Awaiting Synchronous Link...</p>
         </div>
     </div>
 </div>
 
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
-{% endblock %}
+<!-- Modal: Site Manager -->
+<div id="stageModal" class="modal-overlay" onclick="closeSiteModal()">
+    <div class="modal-content" style="max-width: 450px;" onclick="event.stopPropagation()">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--brand-red); padding-bottom: 1rem;">
+            <h3 id="modalProjectName" class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0;">
+                SITE_PHASES</h3>
+            <button onclick="closeSiteModal()"
+                style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
 
-{% block scripts %}
+        <div id="stageList"
+            style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem; max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">
+            <!-- Stages list from JS -->
+        </div>
+
+        <form id="createStageForm" style="border-top: 1px solid var(--glass-border); padding-top: 2.5rem;">
+            <input type="hidden" id="stageProjectId" name="project_id">
+            <label
+                style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem;">Phase
+                Designation</label>
+            <div style="display: flex; gap: 1rem;">
+                <input type="text" name="name" placeholder="E.G. FOUNDATION_WORK" required class="modern-input"
+                    style="font-weight: 800; text-transform: uppercase; background: var(--bg-deep);">
+                <button type="submit" class="btn-modern btn-primary"
+                    style="padding: 0 2rem; font-weight: 900;">ADD</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-async function loadProjects() {
-    try {
-        // Load Designs first for the dropdown
-        const dResp = await fetch('/api/v1/designs/');
-        const designs = await dResp.json();
-        const dSelect = document.getElementById('designSelect');
-        if (dSelect) {
-            dSelect.innerHTML = '<option value="">SELECT ARCHITECTURAL DESIGN...</option>' + 
-                designs.map(d => `<option value="${d.id}">${d.name.toUpperCase()}</option>`).join('');
-        }
+    async function loadProjects() {
+        try {
+            const uResp = await fetch('/api/v1/users/', { credentials: 'same-origin' });
+            if (uResp.ok) {
+                const users = await uResp.json();
+                const aSelect = document.getElementById('assigneeSelect');
+                if (aSelect) {
+                    const managers = users.filter(u => u.role === 'manager' || u.role === 'admin' || u.role === 'director');
+                    aSelect.innerHTML = '<option value="">SELECT SITE_MANAGER...</option>' +
+                        managers.map(u => `<option value="${u.id}">${u.username.toUpperCase()}</option>`).join('');
+                }
+            }
 
-        const resp = await fetch('/api/v1/projects/');
-        if (!resp.ok) throw new Error();
-        const projects = await resp.json();
-        const container = document.getElementById('projectsList');
-        
-        if (projects.length === 0) {
-            container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5; grid-column: 1 / -1;">No active projects found</div>';
-            return;
-        }
-        
-        container.innerHTML = projects.map((p, idx) => `
-            <div class="glass-card reveal-text reveal-delay-${(idx % 4) + 1}" style="padding: 2.5rem; background: rgba(255,255,255,0.02); border-left: 5px solid var(--brand-red); cursor: pointer;" onclick="selectProject(${p.id})">
-                <h4 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 0.5rem; color: white;">${p.name}</h4>
-                <div style="font-size: 0.6rem; color: var(--accent-blue); font-weight: 900; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.1em;">
-                    ${p.design_id ? `LINKED_DESIGN_ID: ${p.design_id}` : 'NO DESIGN LINKED'}
+            const form = document.getElementById('createProjectForm');
+            if (form && !form.dataset.listenerAttached) {
+                form.dataset.listenerAttached = 'true';
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    const origText = btn.innerHTML;
+                    const progressWrapper = document.getElementById('initProgressWrapper');
+                    const progressBar = document.getElementById('initProgressBar');
+                    const percentText = document.getElementById('initPercentText');
+                    const statusText = document.getElementById('initStatusText');
+
+                    btn.disabled = true;
+                    btn.innerHTML = 'INITIALIZING...';
+                    progressWrapper.style.display = 'block';
+                    progressBar.style.width = '0%';
+                    percentText.textContent = '0%';
+                    statusText.textContent = 'SYNCING_SITE_DATA...';
+
+                    const fd = new FormData(e.target);
+
+                    // Ensure assignee_id is cleaned to null if not selected
+                    if (!fd.get('assignee_id')) {
+                        fd.delete('assignee_id');
+                    }
+
+                    // Pack Materials Data
+                    const basket = [];
+                    document.querySelectorAll('.init-mat-item').forEach(item => {
+                        basket.push({
+                            id: parseInt(item.dataset.id),
+                            cost: parseFloat(item.dataset.cost)
+                        });
+                    });
+                    if (basket.length > 0) {
+                        fd.append('materials_data', JSON.stringify(basket));
+                    }
+
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/api/v1/projects/', true);
+                    xhr.withCredentials = true;
+
+                    xhr.upload.onprogress = (event) => {
+                        if (event.lengthComputable) {
+                            const percent = Math.round((event.loaded / event.total) * 100);
+                            progressBar.style.width = percent + '%';
+                            percentText.textContent = percent + '%';
+                            if (percent < 40) statusText.textContent = 'PHASING_BLUEPRINTS...';
+                            else if (percent < 80) statusText.textContent = 'UPLINKING_DOCUMENTATION...';
+                            else statusText.textContent = 'FINALIZING_HANDSHAKE...';
+                        }
+                    };
+
+                    xhr.onload = () => {
+                        btn.disabled = false;
+                        btn.innerHTML = origText;
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            e.target.reset();
+                            setTimeout(() => progressWrapper.style.display = 'none', 1000);
+                            loadProjects();
+                            showNotification("STATION_INITIALIZED: New site station active.");
+                        } else {
+                            let detail = "HQ_CONNECTION_ERROR";
+                            try {
+                                const errorObj = JSON.parse(xhr.responseText);
+                                detail = errorObj.detail || errorObj.message || "REGISTRY_REJECTION";
+                            } catch (e) {
+                                detail = `HTTP_${xhr.status}_REJECTION`;
+                            }
+                            showNotification(`INITIALIZATION_FAILED: ${detail}`, "error");
+                            progressWrapper.style.display = 'none';
+                        }
+                    };
+
+                    xhr.onerror = () => {
+                        btn.disabled = false;
+                        btn.innerHTML = origText;
+                        progressWrapper.style.display = 'none';
+                        showNotification("NETWORK_SYNC_FAILURE: Check connection.", "error");
+                    };
+
+                    xhr.send(fd);
+                });
+            }
+
+            let projects = null;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                const resp = await fetch('/api/v1/projects/', { credentials: 'same-origin' });
+                if (resp.ok) { projects = await resp.json(); break; }
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            const container = document.getElementById('projectsList');
+            if (!projects || projects.length === 0) {
+                container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.25em; grid-column: 1 / -1;">NO_ACTIVE_SITES_FOUND</div>';
+                return;
+            }
+
+            container.innerHTML = projects.map((p, idx) => `
+            <div class="glass-card reveal-text reveal-delay-${(idx % 4) + 1}" 
+                 style="padding: 2rem; background: var(--bg-card); border-top: 4px solid var(--brand-red); border: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s;" 
+                 onclick="selectProject(${p.id})">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <h4 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">${p.name}</h4>
+                    <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; background: var(--bg-deep); padding: 0.2rem 0.6rem; border-radius: 4px;">ID: ${p.id}</span>
                 </div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; font-weight: 600; opacity: 0.8; line-height: 1.5;">${p.description || 'No description provided.'}</p>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.6;">ID: ${p.id}</span>
-                    <span style="font-size: 0.65rem; background: rgba(227, 30, 36, 0.1); color: var(--brand-red); padding: 4px 12px; border-radius: 50px; font-weight: 900; letter-spacing: 0.1em;">SELECT →</span>
+                <div style="font-size: 0.65rem; color: var(--brand-red); font-weight: 900; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ${p.bim_model_url ? '<i class="fas fa-check-circle"></i> RESOURCE_SYNC_ACTIVE' : '<i class="fas fa-exclamation-triangle"></i> PENDING_DOCUMENTATION'}
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 1.5rem; font-weight: 500; line-height: 1.6; height: 3.2em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.description || 'Global infrastructure project managed by Vinicius Group.'}</p>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn-modern btn-primary" style="padding: 0.6rem 1rem; font-size: 0.65rem; flex: 1; border-radius: 4px;" onclick="openSiteManager(event, ${p.id}, '${p.name}')">SITE MANAGER</button>
+                    <button class="btn-modern btn-ghost" style="padding: 0.6rem 1rem; font-size: 0.65rem; flex: 1; border-radius: 4px;" onclick="selectProject(${p.id})">SELECT_SITE</button>
                 </div>
             </div>
         `).join('');
-    } catch(err) {
-        console.error("Failed to load projects", err);
+        } catch (err) { console.error("Projects synchronization error", err); }
     }
-}
 
-function selectProject(id) {
-    localStorage.setItem('currentProjectId', id);
-    window.location.href = `/projects/${id}/project-updates`;
-}
+    function selectProject(id) {
+        localStorage.setItem('currentProjectId', id);
+        window.location.href = `/projects/${id}/project-updates`;
+    }
 
-const createForm = document.getElementById('createProjectForm');
-if (createForm) {
-    createForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const fd = new FormData(createForm);
+    window.openSiteManager = function (event, id, name) {
+        if (event) event.stopPropagation();
+        document.getElementById('modalProjectName').innerText = name.toUpperCase() + ": SITE_PHASES";
+        document.getElementById('stageProjectId').value = id;
+        document.getElementById('stageModal').style.display = 'flex';
+        loadStages(id);
+    }
+
+    window.closeSiteModal = function () {
+        document.getElementById('stageModal').style.display = 'none';
+    }
+
+    async function loadStages(pid) {
+        const list = document.getElementById('stageList');
+        list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.6rem;">SYNCHRONIZING...</div>';
         try {
-            const resp = await fetch('/api/v1/projects/', { method: 'POST', body: fd });
-            if (resp.ok) { createForm.reset(); loadProjects(); }
-            else { const err = await resp.json(); alert('INIT_ERROR: ' + (err.detail || 'Failed')); }
-        } catch(err) { alert('PROTOCOL_FAILURE: Terminal connection lost.'); }
-    });
-}
+            const r = await fetch(`/api/v1/projects/${pid}/stages`, { credentials: 'same-origin' });
+            const stages = await r.json();
+            if (stages.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem; border: 1px dashed var(--glass-border); font-size: 0.65rem;">NO_PHASES_DEFINED</div>';
+            } else {
+                list.innerHTML = stages.map(s => `
+                <div style="padding: 0.75rem 1rem; background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">${s.name.toUpperCase()}</span>
+                    <span class="status-pill" style="font-size: 0.55rem; background: var(--bg-deep); color: var(--text-muted); padding: 0.2rem 0.5rem; border-radius: 50px; font-weight: 800;">${s.status.toUpperCase()}</span>
+                </div>
+            `).join('');
+            }
+        } catch (e) { list.innerHTML = 'SYNC_ERROR'; }
+    }
 
-loadProjects();
+    document.addEventListener('DOMContentLoaded', () => {
+        const stageForm = document.getElementById('createStageForm');
+        if (stageForm) {
+            stageForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const body = { project_id: parseInt(fd.get('project_id')), name: fd.get('name').toUpperCase() };
+                try {
+                    const r = await fetch('/api/v1/stages/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(body)
+                    });
+                    if (r.ok) { e.target.reset(); loadStages(body.project_id); }
+                } catch (e) { alert("PHASE_INITIALIZATION_ERROR"); }
+            });
+        }
+        async function loadResources() {
+        const matSelect = document.getElementById('project-material-catalog');
+        try {
+            const resp = await fetch('/api/v1/store/materials');
+            const materials = await resp.json();
+            matSelect.innerHTML = '<option value="">SELECT_RESOURCE_TO_ATTACH</option>';
+            materials.forEach(m => {
+                matSelect.innerHTML += `<option value="${m.id}" data-cost="${m.unit_cost}">${m.name.toUpperCase()} (DEFAULT: ₦${m.unit_cost})</option>`;
+            });
+            
+            // Auto-set cost when material is selected
+            matSelect.onchange = (e) => {
+                const opt = e.target.selectedOptions[0];
+                if (opt && opt.dataset.cost) {
+                    document.getElementById('project-material-cost').value = opt.dataset.cost;
+                }
+            };
+        } catch (e) { console.error("Registry Sync Failure", e); }
+    }
+
+    function addMaterialToInitList() {
+        const select = document.getElementById('project-material-catalog');
+        const costInput = document.getElementById('project-material-cost');
+        const basket = document.getElementById('init-material-basket');
+        
+        if (!select.value || !costInput.value) return;
+        
+        const matId = select.value;
+        const matName = select.selectedOptions[0].text.split(' (')[0];
+        const cost = costInput.value;
+
+        // Check for duplicates
+        if (document.querySelector(`.init-mat-item[data-id="${matId}"]`)) {
+            showNotification("RESOURCE_ALREADY_ATTACHED", "warning");
+            return;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'init-mat-item glass-card reveal-text';
+        div.dataset.id = matId;
+        div.dataset.cost = cost;
+        div.style.padding = '1rem';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        div.style.background = 'rgba(255,255,255,0.02)';
+        div.style.border = '1px solid var(--glass-border)';
+
+        div.innerHTML = `
+            <div>
+                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 900; margin-bottom: 0.2rem;">${matName}</div>
+                <div style="font-size: 0.75rem; color: white; font-weight: 900;">₦${parseFloat(cost).toLocaleString()}</div>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--brand-red); cursor: pointer; font-weight: 900; font-size: 1rem;">&times;</button>
+        `;
+        basket.appendChild(div);
+        
+        // Reset inputs
+        select.value = '';
+        costInput.value = '';
+    }
+
+    loadProjects();
+    loadPersonnel();
+    loadResources();
+    });
 </script>
+
+<style>
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(1, 4, 9, 0.85);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 540px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+</style>
 {% endblock %}

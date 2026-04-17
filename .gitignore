@@ -38,3 +38,7 @@ uploads copy/
 *.bak
 *.swp
 *.tmp
+
+# Seed & Test scripts (contain credentials)
+seed_users.py
+test_db_insert.py

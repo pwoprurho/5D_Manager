@@ -1,19 +1,12 @@
-const CACHE_NAME = '5d-project-manager-v1';
+const CACHE_NAME = 'vinicius-command-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/signin',
-    '/static/style.css',
-    '/static/script.js',
+    '/static/css/style.css',
+    '/static/js/pwa.js',
     '/static/assets/logo.png',
     '/static/manifest.json',
-    '/static/js/offline_db.js',
-    '/static/js/sql_db.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    'https://cdn.jsdelivr.net/npm/leaflet-heat@0.2.0/dist/leaflet-heat.js',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 

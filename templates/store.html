@@ -5,25 +5,40 @@
 <div style="display: flex; flex-direction: column; gap: 2.5rem;">
     <!-- Terminal Stats Header -->
     <header style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
-        <div class="glass-card reveal-text" style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--brand-red);">
-            <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">Total Inventory Value</div>
+        <div class="glass-card reveal-text"
+            style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--brand-red);">
+            <div
+                style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Total Inventory Value</div>
             <div id="stat-total-value" style="font-size: 1.5rem; font-weight: 900; color: white;">₦0.00</div>
         </div>
-        <div class="glass-card reveal-text reveal-delay-1" style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--accent-blue);">
-            <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">Active Requests</div>
+        <div class="glass-card reveal-text reveal-delay-1"
+            style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--accent-blue);">
+            <div
+                style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Active Requests</div>
             <div id="stat-active-reqs" style="font-size: 1.5rem; font-weight: 900; color: white;">0</div>
         </div>
-        <div class="glass-card reveal-text reveal-delay-2" style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--brand-orange);">
-            <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">Low Stock Alerts</div>
+        <div class="glass-card reveal-text reveal-delay-2"
+            style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--brand-orange);">
+            <div
+                style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Low Stock Alerts</div>
             <div id="stat-low-stock" style="font-size: 1.5rem; font-weight: 900; color: var(--brand-orange);">0</div>
         </div>
         {% if user.role.value == 'manager' %}
-        <div class="glass-card reveal-text reveal-delay-3" style="padding: 1.5rem; display: flex; align-items: center; justify-content: center; background: rgba(227,30,36,0.05); border: 1px dashed rgba(227,30,36,0.3);">
-            <button onclick="openRequestModal()" class="btn-modern btn-primary" style="width: 100%; height: 100%; border-radius: var(--radius-sm); font-size: 0.8rem; letter-spacing: 0.1em; font-weight: 900;">+ INITIATE REQUEST</button>
+        <div class="glass-card reveal-text reveal-delay-3"
+            style="padding: 1.5rem; display: flex; align-items: center; justify-content: center; background: rgba(227,30,36,0.05); border: 1px dashed rgba(227,30,36,0.3);">
+            <button onclick="openRequestModal()" class="btn-modern btn-primary"
+                style="width: 100%; height: 100%; border-radius: var(--radius-sm); font-size: 0.8rem; letter-spacing: 0.1em; font-weight: 900;">+
+                INITIATE REQUEST</button>
         </div>
         {% else %}
-        <div class="glass-card reveal-text reveal-delay-3" style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--text-muted); opacity: 0.5;">
-            <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">Requisition Access</div>
+        <div class="glass-card reveal-text reveal-delay-3"
+            style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--text-muted); opacity: 0.5;">
+            <div
+                style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Requisition Access</div>
             <div style="font-size: 0.8rem; font-weight: 900; color: white;">MANAGERS ONLY</div>
         </div>
         {% endif %}
@@ -35,15 +50,34 @@
             <section class="glass-card" style="padding: 2.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-family: 'Outfit'; font-weight: 900; color: var(--brand-red); font-size: 1.25rem;">01</span>
-                        <h2 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; margin: 0;">Resource Inventory</h2>
+                        <span
+                            style="font-family: 'Outfit'; font-weight: 900; color: var(--brand-red); font-size: 1.25rem;">01</span>
+                        <h2
+                            style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; margin: 0;">
+                            Resource Inventory</h2>
                     </div>
                     {% set role_str = user.role|string %}
                     {% if 'admin' in role_str or 'manager' in role_str or 'director' in role_str %}
-                    <button onclick="openMaterialModal()" class="btn-modern btn-ghost" style="padding: 0.65rem 1.5rem; font-size: 0.7rem; font-weight: 900;">+ REGISTER MATERIAL</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button onclick="openProjectManagerModal()" id="btn-manage-site" class="btn-modern btn-ghost"
+                            style="padding: 0.65rem 1.5rem; font-size: 0.7rem; font-weight: 900; display: none; border-color: var(--accent-blue); color: var(--accent-blue);">MANAGE
+                            SITE STORE</button>
+                        <button onclick="openMaterialModal()" class="btn-modern btn-ghost"
+                            style="padding: 0.65rem 1.5rem; font-size: 0.7rem; font-weight: 900;">+ REGISTER
+                            MATERIAL</button>
+                    </div>
                     {% endif %}
                 </div>
-                <div id="inventory-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem;">
+                
+                <!-- Project Context Selector -->
+                <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem; background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2em;">Active Store Context:</div>
+                    <select id="store-context-selector" class="modern-input" style="max-width: 300px; font-weight: 800; background: var(--bg-deep);" onchange="switchStoreContext()">
+                        <option value="global">GLOBAL_CENTRAL_DEPOT</option>
+                    </select>
+                </div>
+                <div id="inventory-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem;">
                     <!-- Cards will be injected -->
                 </div>
             </section>
@@ -53,8 +87,11 @@
             <!-- Pipeline -->
             <section class="glass-card" style="padding: 2.5rem;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-                    <span style="font-family: 'Outfit'; font-weight: 900; color: var(--brand-red); font-size: 1.25rem;">02</span>
-                    <h2 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; margin: 0;">Logistics Pipeline</h2>
+                    <span
+                        style="font-family: 'Outfit'; font-weight: 900; color: var(--brand-red); font-size: 1.25rem;">02</span>
+                    <h2
+                        style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; margin: 0;">
+                        Logistics Pipeline</h2>
                 </div>
                 <div id="requests-list" style="display: flex; flex-direction: column; gap: 1rem;">
                     <!-- Request Items will be injected -->
@@ -65,58 +102,164 @@
 </div>
 
 <style>
-.inv-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius-md); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; }
-.inv-card:hover { background: rgba(255,255,255,0.04); transform: translateY(-5px); border-color: var(--brand-red); }
-.inv-card.low-stock { border-color: rgba(255,152,0,0.5); background: rgba(255,152,0,0.02); }
-.inv-card.low-stock::after { content: 'LOW STOCK'; position: absolute; top: 10px; right: -25px; transform: rotate(45deg); background: var(--brand-orange); color: white; font-size: 0.5rem; font-weight: 900; padding: 4px 30px; }
+    .inv-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 2rem;
+        border-radius: var(--radius-md);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+    }
 
-.req-item { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); transition: all 0.2s; }
-.req-item:hover { background: rgba(255,255,255,0.04); border-color: var(--accent-blue); }
+    .inv-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        transform: translateY(-5px);
+        border-color: var(--brand-red);
+    }
 
-.badge-s { padding: 6px 14px; border-radius: 50px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; border: 1px solid transparent; display: inline-block; }
-.s-pending { background: rgba(255,152,0,0.1); color: var(--brand-orange); border-color: rgba(255,152,0,0.2); }
-.s-approved { background: rgba(59,130,246,0.1); color: var(--accent-blue); border-color: rgba(59,130,246,0.2); }
-.s-issued { background: rgba(16,185,129,0.1); color: #10b981; border-color: rgba(16,185,129,0.2); }
-.s-rejected { background: rgba(227,30,36,0.1); color: var(--brand-red); border-color: rgba(227,30,36,0.2); }
+    .inv-card.low-stock {
+        border-color: rgba(255, 152, 0, 0.5);
+        background: rgba(255, 152, 0, 0.02);
+    }
 
-.modal-bg { display:none; position:fixed; inset:0; background:rgba(2,6,23,0.95); backdrop-filter:blur(20px); z-index:1000; align-items:center; justify-content:center; }
-.modal-box { background:var(--bg-navy); width:100%; max-width:520px; padding:3.5rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); border-top:6px solid var(--brand-red); position: relative; }
+    .inv-card.low-stock::after {
+        content: 'LOW STOCK';
+        position: absolute;
+        top: 10px;
+        right: -25px;
+        transform: rotate(45deg);
+        background: var(--brand-orange);
+        color: white;
+        font-size: 0.5rem;
+        font-weight: 900;
+        padding: 4px 30px;
+    }
+
+    .req-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--glass-border);
+        transition: all 0.2s;
+    }
+
+    .req-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--accent-blue);
+    }
+
+    .badge-s {
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-size: 0.6rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        border: 1px solid transparent;
+        display: inline-block;
+    }
+
+    .s-pending {
+        background: rgba(255, 152, 0, 0.1);
+        color: var(--brand-orange);
+        border-color: rgba(255, 152, 0, 0.2);
+    }
+
+    .s-approved {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-blue);
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .s-issued {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .s-rejected {
+        background: rgba(227, 30, 36, 0.1);
+        color: var(--brand-red);
+        border-color: rgba(227, 30, 36, 0.2);
+    }
+
+    .modal-bg {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.95);
+        backdrop-filter: blur(20px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-box {
+        background: var(--bg-navy);
+        width: 100%;
+        max-width: 520px;
+        padding: 3.5rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--glass-border);
+        border-top: 6px solid var(--brand-red);
+        position: relative;
+    }
 </style>
 
 <!-- Add/Edit Material Modal -->
 <div id="material-modal" class="modal-bg">
     <div class="modal-box">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-            <h2 id="modal-title" style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">Initialize Resource</h2>
-            <button onclick="closeMaterialModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:2rem;">&times;</button>
+            <h2 id="modal-title"
+                style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">
+                Initialize Resource</h2>
+            <button onclick="closeMaterialModal()"
+                style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:2rem;">&times;</button>
         </div>
         <form id="material-form" style="display: flex; flex-direction: column; gap: 2rem;">
             <input type="hidden" id="mat-id">
             <div>
-                <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Name</label>
+                <label
+                    style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Name</label>
                 <input type="text" id="mat-name" required class="modern-input" style="font-weight: 700;">
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                 <div>
-                    <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Unit</label>
-                    <input type="text" id="mat-unit" required class="modern-input" placeholder="BAGS, UNITS..." style="font-weight: 700;">
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Unit</label>
+                    <input type="text" id="mat-unit" required class="modern-input" placeholder="BAGS, UNITS..."
+                        style="font-weight: 700;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Unit Cost (NGN)</label>
-                    <input type="number" id="mat-cost" required step="0.01" class="modern-input" style="font-weight: 800;">
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Unit
+                        Cost (NGN)</label>
+                    <input type="number" id="mat-cost" required step="0.01" class="modern-input"
+                        style="font-weight: 800;">
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                 <div>
-                    <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Current Stock</label>
-                    <input type="number" id="mat-stock" required step="0.01" class="modern-input" style="font-weight: 800;">
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Current
+                        Stock</label>
+                    <input type="number" id="mat-stock" required step="0.01" class="modern-input"
+                        style="font-weight: 800;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Alert Threshold</label>
-                    <input type="number" id="mat-threshold" required step="0.01" value="10.0" class="modern-input" style="font-weight: 800; border-color: rgba(255,152,0,0.3); color: var(--brand-orange);">
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">Alert
+                        Threshold</label>
+                    <input type="number" id="mat-threshold" required step="0.01" value="10.0" class="modern-input"
+                        style="font-weight: 800; border-color: rgba(255,152,0,0.3); color: var(--brand-orange);">
                 </div>
             </div>
-            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem; width: 100%; margin-top: 1rem; font-weight: 900;">FINALIZE ENTRY</button>
+            <button type="submit" class="btn-modern btn-primary"
+                style="padding: 1.25rem; width: 100%; margin-top: 1rem; font-weight: 900;">FINALIZE ENTRY</button>
         </form>
     </div>
 </div>
@@ -125,23 +268,33 @@
 <div id="request-modal" class="modal-bg">
     <div class="modal-box" style="border-top-color: var(--accent-blue);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-            <h2 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">Initiate Request</h2>
-            <button onclick="closeRequestModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:2rem;">&times;</button>
+            <h2 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">Initiate
+                Request</h2>
+            <button onclick="closeRequestModal()"
+                style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:2rem;">&times;</button>
         </div>
         <form id="material-request-form" style="display: flex; flex-direction: column; gap: 2rem;">
             <div>
-                <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: var(--text-muted);">Execution Context (Project)</label>
+                <label
+                    style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: var(--text-muted);">Execution
+                    Context (Project)</label>
                 <select id="req-project-id" required class="modern-input" style="font-weight: 700;"></select>
             </div>
             <div>
-                <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: var(--text-muted);">Resource</label>
+                <label
+                    style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: var(--text-muted);">Resource</label>
                 <select id="req-material-id" required class="modern-input" style="font-weight: 700;"></select>
             </div>
             <div>
-                <label style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: var(--text-muted);">Quantity Required</label>
-                <input type="number" id="req-quantity" required step="0.01" class="modern-input" style="font-weight: 800; font-size: 1.5rem;">
+                <label
+                    style="display: block; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: var(--text-muted);">Quantity
+                    Required</label>
+                <input type="number" id="req-quantity" required step="0.01" class="modern-input"
+                    style="font-weight: 800; font-size: 1.5rem;">
             </div>
-            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem; width: 100%; margin-top: 1rem; font-weight: 900; background: var(--accent-blue); border-color: var(--accent-blue);">AUTHORIZE REQUISITION</button>
+            <button type="submit" class="btn-modern btn-primary"
+                style="padding: 1.25rem; width: 100%; margin-top: 1rem; font-weight: 900; background: var(--accent-blue); border-color: var(--accent-blue);">AUTHORIZE
+                REQUISITION</button>
         </form>
     </div>
 </div>
@@ -150,16 +303,67 @@
 <div id="auth-modal" class="modal-bg">
     <div class="modal-box" style="border-top-color: #10b981; max-width: 480px;">
         <div style="text-align: center; margin-bottom: 2.5rem;">
-            <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; color: var(--text-muted); margin-bottom: 1rem;">Logistics Terminal</div>
-            <h2 id="auth-modal-title" style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0;">DISPATCH AUTHORIZATION</h2>
+            <div
+                style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; color: var(--text-muted); margin-bottom: 1rem;">
+                Logistics Terminal</div>
+            <h2 id="auth-modal-title"
+                style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0;">DISPATCH
+                AUTHORIZATION</h2>
         </div>
-        <div id="auth-modal-content" style="background: rgba(0,0,0,0.2); padding: 2rem; border-radius: var(--radius-sm); margin-bottom: 2.5rem; border: 1px solid var(--glass-border);">
+        <div id="auth-modal-content"
+            style="background: rgba(0,0,0,0.2); padding: 2rem; border-radius: var(--radius-sm); margin-bottom: 2.5rem; border: 1px solid var(--glass-border);">
             <!-- Details injected here -->
         </div>
         <div id="auth-actions" style="display: flex; flex-direction: column; gap: 1rem;">
             <!-- Buttons injected here -->
         </div>
-        <button onclick="closeAuthModal()" style="width: 100%; background: none; border: none; color: var(--text-muted); font-size: 0.7rem; font-weight: 900; text-transform: uppercase; margin-top: 1.5rem; cursor: pointer; letter-spacing: 0.1em;">Dismiss</button>
+        <button onclick="closeAuthModal()"
+            style="width: 100%; background: none; border: none; color: var(--text-muted); font-size: 0.7rem; font-weight: 900; text-transform: uppercase; margin-top: 1.5rem; cursor: pointer; letter-spacing: 0.1em;">Dismiss</button>
+    </div>
+</div>
+
+<!-- Project Store Manager Modal -->
+<div id="project-manager-modal" class="modal-bg">
+    <div class="modal-box" style="max-width: 680px; border-top-color: var(--accent-blue);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+            <div>
+                <h2 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">Site Store Administration</h2>
+                <div id="pm-modal-subtitle" style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-top: 0.5rem;">PROJECT: UNKNOWN</div>
+            </div>
+            <button onclick="closeProjectManagerModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:2rem;">&times;</button>
+        </div>
+
+        <!-- Attachment Tab -->
+        <div style="margin-bottom: 2.5rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed var(--glass-border);">
+            <div style="font-size: 0.7rem; font-weight: 900; color: white; margin-bottom: 1rem; text-transform: uppercase;">Authorize New Resource</div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; align-items: flex-end;">
+                <div>
+                    <label style="font-size: 0.5rem; color: var(--text-muted); font-weight: 900;">SELECT GLOBAL MATERIAL</label>
+                    <select id="pm-attach-id" class="modern-input" style="font-size: 0.7rem;"></select>
+                </div>
+                <div>
+                    <label style="font-size: 0.5rem; color: var(--text-muted); font-weight: 900;">SITE UNIT COST (NGN)</label>
+                    <input type="number" id="pm-attach-cost" class="modern-input" style="font-size: 0.7rem;">
+                </div>
+                <button onclick="attachMaterialToSite()" class="btn-modern btn-primary" style="padding: 1.1rem 1.5rem; font-size: 0.65rem;">+ ATTACH</button>
+            </div>
+        </div>
+
+        <div style="max-height: 300px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; border-bottom: 1px solid var(--glass-border);">
+                        <th style="padding: 1rem; font-size: 0.6rem; color: var(--text-muted);">RESOURCE</th>
+                        <th style="padding: 1rem; font-size: 0.6rem; color: var(--text-muted);">STOCK</th>
+                        <th style="padding: 1rem; font-size: 0.6rem; color: var(--text-muted);">PRICE</th>
+                        <th style="padding: 1rem; font-size: 0.6rem; color: var(--text-muted);">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="pm-inventory-list">
+                    <!-- Site Inventory items injected here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -167,107 +371,115 @@
 
 {% block scripts %}
 <script>
-let materials = [], projects = [];
-const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
+    let materials = [], projects = [], activeInventory = [];
+    let currentContext = 'global';
+    const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
 
-async function initStore() { 
-    await Promise.all([loadMaterials(), loadProjects()]); 
-    loadRequests(); 
-}
+    async function initStore() {
+        await Promise.all([loadMaterials(), loadProjects()]);
+        updateContextSelector();
+        switchStoreContext();
+    }
 
-async function loadMaterials() {
-    try {
-        const resp = await fetch('/api/v1/store/materials'); 
-        materials = await resp.json();
-        const grid = document.getElementById('inventory-grid');
-        const matSelect = document.getElementById('req-material-id');
-        
-        let totalVal = 0;
-        let lowStockCount = 0;
-        
-        grid.innerHTML = ''; 
-        matSelect.innerHTML = '<option value="">Select Resource</option>';
-        
-        materials.forEach((m, idx) => {
-            const stock = parseFloat(m.current_stock);
-            const cost = parseFloat(m.unit_cost);
-            totalVal += stock * cost;
-            
-            const threshold = parseFloat(m.low_stock_threshold || 10);
-            const isLow = stock <= threshold;
-            if (isLow) lowStockCount++;
-            
-            let actions = '';
-            if (['admin','president', 'manager', 'director'].includes(userRole)) {
-                actions = `<div style="display:flex; gap:0.75rem; margin-top:1.5rem; opacity: 0.5;">
-                    <button onclick="openMaterialModal(${m.id})" class="btn-modern btn-ghost" style="padding:0.3rem 0.8rem; font-size:0.5rem; border-radius:4px; font-weight:900;">EDIT</button>
-                    <button onclick="deleteMaterial(${m.id})" class="btn-modern btn-ghost" style="padding:0.3rem 0.8rem; font-size:0.5rem; border-radius:4px; border-color:rgba(227,30,36,0.3); color:var(--brand-red); font-weight:900;">&times;</button>
-                </div>`;
-            }
-
-            grid.innerHTML += `
-                <div class="inv-card reveal-text reveal-delay-${(idx%4)+1} ${isLow ? 'low-stock' : ''}">
-                    <div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:1.25rem; text-transform:uppercase; letter-spacing:0.15em; font-weight:900;">${m.name}</div>
-                    <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom:0.5rem;">
-                        <div style="font-size:2rem; font-weight:900; color:white;">${Number(stock).toLocaleString()}</div>
-                        <div style="font-size:0.6rem; color:var(--text-muted); font-weight:900;">${m.unit.toUpperCase()}</div>
-                    </div>
-                    <div style="font-size:0.65rem; color:var(--brand-red); font-weight:900; font-family: monospace;">₦${cost.toFixed(2)} / UNIT</div>
-                    ${actions}
-                </div>`;
-                
-            matSelect.innerHTML += `<option value="${m.id}">${m.name.toUpperCase()} (${m.unit.toUpperCase()})</option>`;
+    // Context & Loading Protocols
+    function updateContextSelector() {
+        const sel = document.getElementById('store-context-selector');
+        sel.innerHTML = '<option value="global">GLOBAL_CENTRAL_DEPOT</option>';
+        projects.forEach(p => {
+            sel.innerHTML += `<option value="${p.id}">${p.name.toUpperCase()} (SITE_WAREHOUSE)</option>`;
         });
-        
-        document.getElementById('stat-total-value').textContent = `₦${totalVal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('stat-low-stock').textContent = lowStockCount;
-        
-    } catch (err) { console.error(err); }
-}
+    }
 
-async function loadProjects() {
-    try {
-        const resp = await fetch('/api/v1/projects/'); 
-        projects = await resp.json();
-        const sel = document.getElementById('req-project-id');
-        sel.innerHTML = '<option value="">Select Project Scope</option>';
-        projects.forEach(p => { 
-            sel.innerHTML += `<option value="${p.id}">${p.name.toUpperCase()}</option>`; 
-        });
-    } catch (err) { console.error(err); }
-}
-
-async function loadRequests() {
-    try {
-        const resp = await fetch('/api/v1/store/requests'); 
-        const requests = await resp.json();
-        const list = document.getElementById('requests-list'); 
-        list.innerHTML = '';
+    async function switchStoreContext() {
+        currentContext = document.getElementById('store-context-selector').value;
+        const btnManage = document.getElementById('btn-manage-site');
         
-        const pendingCount = requests.filter(r => r.status === 'pending').length;
-        document.getElementById('stat-active-reqs').textContent = pendingCount;
-
-        if (requests.length === 0) { 
-            list.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted); font-weight:900; font-size:0.7rem; letter-spacing:0.2em; opacity:0.5;">PIPELINE CLEAR</div>'; 
-            return; 
+        if (currentContext === 'global') {
+            btnManage.style.display = 'none';
+            await loadMaterials();
+        } else {
+            btnManage.style.display = 'block';
+            const proj = projects.find(p => p.id == currentContext);
+            if (proj) document.getElementById('pm-modal-subtitle').innerText = `PROJECT: ${proj.name.toUpperCase()}`;
+            await loadProjectInventory(currentContext);
         }
+        loadRequests();
+    }
 
-        requests.forEach(r => {
-            const mat = materials.find(m => m.id === r.material_id);
-            const proj = projects.find(p => p.id === r.project_id);
-            const date = new Date(r.request_date).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}).toUpperCase();
+    async function loadMaterials() {
+        try {
+            const resp = await fetch('/api/v1/store/materials');
+            materials = await resp.json();
+            renderInventory(materials, false);
             
-            let actionBtn = '';
-            if (['admin','president','director'].includes(userRole)) {
-                if (r.status === 'pending') {
-                    actionBtn = `<button onclick="openAuthModal(${r.id}, 'authorize')" class="btn-modern btn-primary" style="padding:0.5rem 1rem; font-size:0.55rem; font-weight:900; border-radius:4px;">VERIFY</button>`;
-                } else if (r.status === 'approved') {
-                    actionBtn = `<button onclick="openAuthModal(${r.id}, 'dispatch')" class="btn-modern btn-primary" style="padding:0.5rem 1rem; font-size:0.55rem; font-weight:900; border-radius:4px; background:#10b981; border-color:#10b981;">DISPATCH</button>`;
-                }
+            const matSelect = document.getElementById('req-material-id');
+            const pmAttachSelect = document.getElementById('pm-attach-id');
+            matSelect.innerHTML = '<option value="">Select Resource</option>';
+            pmAttachSelect.innerHTML = '<option value="">LIST_GLOBAL_ASSETS...</option>';
+            
+            materials.forEach(m => {
+                matSelect.innerHTML += `<option value="${m.id}">${m.name.toUpperCase()} (${m.unit.toUpperCase()})</option>`;
+                pmAttachSelect.innerHTML += `<option value="${m.id}" data-cost="${m.unit_cost}">${m.name.toUpperCase()}</option>`;
+            });
+
+            pmAttachSelect.onchange = (e) => {
+                const opt = e.target.selectedOptions[0];
+                if (opt && opt.dataset.cost) document.getElementById('pm-attach-cost').value = opt.dataset.cost;
+            };
+        } catch (err) { console.error(err); }
+    }
+
+    async function loadProjectInventory(pid) {
+        try {
+            const resp = await fetch(`/api/v1/store/projects/${pid}/inventory`);
+            activeInventory = await resp.json();
+            renderInventory(activeInventory, true);
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadProjects() {
+        try {
+            const resp = await fetch('/api/v1/projects/');
+            projects = await resp.json();
+            const sel = document.getElementById('req-project-id');
+            sel.innerHTML = '<option value="">Select Project Scope</option>';
+            projects.forEach(p => {
+                sel.innerHTML += `<option value="${p.id}">${p.name.toUpperCase()}</option>`;
+            });
+        } catch (err) { console.error(err); }
+    }
+
+    async function loadRequests() {
+        try {
+            const resp = await fetch('/api/v1/store/requests');
+            const requests = await resp.json();
+            const list = document.getElementById('requests-list');
+            list.innerHTML = '';
+
+            const pendingCount = requests.filter(r => r.status === 'pending').length;
+            document.getElementById('stat-active-reqs').textContent = pendingCount;
+
+            if (requests.length === 0) {
+                list.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted); font-weight:900; font-size:0.7rem; letter-spacing:0.2em; opacity:0.5;">PIPELINE CLEAR</div>';
+                return;
             }
 
-            list.innerHTML += `
-                <div class="req-item">
+            requests.forEach(r => {
+                const mat = materials.find(m => m.id === r.material_id);
+                const proj = projects.find(p => p.id === r.project_id);
+                const date = new Date(r.request_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase();
+
+                let actionBtn = '';
+                if (['admin', 'director'].includes(userRole)) {
+                    if (r.status === 'pending') {
+                        actionBtn = `<button onclick="openAuthModal(${r.id}, 'authorize')" class="btn-modern btn-primary" style="padding:0.5rem 1rem; font-size:0.55rem; font-weight:900; border-radius:4px;">VERIFY</button>`;
+                    } else if (r.status === 'approved') {
+                        actionBtn = `<button onclick="openAuthModal(${r.id}, 'dispatch')" class="btn-modern btn-primary" style="padding:0.5rem 1rem; font-size:0.55rem; font-weight:900; border-radius:4px; background:#10b981; border-color:#10b981;">DISPATCH</button>`;
+                    }
+                }
+
+                list.innerHTML += `
+                <div class="req-item glass-card reveal-text">
                     <div style="flex: 1;">
                         <div style="font-size:0.55rem; color:var(--text-muted); font-weight:900; margin-bottom:0.25rem;">${date} — ${proj ? proj.name : 'GENERAL'}</div>
                         <div style="font-size:0.8rem; font-weight:900; color:white; text-transform:uppercase;">${mat ? mat.name : 'UNKNOWN'}</div>
@@ -277,157 +489,223 @@ async function loadRequests() {
                         <div style="font-size:0.55rem; color:var(--text-muted); font-weight:900;">${mat ? mat.unit.toUpperCase() : ''}</div>
                     </div>
                     <div style="display:flex; align-items:center; gap: 1rem;">
+                        <button onclick="printRequisition(${r.id})" class="btn-modern btn-ghost" style="padding:0.4rem; border-radius:4px; border-color:var(--text-muted); opacity:0.5;" title="Print Form"><i class="fas fa-print"></i></button>
                         <span class="badge-s s-${r.status}" style="font-size: 0.5rem;">${r.status}</span>
                         ${actionBtn}
-                        ${['admin','president','manager','director'].includes(userRole) ? `<button onclick="deleteRequest(${r.id})" style="background:none; border:none; color:var(--brand-red); font-weight:900; cursor:pointer; font-size:1.1rem; opacity:0.3; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">&times;</button>` : ''}
+                        ${['admin', 'manager', 'director'].includes(userRole) ? `<button onclick="deleteRequest(${r.id})" style="background:none; border:none; color:var(--brand-red); font-weight:900; cursor:pointer; font-size:1.1rem; opacity:0.2; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.2">&times;</button>` : ''}
                     </div>
                 </div>`;
-        });
-    } catch (err) { console.error(err); }
-}
+            });
+        } catch (err) { console.error(err); }
+    }
 
-function openAuthModal(reqId, type) {
-    const modal = document.getElementById('auth-modal');
-    const content = document.getElementById('auth-modal-content');
-    const actions = document.getElementById('auth-actions');
-    const title = document.getElementById('auth-modal-title');
-    
-    // In a real app, you'd fetch the latest data for this request, 
-    // but here we can find it in our local cached list if we saved it, 
-    // or just re-fetch for safety.
-    fetch(`/api/v1/store/requests`).then(r => r.json()).then(requests => {
-        const r = requests.find(x => x.id === reqId);
-        const mat = materials.find(m => m.id === r.material_id);
-        const totalCost = (r.quantity_requested * (mat ? mat.unit_cost : 0)).toFixed(2);
-        
-        title.innerText = type === 'authorize' ? 'VALIDATE REQUISITION' : 'DISPATCH AUTHORIZATION';
-        
-        content.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:900;">RESOURCE</div>
-                    <div style="font-size:0.7rem; color:white; font-weight:900; text-transform:uppercase;">${mat ? mat.name : '???'}</div>
+    // UI Orchestration
+    function renderInventory(data, isSite = false) {
+        const grid = document.getElementById('inventory-grid');
+        grid.innerHTML = '';
+        let totalVal = 0, lowStockCount = 0;
+
+        data.forEach((m, idx) => {
+            const matMeta = isSite ? m.material : m;
+            const stock = parseFloat(m.quantity !== undefined ? m.quantity : m.current_stock);
+            const cost = parseFloat(m.unit_cost);
+            totalVal += stock * cost;
+
+            const threshold = parseFloat(m.low_stock_threshold || 10);
+            const isLow = stock <= threshold;
+            if (isLow) lowStockCount++;
+
+            let actions = '';
+            if (['admin', 'director', 'manager'].includes(userRole)) {
+                if (!isSite) {
+                    actions = `<button onclick="openMaterialModal(${m.id})" class="btn-modern btn-ghost" style="padding:0.3rem 0.8rem; font-size:0.5rem; border-radius:4px; font-weight:900; opacity:0.5;">EDIT_BASE</button>`;
+                } else {
+                    actions = `<button onclick="reconcilePrompt(${m.material_id}, ${stock}, ${cost})" class="btn-modern btn-ghost" style="padding:0.3rem 0.8rem; font-size:0.5rem; border-radius:4px; font-weight:900; border-color:var(--accent-blue); color:var(--accent-blue);">SITE_AUDIT</button>`;
+                }
+            }
+
+            grid.innerHTML += `
+            <div class="inv-card reveal-text reveal-delay-${(idx % 4) + 1} ${isLow ? 'low-stock' : ''}">
+                <div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:1.25rem; text-transform:uppercase; letter-spacing:0.15em; font-weight:900;">${matMeta.name}</div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom:0.5rem;">
+                    <div style="font-size:2rem; font-weight:900; color:white;">${Number(stock).toLocaleString()}</div>
+                    <div style="font-size:0.6rem; color:var(--text-muted); font-weight:900;">${matMeta.unit.toUpperCase()}</div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:900;">QUANTITY</div>
-                    <div style="font-size:1.1rem; color:var(--brand-red); font-weight:900;">${r.quantity_requested} ${mat ? mat.unit : ''}</div>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:900;">TOTAL VALUE</div>
-                    <div style="font-size:0.9rem; color:white; font-weight:900;">₦${Number(totalCost).toLocaleString()}</div>
-                </div>
-                <hr style="border:none; border-top: 1px solid var(--glass-border);">
-                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(227,30,36,0.1); padding: 0.75rem; border-radius: 4px;">
-                    <div style="font-size:0.6rem; color:var(--brand-red); font-weight:900;">WAREHOUSE STOCK</div>
-                    <div style="font-size:0.8rem; color:white; font-weight:900;">${mat ? mat.current_stock : 0} AVAILABLE</div>
-                </div>
-            </div>
-        `;
-        
-        actions.innerHTML = '';
-        if (type === 'authorize') {
-            actions.innerHTML = `
-                <button onclick="updateStatus(${r.id}, 'approved')" class="btn-modern btn-primary" style="padding:1.25rem; font-weight:900; background: var(--accent-blue); border-color: var(--accent-blue);">APPROVE REQUISITION</button>
-                <button onclick="updateStatus(${r.id}, 'rejected')" class="btn-modern btn-ghost" style="padding:1rem; font-weight:900; color: var(--brand-red); border-color: rgba(227,30,36,0.3);">DENY REQUEST</button>
-            `;
+                <div style="font-size:0.65rem; color:var(--brand-red); font-weight:900; font-family: monospace;">₦${cost.toFixed(2)} / UNIT</div>
+                <div style="margin-top:1.5rem; display:flex; gap:0.5rem;">${actions}</div>
+            </div>`;
+        });
+
+        document.getElementById('stat-total-value').textContent = `₦${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+        document.getElementById('stat-low-stock').textContent = lowStockCount;
+    }
+
+    // Modal Control Protocols
+    function openMaterialModal(id = null) {
+        document.getElementById('material-form').reset();
+        document.getElementById('mat-id').value = '';
+        if (id) {
+            const m = materials.find(x => x.id === id);
+            if (m) {
+                document.getElementById('modal-title').innerText = 'Modify Resource';
+                document.getElementById('mat-id').value = m.id;
+                document.getElementById('mat-name').value = m.name;
+                document.getElementById('mat-unit').value = m.unit;
+                document.getElementById('mat-cost').value = m.unit_cost;
+                document.getElementById('mat-stock').value = m.current_stock;
+                document.getElementById('mat-threshold').value = m.low_stock_threshold;
+            }
         } else {
-            actions.innerHTML = `
-                <button onclick="updateStatus(${r.id}, 'issued')" class="btn-modern btn-primary" style="padding:1.25rem; font-weight:900; background: #10b981; border-color: #10b981;">FINALIZE DISPATCH</button>
-            `;
+            document.getElementById('modal-title').innerText = 'Initialize Resource';
         }
+        document.getElementById('material-modal').style.display = 'flex';
+    }
+    function closeMaterialModal() { document.getElementById('material-modal').style.display = 'none'; }
+    
+    function openRequestModal() { document.getElementById('request-modal').style.display = 'flex'; }
+    function closeRequestModal() { document.getElementById('request-modal').style.display = 'none'; }
+    
+    function openProjectManagerModal() {
+        if (currentContext === 'global') return;
+        document.getElementById('project-manager-modal').style.display = 'flex';
+        renderPMInventory();
+    }
+    function closeProjectManagerModal() { document.getElementById('project-manager-modal').style.display = 'none'; }
+
+    function openAuthModal(reqId, type) {
+        const modal = document.getElementById('auth-modal');
+        const content = document.getElementById('auth-modal-content');
+        const actions = document.getElementById('auth-actions');
+        const title = document.getElementById('auth-modal-title');
+
+        fetch(`/api/v1/store/requests`).then(r => r.json()).then(requests => {
+            const r = requests.find(x => x.id === reqId);
+            const mat = materials.find(m => m.id === r.material_id);
+            const totalCost = (r.quantity_requested * (mat ? mat.unit_cost : 0)).toFixed(2);
+
+            title.innerText = type === 'authorize' ? 'VALIDATE REQUISITION' : 'DISPATCH AUTHORIZATION';
+            content.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <div style="font-size:0.7rem; color:var(--text-muted); font-weight:900;">RESOURCE</div>
+                        <div style="font-size:0.7rem; color:white; font-weight:900;">${mat ? mat.name.toUpperCase() : '???'}</div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <div style="font-size:0.7rem; color:var(--text-muted); font-weight:900;">QUANTITY</div>
+                        <div style="font-size:1.1rem; color:var(--brand-red); font-weight:900;">${r.quantity_requested} ${mat ? mat.unit : ''}</div>
+                    </div>
+                </div>`;
+            
+            actions.innerHTML = '';
+            if (type === 'authorize') {
+                actions.innerHTML = `
+                    <button onclick="updateStatus(${r.id}, 'approved')" class="btn-modern btn-primary">APPROVE</button>
+                    <button onclick="updateStatus(${r.id}, 'rejected')" class="btn-modern btn-ghost" style="color:var(--brand-red);">REJECT</button>`;
+            } else {
+                actions.innerHTML = `<button onclick="updateStatus(${r.id}, 'issued')" class="btn-modern btn-primary" style="background:#10b981; border-color:#10b981;">DISPATCH</button>`;
+            }
+        });
+        modal.style.display = 'flex';
+    }
+    function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
+
+    // Logistic Operations
+    async function printRequisition(id) {
+        try {
+            const resp = await fetch(`/api/v1/store/requests/${id}/print`);
+            const data = await resp.json();
+            if (data.pdf_url) window.open(data.pdf_url, '_blank');
+        } catch (e) { showNotification("PRINT_FAILURE", "error"); }
+    }
+
+    function renderPMInventory() {
+        const list = document.getElementById('pm-inventory-list');
+        list.innerHTML = '';
+        activeInventory.forEach(inv => {
+            list.innerHTML += `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem; color: white; font-weight: 800;">${inv.material.name}</td>
+                    <td style="padding: 1rem; color: var(--brand-red); font-weight: 950;">${inv.quantity}</td>
+                    <td style="padding: 1rem; color: var(--text-muted);">₦${parseFloat(inv.unit_cost).toFixed(2)}</td>
+                    <td style="padding: 1rem; display:flex; gap:0.5rem;">
+                        <button onclick="reconcilePrompt(${inv.material_id}, ${inv.quantity}, ${inv.unit_cost})" class="btn-modern btn-ghost" style="padding: 0.5rem;"><i class="fas fa-edit"></i></button>
+                        <button onclick="detachMaterial(${inv.material_id})" class="btn-modern btn-ghost" style="padding: 0.5rem; color: var(--brand-red);"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    async function attachMaterialToSite() {
+        const matId = document.getElementById('pm-attach-id').value;
+        const cost = document.getElementById('pm-attach-cost').value;
+        if (!matId || !cost) return;
+        const resp = await fetch(`/api/v1/store/projects/${currentContext}/inventory`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ material_id: parseInt(matId), unit_cost: parseFloat(cost) })
+        });
+        if (resp.ok) { showNotification("ASSET_ATTACHED"); await loadProjectInventory(currentContext); renderPMInventory(); }
+    }
+
+    async function detachMaterial(matId) {
+        if (!confirm("DETACH_RESOURCE?")) return;
+        const resp = await fetch(`/api/v1/store/projects/${currentContext}/inventory/${matId}`, { method: 'DELETE' });
+        if (resp.ok) { showNotification("ASSET_DETACHED"); await loadProjectInventory(currentContext); renderPMInventory(); }
+    }
+
+    function reconcilePrompt(matId, currentQty, currentCost) {
+        const newQty = prompt("Physical Audit Quantity:", currentQty);
+        if (newQty === null) return;
+        const newCost = prompt("Site Unit Cost (NGN):", currentCost);
+        if (newCost === null) return;
+        updateSiteStock(matId, parseFloat(newQty), parseFloat(newCost));
+    }
+
+    async function updateSiteStock(matId, qty, cost) {
+        const resp = await fetch(`/api/v1/store/projects/${currentContext}/inventory/${matId}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: qty, unit_cost: cost })
+        });
+        if (resp.ok) { showNotification("SITE_AUDIT_SYNCED"); await loadProjectInventory(currentContext); renderPMInventory(); }
+    }
+
+    async function updateStatus(reqId, status) {
+        const resp = await fetch(`/api/v1/store/request/${reqId}?status=${status}`, { method: 'PATCH' });
+        if (resp.ok) { closeAuthModal(); showNotification(`PIPELINE_${status.toUpperCase()}`); initStore(); }
+    }
+
+    // Submission Listeners
+    document.getElementById('material-request-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            project_id: parseInt(document.getElementById('req-project-id').value),
+            material_id: parseInt(document.getElementById('req-material-id').value),
+            quantity_requested: parseFloat(document.getElementById('req-quantity').value)
+        };
+        const resp = await fetch('/api/v1/store/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (resp.ok) { e.target.reset(); closeRequestModal(); loadRequests(); showNotification("REQUEST_COMMITTED"); }
     });
 
-    modal.style.display = 'flex';
-}
+    document.getElementById('material-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('mat-id').value;
+        const data = {
+            name: document.getElementById('mat-name').value.toUpperCase(),
+            unit: document.getElementById('mat-unit').value.toUpperCase(),
+            unit_cost: parseFloat(document.getElementById('mat-cost').value),
+            current_stock: parseFloat(document.getElementById('mat-stock').value),
+            low_stock_threshold: parseFloat(document.getElementById('mat-threshold').value)
+        };
+        const url = id ? `/api/v1/store/materials/${id}` : '/api/v1/store/materials';
+        const resp = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (resp.ok) { closeMaterialModal(); loadMaterials(); showNotification("REGISTRY_UPDATED"); }
+    });
 
-function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
-function openRequestModal() { document.getElementById('request-modal').style.display = 'flex'; }
-function closeRequestModal() { document.getElementById('request-modal').style.display = 'none'; }
-function openMaterialModal(id = null) {
-    const modal = document.getElementById('material-modal'); 
-    document.getElementById('material-form').reset(); 
-    document.getElementById('mat-id').value = '';
-    if (id) { 
-        const m = materials.find(m => m.id === id); 
-        if (m) { 
-            document.getElementById('modal-title').innerText = 'Modify Resource'; 
-            document.getElementById('mat-id').value = m.id; 
-            document.getElementById('mat-name').value = m.name; 
-            document.getElementById('mat-unit').value = m.unit; 
-            document.getElementById('mat-cost').value = m.unit_cost; 
-            document.getElementById('mat-stock').value = m.current_stock; 
-            document.getElementById('mat-threshold').value = m.low_stock_threshold || 10;
-        } 
-    } else { 
-        document.getElementById('modal-title').innerText = 'Initialize Resource'; 
-    }
-    modal.style.display = 'flex';
-}
-function closeMaterialModal() { document.getElementById('material-modal').style.display = 'none'; }
-
-async function updateStatus(reqId, status) {
-    const resp = await fetch(`/api/v1/store/request/${reqId}?status=${status}`, { method: 'PATCH' });
-    if (resp.ok) { 
-        closeAuthModal();
-        initStore(); 
-    } else { 
-        const d = await resp.json(); 
-        alert(d.detail || 'Failed'); 
-    }
-}
-
-document.getElementById('material-request-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = { 
-        project_id: parseInt(document.getElementById('req-project-id').value), 
-        material_id: parseInt(document.getElementById('req-material-id').value), 
-        quantity_requested: parseFloat(document.getElementById('req-quantity').value) 
-    };
-    const resp = await fetch('/api/v1/store/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    if (resp.ok) { 
-        closeRequestModal();
-        document.getElementById('material-request-form').reset(); 
-        loadRequests(); 
-    } else { 
-        alert('Submission failed'); 
-    }
-});
-
-document.getElementById('material-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('mat-id').value;
-    const data = { 
-        name: document.getElementById('mat-name').value.toUpperCase(), 
-        unit: document.getElementById('mat-unit').value.toUpperCase(), 
-        unit_cost: parseFloat(document.getElementById('mat-cost').value), 
-        current_stock: parseFloat(document.getElementById('mat-stock').value),
-        low_stock_threshold: parseFloat(document.getElementById('mat-threshold').value)
-    };
-    const url = id ? `/api/v1/store/materials/${id}` : '/api/v1/store/materials';
-    const resp = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    if (resp.ok) { 
-        closeMaterialModal(); 
-        loadMaterials(); 
-    } else { 
-        const err = await resp.json(); 
-        alert(err.detail || 'Save failed'); 
-    }
-});
-
-async function deleteMaterial(id) {
-    if (!confirm('Delete this resource?')) return;
-    const resp = await fetch(`/api/v1/store/materials/${id}`, { method: 'DELETE' });
-    if (resp.ok) { loadMaterials(); } else { alert('Delete failed'); }
-}
-
-async function deleteRequest(id) {
-    if (!confirm('DELETE THIS REQUEST PERMANENTLY?')) return;
-    try {
+    async function deleteRequest(id) {
+        if (!confirm('EXTERMINATE_REQUISITION?')) return;
         const resp = await fetch(`/api/v1/store/request/${id}`, { method: 'DELETE' });
-        if (resp.ok) { loadRequests(); } else { alert('Delete failed'); }
-    } catch(err) { alert('Network error during deletion.'); }
-}
+        if (resp.ok) { loadRequests(); showNotification("RECORD_PURGED"); }
+    }
 
-initStore();
+    initStore();
 </script>
 {% endblock %}

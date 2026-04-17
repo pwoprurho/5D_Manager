@@ -1,23 +1,34 @@
 import re
 import os
 
-MAIN_PY = r"c:\Users\Administrator\outbound-caller-python\backend\app\main.py"
+files_to_check = [
+    "c:\\Users\\Administrator\\outbound-caller-python\\backend\\app\\main.py",
+    "c:\\Users\\Administrator\\outbound-caller-python\\templates\\admin_users.html",
+    "c:\\Users\\Administrator\\outbound-caller-python\\templates\\register.html"
+]
 
-with open(MAIN_PY, "r", encoding="utf-8") as f:
-    content = f.read()
-
-def replacer(match):
-    roles_str = match.group(1)
-    roles = set(r.strip() for r in roles_str.split(","))
+for fp in files_to_check:
+    with open(fp, "r", encoding="utf-8") as f:
+        content = f.read()
     
-    # We want president to have all admin backend capabilities without exception.
-    if "models.UserRole.admin" in roles:
-        roles.add("models.UserRole.president")
-            
-    sorted_roles = sorted(list(roles))
-    return f"Depends(auth.check_role([{', '.join(sorted_roles)}]))"
+    # Simple replaces for Python occurrences of staff -> engineer
+    if fp.endswith(".py"):
+        content = content.replace('"role": "staff"', '"role": "engineer"')
+        content = content.replace("'role': 'staff'", "'role': 'engineer'")
+        content = content.replace('models.UserRole.staff', 'models.UserRole.engineer')
+        content = content.replace("Staff and managers", "Engineers and managers")
+        # Ensure we cover user=Depends...staff
+        content = content.replace('role: str = Form("staff")', 'role: str = Form("engineer")')
+        content = content.replace('role: models.UserRole = models.UserRole.staff', 'role: models.UserRole = models.UserRole.engineer')
+        
+    elif fp.endswith(".html"):
+        content = content.replace('role === "staff"', 'role === "engineer"')
+        content = content.replace("role === 'staff'", "role === 'engineer'")
+        content = content.replace('value="staff"', 'value="engineer"')
+        content = content.replace("FIELD_STAFF", "SITE_ENGINEER")
+        content = content.replace("staff: ", "engineer: ")
+        
+    with open(fp, "w", encoding="utf-8") as f:
+        f.write(content)
 
-new_content = re.sub(r'Depends\(auth\.check_role\(\[(.*?)\]\)\)', replacer, content)
-
-with open(MAIN_PY, "w", encoding="utf-8") as f:
-    f.write(new_content)
+print("Roles modified!")

@@ -4,107 +4,140 @@
     <div class="app-shell">
         <!-- Infrastructure Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <div class="flex items-center justify-between mb-10 reveal-text">
-                <div class="logo flex items-center gap-4">
-                    <img src="/static/assets/logo.png" alt="Vinicius Logo" style="width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(227, 30, 36, 0.4));">
-                    <span style="font-weight: 900; letter-spacing: -0.05em; font-size: 1.5rem; text-transform: uppercase;">Vinicius</span>
-                </div>
+            <div class="flex items-center justify-between mb-10 reveal-text" style="padding: 1.5rem;">
+                <a href="{{ '/dashboard' if user else '/' }}" class="serif-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.75rem;">
+                    <img src="/static/assets/logo.png" alt="Vinicius Logo" style="width: 28px; height: 28px; filter: drop-shadow(0 0 8px rgba(227, 30, 36, 0.4));">
+                    <span style="font-weight: 700; font-size: 1.5rem; letter-spacing: -0.02em;">VINICIUS</span>
+                </a>
                 <button onclick="toggleSidebar()" class="mobile-toggle" style="font-size: 1.2rem;">&times;</button>
             </div>
             
-            <nav style="flex: 1; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1.5rem;">
+            <nav style="flex: 1; overflow-y: auto; padding: 0 1.5rem; margin-bottom: 5rem;">
                 <ul class="nav-links" style="list-style: none;">
-                    <li class="reveal-text reveal-delay-1">
-                        <a href="/" class="nav-link">
-                            <span style="width: 8px; height: 8px; background: currentColor; border-radius: 2px; margin-right: 12px; opacity: 0.5;"></span>
-                            <span>Projects Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="reveal-text reveal-delay-1">
-                        <a href="/projects" class="nav-link">
-                            <span style="width: 8px; height: 8px; background: currentColor; border-radius: 2px; margin-right: 12px; opacity: 0.5;"></span>
-                            <span>Projects</span>
-                        </a>
-                    </li>
-                    <li class="reveal-text reveal-delay-1">
-                        <a href="/designs" class="nav-link">
-                            <span style="width: 8px; height: 8px; background: var(--accent-blue); border-radius: 2px; margin-right: 12px; opacity: 0.8;"></span>
-                            <span>Blueprints</span>
-                        </a>
-                    </li>
+                    <li class="reveal-text"><a href="/dashboard" class="nav-link"><span>Dashboard</span></a></li>
+                    <li class="reveal-text"><a href="/projects" class="nav-link"><span>Projects</span></a></li>
                     
-                    <div id="projectContextNav" class="contextual-nav" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); display: none;">
-                        <li class="reveal-text reveal-delay-2" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; padding-left: 1.25rem; letter-spacing: 0.25em;">Current Site</li>
-                        <li class="reveal-text reveal-delay-2"><a id="navKanban" href="#" class="nav-link"><span>Work Board</span></a></li>
-                        <li class="reveal-text reveal-delay-2"><a id="navGantt" href="#" class="nav-link"><span>Schedule</span></a></li>
-                        <li class="reveal-text reveal-delay-2"><a id="navProjectUpdate" href="#" class="nav-link"><span>Tasks</span></a></li>
+                    <div id="projectContextNav" class="contextual-nav" style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); display: none;">
+                        <li class="reveal-text" style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; letter-spacing: 0.25em;">Active_Site</li>
+                        <li class="reveal-text"><a id="navKanban" href="#" class="nav-link"><span>Work Board</span></a></li>
+                        <li class="reveal-text"><a id="navGantt" href="#" class="nav-link"><span>Schedule</span></a></li>
+                        <li class="reveal-text"><a id="navProjectUpdate" href="#" class="nav-link"><span>Site Manager</span></a></li>
                     </div>
 
-                    <div style="margin-top: 3rem; border-top: 1px solid var(--glass-border); padding-top: 2rem;">
-                        <li class="reveal-text reveal-delay-3" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; padding-left: 1.25rem; letter-spacing: 0.25em;">Logistics</li>
-                        <li class="reveal-text reveal-delay-3"><a href="/store" class="nav-link"><span>Inventory</span></a></li>
-                        <li class="reveal-text reveal-delay-3"><a href="/site_updates" class="nav-link"><span>Daily Logs</span></a></li>
-                        {% set role_str = user.role|string if user else '' %}
-                        {% if user and ('admin' in role_str or 'director' in role_str) %}
-                        <li class="reveal-text reveal-delay-3" style="margin-top: 1rem;"><a href="/admin/users" class="nav-link"><span>Team</span></a></li>
+                    <div style="margin-top: 2.5rem; border-top: 1px solid var(--glass-border); padding-top: 2rem;">
+                        <li class="reveal-text" style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; letter-spacing: 0.25em;">Logistics</li>
+                        <li class="reveal-text"><a href="/store" class="nav-link"><span>Inventory</span></a></li>
+                        <li class="reveal-text"><a href="/site-updates" class="nav-link"><span>Daily Logs</span></a></li>
+                        {% set role_str = user.role|string|lower if user else '' %}
+                        {% if 'admin' in role_str or 'director' in role_str or 'manager' in role_str %}
+                        <li class="reveal-text"><a href="/admin/users" class="nav-link"><span>Personnel Registry</span></a></li>
                         {% endif %}
                     </div>
                 </ul>
             </nav>
 
-            <div class="reveal-text reveal-delay-4" style="margin-top: 2rem;">
-                <div class="glass-card" style="padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.65rem; color: var(--text-muted); text-align: center; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; background: rgba(255,255,255,0.02);">
-                    Infrastructure v2.9.0-BETA
+            <div class="reveal-text" style="padding: 1.5rem; margin-top: auto;">
+                <div class="glass-card" style="padding: 1rem; border-radius: var(--radius-sm); font-size: 0.55rem; color: var(--brand-red); text-align: center; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid rgba(227,30,36,0.1);">
+                    COMMAND_TERMINAL v2.9
                 </div>
             </div>
         </aside>
 
         <!-- Main Workspace -->
         <div class="main-container">
-            <header class="top-bar reveal-text">
-                <div class="flex items-center gap-6">
-                    <button onclick="toggleSidebar()" class="mobile-toggle">&#9776;</button>
-                    <div class="project-switcher" style="display: flex; align-items: center; gap: 1.5rem;">
-                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">Active Site</span>
-                        <div style="position: relative;">
-                            <select id="globalProjectSwitcher" onchange="switchProject(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; font-weight: 800; outline: none; cursor: pointer; font-size: 0.8rem; padding: 0.5rem 2.5rem 0.5rem 1.25rem; border-radius: 50px; appearance: none; min-width: 200px;">
-                                <option value="" style="background: var(--bg-navy);">Switch Project...</option>
-                            </select>
-                            <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--brand-red); font-size: 0.6rem;">&#9660;</div>
+            <!-- Command Header (viniciusint.com official style) -->
+            <header class="top-bar reveal-text" style="background: linear-gradient(90deg, #E31E24 0%, #BA181E 100%); color: white; border: none; padding: 0.75rem 2.5rem; height: auto; min-height: 60px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 2rem;">
+                    <div style="display: flex; align-items: center; gap: clamp(1rem, 4vw, 2rem); flex-wrap: wrap; flex: 1;">
+                        <button onclick="toggleSidebar()" class="mobile-toggle" style="color: white; font-size: 1.25rem; background: transparent; border: none; cursor: pointer;">&#9776;</button>
+                        
+                        <div class="project-switcher" style="display: flex; align-items: center; gap: 1rem; flex-shrink: 0;">
+                            <span style="font-size: 0.65rem; color: rgba(255,255,255,0.7); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">Active_Site:</span>
+                            <div style="position: relative;">
+                                <select id="globalProjectSwitcher" onchange="switchProject(this.value)" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white; font-weight: 700; outline: none; cursor: pointer; font-size: 0.8rem; padding: 0.4rem 2rem 0.4rem 1rem; border-radius: 4px; appearance: none; min-width: 200px;">
+                                    <option value="" style="background: #E31E24;">Synchronizing Sites...</option>
+                                </select>
+                                <div style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: white; font-size: 0.5rem;">&#9660;</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="user-profile flex items-center gap-8">
-                    {% if user %}
-                    <div class="flex items-center gap-5">
-                        <div style="text-align: right;">
-                            <div style="font-weight: 800; font-size: 0.95rem; letter-spacing: -0.01em;">{{ user.username }}</div>
-                            <div style="font-size: 0.65rem; color: var(--brand-red); font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; margin-top: -2px;">{{ user.role }}</div>
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        {% if user %}
+                        <div style="text-align: right; line-height: 1.2;">
+                            <div style="font-weight: 900; font-size: 0.85rem; letter-spacing: -0.01em; text-transform: uppercase;">{{ user.username }}</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.7); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">
+                                {{ 'ENGINEER' if user.role|string == 'staff' or user.role|string == 'UserRole.staff' else user.role|string|replace('UserRole.', '')|upper }}
+                            </div>
                         </div>
-                        <button onclick="logout()" class="btn-modern btn-ghost" style="padding: 0.5rem 1.5rem; font-size: 0.65rem; border-radius: 50px; font-weight: 900;">SIGN OUT</button>
+                        <button onclick="toggleTheme()" id="theme-btn" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 50px; padding: 0.4rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: 0.2s;">
+                            <i class="fas fa-sun" id="theme-icon" style="font-size: 0.75rem;"></i>
+                            <span id="theme-text" style="font-size: 0.6rem; font-weight: 900; letter-spacing: 0.05em;">BRIGHT_MOOD</span>
+                        </button>
+                        <button onclick="logout()" style="background: white; color: #E31E24; border: none; border-radius: 4px; padding: 0.4rem 1.25rem; font-size: 0.65rem; font-weight: 900; cursor: pointer; transition: 0.2s;">SIGN_OUT</button>
+                        {% else %}
+                        <div style="font-size: 0.7rem; font-weight: 900; color: white; opacity: 0.7;">UNAUTHENTICATED</div>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <div class="btn-modern btn-ghost" style="border-radius: 50px; font-size: 0.7rem; font-weight: 900;">GUEST_STATE</div>
-                    {% endif %}
                 </div>
             </header>
 
-            <div class="content-body">
-                <div class="reveal-text" style="margin-bottom: 4rem; border-left: 5px solid var(--brand-red); padding: 0.5rem 0 0.5rem 2rem;">
-                    <h1 class="text-gradient" style="font-size: 3rem; text-transform: uppercase; line-height: 0.9; margin-bottom: 0.75rem;">{% block page_title %}Overview{% endblock %}</h1>
-                    <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.8;">Project Management & Site Logistics</p>
+            <div class="content-body" style="padding: 3rem 2.5rem;">
+                <div class="reveal-text" style="margin-bottom: 2.5rem; border-left: 5px solid var(--brand-red); padding-left: 2rem;">
+                    <h1 class="serif-brand" style="font-size: 2.75rem; text-transform: uppercase; line-height: 1.1; margin-bottom: 0.5rem; font-weight: 900;">{% block page_title %}Overview{% endblock %}</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.8;">Vinicius International Architecture Hub</p>
                 </div>
                 
-                <main class="reveal-text reveal-delay-1">
+                <main class="reveal-text">
                     {% block content %}{% endblock %}
                 </main>
             </div>
         </div>
     </div>
 
-    <!-- Global Application Logic -->
+    <!-- Contextual Actions & Navigation Logic -->
     <script>
+        // --- High-Fidelity Notification Hub ---
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-hub');
+            const toast = document.createElement('div');
+            toast.className = `glass-card reveal-text toast-notification`;
+            
+            const color = type === 'success' ? '#10B981' : (type === 'error' ? 'var(--brand-red)' : '#F59E0B');
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle');
+            
+            toast.style.cssText = `
+                padding: 1rem 1.75rem;
+                background: var(--bg-card);
+                border-left: 4px solid ${color};
+                min-width: 300px;
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                transition: transform 0.3s ease, opacity 0.3s ease;
+                z-index: 9999;
+            `;
+            
+            toast.innerHTML = `
+                <i class="fas ${icon}" style="color: ${color}; font-size: 1.1rem;"></i>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 2px;">SYSTEM_CHANNEL</span>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); letter-spacing: 0.05em;">${message.toUpperCase()}</span>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto-Eject Sequence
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(50px)';
+                setTimeout(() => toast.remove(), 400);
+            }, 4500);
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) sidebar.classList.toggle('active');
@@ -123,13 +156,14 @@
 
         async function loadSwitcherProjects() {
             try {
-                const resp = await fetch('/api/v1/projects/');
+                const resp = await fetch('/api/v1/projects/', { credentials: 'same-origin' });
                 if (!resp.ok) return;
                 const projects = await resp.json();
                 const switcher = document.getElementById('globalProjectSwitcher');
                 if (!switcher) return;
                 const currentProjId = localStorage.getItem('currentProjectId');
                 
+                switcher.innerHTML = '<option value="">Navigate To Site...</option>';
                 projects.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
@@ -137,53 +171,53 @@
                     if (p.id == currentProjId) opt.selected = true;
                     switcher.appendChild(opt);
                 });
-                
-                if (currentProjId) updateContextNav(currentProjId);
-            } catch (err) {}
-        }
 
-        function switchProject(id) {
-            if (!id) {
-                localStorage.removeItem('currentProjectId');
-                const ctxNav = document.getElementById('projectContextNav');
-                if (ctxNav) ctxNav.style.display = 'none';
-                window.location.href = '/projects';
-                return;
+                if(currentProjId) {
+                    document.getElementById('projectContextNav').style.display = 'block';
+                    document.getElementById('navKanban').href = `/projects/${currentProjId}/kanban`;
+                    document.getElementById('navGantt').href = `/projects/${currentProjId}/gantt`;
+                    document.getElementById('navProjectUpdate').href = `/projects/${currentProjId}/project-updates`;
+                }
+            } catch (err) {
+                console.error("Failed to load project switcher", err);
             }
-            localStorage.setItem('currentProjectId', id);
-            updateContextNav(id);
-            window.location.href = `/projects/${id}/project-updates`;
         }
 
-        function updateContextNav(id) {
-            const nav = document.getElementById('projectContextNav');
-            if (!nav) return;
-            nav.style.display = 'block';
-            const kanban = document.getElementById('navKanban');
-            const gantt = document.getElementById('navGantt');
-            const wp = document.getElementById('navProjectUpdate');
-            if (kanban) kanban.href = `/projects/${id}/kanban`;
-            if (gantt) gantt.href = `/projects/${id}/gantt`;
-            if (wp) wp.href = `/projects/${id}/project-updates`;
+        function switchProject(pid) {
+            if (!pid) return;
+            localStorage.setItem('currentProjectId', pid);
+            window.location.reload();
         }
 
-        loadSwitcherProjects();
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon(next);
+        }
 
-        const currentPath = window.location.pathname;
-        document.querySelectorAll('.nav-link').forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
-                link.classList.add('active');
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            const btnText = document.getElementById('theme-text');
+            if (icon && btnText) {
+                if (theme === 'light') {
+                    icon.className = 'fas fa-moon';
+                    btnText.textContent = 'VOID_MODE';
+                } else {
+                    icon.className = 'fas fa-sun';
+                    btnText.textContent = 'BRIGHT_MOOD';
+                }
             }
-        });
+        }
 
-        // Session Keep-Alive (45 minutes)
-        setInterval(async () => {
-            try {
-                await fetch('/api/v1/auth/refresh', { method: 'POST' });
-            } catch (e) {}
-        }, 2700000); 
+        // Initialize theme on load
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            setTimeout(() => updateThemeIcon(savedTheme), 100);
+            loadSwitcherProjects();
+        })();
     </script>
-{% endblock %}
-
-{% block scripts %}
 {% endblock %}

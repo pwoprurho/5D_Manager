@@ -2,19 +2,18 @@
 <html lang="en">
 
 <head>
+    <script>
+        (function() {
+            const theme = localStorage.getItem('vinicius-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1280">
     <title>{% block title %}Vinicius Command{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- 3D BIM Rendering Engine (IFC.js + Three.js) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/png" href="/static/assets/logo.png">
     <link rel="apple-touch-icon" href="/static/assets/logo.png">
@@ -29,6 +28,40 @@
 </head>
 
 <body>
+    <!-- Strategic Preloader -->
+    <div id="system-preloader" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background: #020617; z-index: 99999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;">
+        <div style="position: relative">
+            <img src="/static/assets/logo.png" style="width: 100%; height: 100%; filter: drop-shadow(0 0 20px rgba(227,30,36,0.5)); animation: pulseLogo 2s infinite ease-in-out;">
+            <div style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border: 2px solid rgba(227,30,36,0.3); border-radius: 50%; border-top-color: #E31E24; animation: rotateLoader 1s linear infinite;"></div>
+        </div>
+        <div style="font-size: 0.6rem; color: #FFFFFF; font-weight: 900; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.6; margin-bottom: 0.5rem;">Initializing_Terminal</div>
+        <div style="width: 140px; height: 2px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; position: relative;">
+            <div id="loader-progress" style="position: absolute; top:0; left:0; height: 100%; width: 0%; background: #E31E24; transition: width 0.3s ease; box-shadow: 0 0 10px #E31E24;"></div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes rotateLoader { to { transform: rotate(360deg); } }
+        @keyframes pulseLogo { 0%, 100% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } }
+    </style>
+
+    <script>
+        // Track initial site alignment
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('system-preloader');
+            const progress = document.getElementById('loader-progress');
+            
+            if (progress) progress.style.width = '100%';
+            
+            setTimeout(() => {
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 600);
+                }
+            }, 800);
+        });
+    </script>
+
     {% block body %}
     <div class="app">
         <main class="main-content">
@@ -42,13 +75,30 @@
     <!-- PWA Logic -->
     <script src="/static/js/pwa.js"></script>
 
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
+    <!-- Global Notification Hub -->
+    <div id="notification-hub" style="position: fixed; top: 2rem; right: 2rem; z-index: 10000; display: flex; flex-direction: column; align-items: flex-end; pointer-events: none;"></div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <script src="/static/js/sql_db.js"></script>
     <script src="/static/js/offline_db.js"></script>
+    <!-- Global Fetch Wrapper (Zero-Trust Auth Support) -->
+    <script>
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            let resource = args[0];
+            let config = args[1];
+            // Only inject credentials for same-origin API requests
+            if (typeof resource === 'string' && resource.startsWith('/api/')) {
+                config = config || {};
+                if (config.credentials === undefined) {
+                    config.credentials = 'same-origin';
+                }
+                return originalFetch.call(window, resource, config);
+            }
+            return originalFetch.apply(window, args);
+        };
+    </script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

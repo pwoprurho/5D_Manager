@@ -1,42 +1,180 @@
 {% extends "base.html" %}
 
-{% block title %}Vinicius Command — Register{% endblock %}
+{% block title %}Vinicius Command — Operational Manual{% endblock %}
 
 {% block body %}
-<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
-    <div class="glass-card reveal-text" style="max-width: 520px; width: 100%; padding: 4rem; border-top: 6px solid var(--brand-red);">
-        <div style="text-align: center; margin-bottom: 3rem;">
-            <div style="width: 20px; height: 20px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red); margin: 0 auto 1.5rem;"></div>
-            <h1 style="font-size: 2rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.04em; margin-bottom: 0.5rem;">Create Account</h1>
-            <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.25em;">Provision new credentials</p>
+<div style="min-height: 100vh; background: var(--bg-deep); padding: 3rem 1rem;">
+    <div class="glass-card reveal-text" style="max-width: 1000px; width: 100%; margin: 0 auto; padding: 4rem; border-top: 6px solid var(--brand-red); background: rgba(0,0,0,0.8);">
+        
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 5rem;">
+            <div style="width: 40px; height: 40px; background: var(--brand-red); border-radius: 8px; transform: rotate(45deg); box-shadow: var(--glow-red); margin: 0 auto 1.5rem;"></div>
+            <h1 style="font-size: 2.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.04em; margin-bottom: 0.5rem; color: #FFFFFF;">Operational Training Manual</h1>
+            <p style="color: var(--text-muted); font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.4em; opacity: 0.8; margin-bottom: 2rem;">Vinicius Command — Strategic Infrastructure Hub</p>
+            
+            <a href="/download" class="btn-modern btn-primary" style="display: inline-flex; padding: 0.85rem 1.75rem; border-radius: 50px; font-size: 0.75rem; background: linear-gradient(135deg, var(--brand-red) 0%, #B91C1C 100%); box-shadow: 0 4px 15px rgba(227, 30, 36, 0.4);">
+                <i class="fas fa-mobile-alt"></i> DEPLOY MOBILE NODE (DOWNLOAD PWA)
+            </a>
         </div>
 
-        {% if error %}
-        <div style="margin-bottom: 2rem; color: white; background: rgba(227,30,36,0.2); border: 1px solid rgba(227,30,36,0.3); padding: 1rem 1.5rem; border-radius: var(--radius-sm); text-align: center; font-size: 0.85rem; font-weight: 700;">{{ error }}</div>
+        {% if success %}
+        <div style="margin-bottom: 3rem; color: #10b981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); padding: 1.25rem; border-radius: 8px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem;">
+            <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> {{ success }}
+        </div>
         {% endif %}
 
-        <form method="post" action="/register" style="display: flex; flex-direction: column; gap: 2rem;">
-            <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Operational ID</label>
-                <input type="text" name="username" required class="modern-input" style="font-weight: 700; padding: 1.25rem;" placeholder="AGENT_IDENTIFIER...">
+        <!-- Content Introduction -->
+        <div style="margin-bottom: 4rem; padding: 2rem; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; line-height: 1.8; color: var(--text-muted);">
+            <p style="margin: 0; font-size: 1rem; font-weight: 500;">Welcome to the <strong>Vinicius Command</strong> training manual. This guide provides a visual and technical walkthrough of the core operational workflows required to manage high-fidelity infrastructure projects across our international portfolio.</p>
+        </div>
+
+        <!-- 1. Authentication -->
+        <section style="margin-bottom: 6rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <span style="font-size: 2rem; font-weight: 900; color: var(--brand-red); font-family: 'Playfair Display', serif;">01</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Unified Authentication Protocol</h2>
             </div>
-            <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Comms Address (Email)</label>
-                <input type="email" name="email" required class="modern-input" style="font-weight: 700; padding: 1.25rem;" placeholder="EMAIL@PROTOCOL.COM">
-            </div>
-            <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Secure Passphrase</label>
-                <div style="position: relative;">
-                    <input type="password" id="register_pass" name="password" required minlength="8" class="modern-input" style="font-weight: 700; padding: 1.25rem; padding-right: 3rem; width: 100%; box-sizing: border-box;" placeholder="••••••••">
-                    <button type="button" onclick="const p=document.getElementById('register_pass'); p.type=p.type==='password'?'text':'password'; this.querySelector('i').classList.toggle('fa-eye'); this.querySelector('i').classList.toggle('fa-eye-slash');" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.5rem; outline: none;"><i class="fas fa-eye"></i></button>
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center;">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <img src="/static/assets/training/login_interface.png" alt="Login Interface" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                </div>
+                <div style="line-height: 1.8; color: var(--text-muted);">
+                    <div style="background: rgba(227,30,36,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: var(--brand-red); font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: SECURE HUB ACCESS</div>
+                    <ol style="padding-left: 1.5rem; font-weight: 500;">
+                        <li style="margin-bottom: 1rem;">Navigate to the high-contrast **Authentication Terminal**.</li>
+                        <li style="margin-bottom: 1rem;">Enter your corporate credentials (Email and Access Key).</li>
+                        <li>Click **AUTHENTICATE** to initialize your secure session.</li>
+                    </ol>
+                    <p style="font-size: 0.75rem; font-style: italic; opacity: 0.6; margin-top: 1.5rem;">*Note: Multi-factor authentication is active on all nodes.*</p>
                 </div>
             </div>
-            <button type="submit" class="btn-modern btn-primary" style="width: 100%; padding: 1.25rem; justify-content: center; font-weight: 900; margin-top: 1rem;">PROVISION ACCOUNT</button>
-        </form>
+        </section>
 
-        <p style="text-align: center; margin-top: 2.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 700;">
-            Already provisioned? <a href="/signin" style="color: var(--brand-red); text-decoration: none; font-weight: 900;">Sign In here</a>
-        </p>
+        <!-- 2. Personnel -->
+        <section style="margin-bottom: 6rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <span style="font-size: 2rem; font-weight: 900; color: var(--accent-blue); font-family: 'Playfair Display', serif;">02</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Personnel Enrollment & Registry</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; align-items: center;">
+                <div style="line-height: 1.8; color: var(--text-muted);">
+                    <div style="background: rgba(59,130,246,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: var(--accent-blue); font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: STAFF DIRECTORY CONTROL</div>
+                    <ul style="list-style-type: none; padding: 0; font-weight: 500;">
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-users" style="color: var(--accent-blue); margin-right: 0.75rem;"></i> Access the **Admin: Personnel Registry** module.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-search" style="color: var(--accent-blue); margin-right: 0.75rem;"></i> Review active staff for role allocations.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-plus-circle" style="color: var(--accent-blue); margin-right: 0.75rem;"></i> Use **ENROLL STAFF** for new acquisitions.</li>
+                        <li><i class="fas fa-user-tag" style="color: var(--accent-blue); margin-right: 0.75rem;"></i> Assign **Operational Roles** carefully.</li>
+                    </ul>
+                </div>
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <img src="/static/assets/training/user_registry.png" alt="User Registry" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Project Init -->
+        <section style="margin-bottom: 6rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <span style="font-size: 2rem; font-weight: 900; color: var(--brand-orange); font-family: 'Playfair Display', serif;">03</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Project Initialization & Ingest</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center;">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <img src="/static/assets/training/project_init.png" alt="Project Ingest" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                </div>
+                <div style="line-height: 1.8; color: var(--text-muted);">
+                    <div style="background: rgba(255,152,0,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: var(--brand-orange); font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: ANCHOR NEW ASSETS</div>
+                    <ol style="padding-left: 1.5rem; font-weight: 500;">
+                        <li style="margin-bottom: 1rem;">From **Projects**, click **INIT PROJECT**.</li>
+                        <li style="margin-bottom: 1rem;">Provide high-density documentation (PDF/BIM).</li>
+                        <li style="margin-bottom: 1rem;">Select a **Lead Facilitator** (Project Manager).</li>
+                        <li>Assign initial work packages via the task modal.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Site Manager -->
+        <section style="margin-bottom: 6rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <span style="font-size: 2rem; font-weight: 900; color: #10b981; font-family: 'Playfair Display', serif;">04</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Site Modeling & Phase Creation</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; align-items: center;">
+                <div style="line-height: 1.8; color: var(--text-muted);">
+                    <div style="background: rgba(16,185,129,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #10b981; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: DEFINE STRUCTURAL TIMELINE</div>
+                    <ul style="list-style-type: none; padding: 0; font-weight: 500;">
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-layer-group" style="color: #10b981; margin-right: 0.75rem;"></i> Open **Site Manager** for your project.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-calendar-plus" style="color: #10b981; margin-right: 0.75rem;"></i> Click **NEW PHASE** for structural milestones.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-clock" style="color: #10b981; margin-right: 0.75rem;"></i> Set the **Operational Window** dates.</li>
+                        <li><i class="fas fa-sync" style="color: #10b981; margin-right: 0.75rem;"></i> Phases auto-populate the Schedule and Kanban.</li>
+                    </ul>
+                </div>
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <img src="/static/assets/training/site_manager.png" alt="Site Manager" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Kanban -->
+        <section style="margin-bottom: 6rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <span style="font-size: 2rem; font-weight: 900; color: #8b5cf6; font-family: 'Playfair Display', serif;">05</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Strategic Kanban Orchestration</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center;">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <img src="/static/assets/training/kanban_board.png" alt="Kanban Board" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                </div>
+                <div style="line-height: 1.8; color: var(--text-muted);">
+                    <div style="background: rgba(139,92,246,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #8b5cf6; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: REAL-TIME TELEMETRY MONITORING</div>
+                    <ol style="padding-left: 1.5rem; font-weight: 500;">
+                        <li style="margin-bottom: 1rem;">Navigate to the **Global Work Board**.</li>
+                        <li style="margin-bottom: 1rem;">Tasks categorized by: Not Started, In Progress, Verified.</li>
+                        <li style="margin-bottom: 1rem;">Drag cards to update telemetry from the field.</li>
+                        <li>Priority tasks pulse in UI for quick intervention.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Analytics -->
+        <section style="margin-bottom: 6rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <span style="font-size: 2rem; font-weight: 900; color: #ec4899; font-family: 'Playfair Display', serif;">06</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Analytics HUD & Auditing</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; align-items: center;">
+                <div style="line-height: 1.8; color: var(--text-muted);">
+                    <div style="background: rgba(236,72,153,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #ec4899; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: COST & PROGRESS EXTRACTION</div>
+                    <ul style="list-style-type: none; padding: 0; font-weight: 500;">
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-chart-line" style="color: #ec4899; margin-right: 0.75rem;"></i> Access the **Analytics HUD** for bird's-eye view.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-money-bill-wave" style="color: #ec4899; margin-right: 0.75rem;"></i> Monitor **Cost vs. Progress** variances.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-file-pdf" style="color: #ec4899; margin-right: 0.75rem;"></i> Click **GENERATE REPORT** for formal audits.</li>
+                        <li><i class="fas fa-cloud-download-alt" style="color: #ec4899; margin-right: 0.75rem;"></i> System compiles field data into high-fidelity PDF.</li>
+                    </ul>
+                </div>
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <img src="/static/assets/training/analytics_hud.png" alt="Analytics HUD" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                </div>
+            </div>
+        </section>
+
+        <!-- Compliance Banner -->
+        <div style="padding: 2.5rem; background: rgba(227,30,36,0.08); border-radius: 15px; border: 1px solid rgba(227,30,36,0.2); margin-top: 4rem; text-align: center;">
+            <p style="font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.9rem; margin-bottom: 1.25rem; color: var(--brand-red);"><i class="fas fa-shield-alt" style="margin-right: 0.75rem;"></i> Operational Compliance Directive</p>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.8; max-width: 700px; margin: 0 auto; font-weight: 600;">
+                All field telemetry, including architectural site captures and manpower logs, must be synchronized daily. Delayed synchronization compromises the integrity of the Analytics HUD and budget actualization telemetry.
+            </p>
+        </div>
+
+        <!-- Footer Actions -->
+        <div style="text-align: center; margin-top: 5rem; border-top: 1px solid var(--glass-border); padding-top: 3rem;">
+            <a href="/" style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 1.25rem 2.5rem; background: var(--brand-red); border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; transition: 0.3s; box-shadow: var(--glow-red); outline: none;">
+                <i class="fas fa-home"></i> Return to Command Terminal
+            </a>
+            <p style="margin-top: 2rem; font-size: 0.7rem; color: var(--text-muted); opacity: 0.5; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Vinicius International Group — Proprietary Site Management Systems</p>
+        </div>
     </div>
 </div>
 {% endblock %}

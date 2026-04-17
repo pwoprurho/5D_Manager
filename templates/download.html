@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Download Vinicius Command Center{% endblock %}
+
+{% block content %}
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="glass-card reveal-text" style="max-width: 900px; width: 100%; padding: 4rem; overflow: hidden; position: relative; border: 1px solid var(--glass-border);">
+        
+        <!-- Abstract Background Glow -->
+        <div style="position: absolute; top: -100px; right: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(227,30,36,0.1) 0%, transparent 70%); filter: blur(50px); pointer-events: none;"></div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 4rem; align-items: center;">
+            <div>
+                <div class="flex items-center gap-4 mb-8">
+                    <img src="/static/assets/logo.png" style="width: 56px; height: 56px; filter: drop-shadow(0 0 15px rgba(227,30,36,0.3));">
+                    <div>
+                        <h1 style="font-size: 2.5rem; line-height: 1; text-transform: uppercase;">Vinicius <span style="display: block; font-weight: 300; font-size: 1.2rem; letter-spacing: 0.2em; color: var(--brand-red);">Command Center</span></h1>
+                    </div>
+                </div>
+
+                <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem; max-width: 500px;">
+                    Experience high-fidelity 5D infrastructure management as a native application. Our Progressive Web Architecture brings site telemetry, field reporting, and project intelligence directly to your desktop or mobile home screen.
+                </p>
+
+                <ul style="list-style: none; padding: 0; margin-bottom: 3rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <li style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">
+                        <i class="fas fa-check-circle" style="color: #10B981;"></i> 100% OFFLINE DATA SYNC
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">
+                        <i class="fas fa-check-circle" style="color: #10B981;"></i> NATIVE SYSTEM NOTIFICATIONS
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">
+                        <i class="fas fa-check-circle" style="color: #10B981;"></i> SECURE BIOMETRIC READINESS
+                    </li>
+                </ul>
+
+                <div style="display: flex; gap: 1.5rem;">
+                    <button id="installBtn" onclick="installPWA()" class="btn-modern btn-primary pwa-install-btn" style="padding: 1.25rem 2.5rem; font-size: 1rem; border-radius: 50px; display: none;">
+                        <i class="fas fa-download"></i> INSTALL NOW
+                    </button>
+                    <div id="installedMsg" style="display: none; padding: 1.25rem 2.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid #10B981; border-radius: 50px; color: #10B981; font-weight: 900; letter-spacing: 0.1em; font-size: 0.75rem;">
+                        <i class="fas fa-check"></i> SYSTEM INSTALLED
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <div style="position: relative; width: 320px; height: 500px; background: #010409; margin: 0 auto; border: 8px solid #1e293b; border-radius: 32px; box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5); overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 24px; background: #1e293b; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; z-index: 50;"></div>
+                    <img src="/static/assets/logo.png" style="width: 80px; margin-top: 150px; opacity: 0.1;">
+                    <div style="position: absolute; bottom: 40px; left: 0; right: 0; padding: 0 2rem;">
+                         <div style="height: 12px; width: 70%; background: #1e293b; margin-bottom: 12px; border-radius: 6px;"></div>
+                         <div style="height: 8px; width: 100%; background: #1e293b; margin-bottom: 8px; border-radius: 4px; opacity: 0.5;"></div>
+                         <div style="height: 8px; width: 90%; background: #1e293b; margin-bottom: 8px; border-radius: 4px; opacity: 0.5;"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 2rem; font-size: 0.65rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">Supports Desktops, iOS & Android</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Listen for the custom event from pwa.js
+    window.addEventListener('pwa-installable', () => {
+        document.getElementById('installBtn').style.display = 'inline-flex';
+    });
+
+    // Handle check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+        document.getElementById('installedMsg').style.display = 'block';
+    }
+
+    // If already installed, don't show the button even if event fires
+    window.addEventListener('appinstalled', () => {
+        document.getElementById('installBtn').style.display = 'none';
+        document.getElementById('installedMsg').style.display = 'block';
+    });
+</script>
+{% endblock %}

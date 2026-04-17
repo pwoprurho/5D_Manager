@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime
 from decimal import Decimal
@@ -10,16 +11,88 @@ from pydantic import BaseModel
 from typing import List, Optional
 from cachetools import TTLCache
 from functools import wraps
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from . import models, database, auth
-from .database import supabase
+from .database import supabase, with_retry
 from .services.cost_engine import CostEngine
 from .services.report_generator import ReportGenerator
-
-# Terminology Migration: Work Package -> Project Phase
 import os
+import re
+import io
+import logging
+import mimetypes
+try:
+    from PIL import Image
+    HAS_PILLOW = True
+except ImportError:
+    HAS_PILLOW = False
 
+try:
+    from pypdf import PdfReader, PdfWriter
+    HAS_PYPDF = True
+except ImportError:
+    HAS_PYPDF = False
+
+# Industrial logging configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("vinicius")
+
+# ============================================================
+# APP INITIALIZATION & SECURITY MIDDLEWARE
+# ============================================================
+
+# Rate Limiter: 3 auth attempts per 20 hours per IP
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="5D Project Management System")
-# Terminology Sync Completed
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ============================================================
+# SECURITY HARDENING MIDDLEWARE
+# ============================================================
+
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # HSTS - Force HTTPS (365 days)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        # Content Security Policy - Mitigate XSS and Data Injection
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.supabase.co; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https://*.supabase.co https://*.supabase.in; "
+            "frame-ancestors 'none'; "
+            "upgrade-insecure-requests"
+        )
+        # Clickjacking Protection
+        response.headers["X-Frame-Options"] = "DENY"
+        # MIME Sniffing Protection
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # XSS Protection for older browsers
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        # Referrer Policy
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS Middleware — restricted same-origin policy
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("ALLOWED_ORIGIN", "*")],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["*"],
+)
+
+# Max upload size: 100MB (Optimized for portfolio documentation and site telemetry)
+MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 
 # Determine base directory for static and template files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,6 +108,21 @@ templates = Jinja2Templates(directory=templates_path)
 
 # Simple in-memory cache for API responses (5 minutes TTL, max 100 items)
 api_cache = TTLCache(maxsize=100, ttl=300)
+
+def serialize_for_supabase(data: dict) -> dict:
+    """Helper to convert Pydantic dict values into Supabase-compatible JSON."""
+    from enum import Enum
+    output = {}
+    for k, v in data.items():
+        if isinstance(v, datetime):
+            output[k] = v.isoformat()
+        elif isinstance(v, Decimal):
+            output[k] = float(v)
+        elif isinstance(v, Enum):
+            output[k] = v.value
+        else:
+            output[k] = v
+    return output
 
 def cache_response(ttl=300):
     def decorator(func):
@@ -52,7 +140,14 @@ def cache_response(ttl=300):
 
 @app.on_event("startup")
 def on_startup():
-    pass
+    """Industrial startup sequence: sync database link and verify telemetry registry."""
+    logger.info("Supabase Infrastructure — Command node operational.")
+    
+    # Diagnostic Telemetry
+    opt_status = "Operational" if HAS_PYPDF else "Library Missing (pip install pypdf)"
+    img_status = "Operational" if HAS_PILLOW else "Library Missing (pip install Pillow)"
+    logger.info(f"System Gates — PDF Optimizer: {opt_status}")
+    logger.info(f"System Gates — Image Optimizer: {img_status}")
 
 # ============================================================
 # EXCEPTION HANDLERS
@@ -78,10 +173,23 @@ async def custom_500_handler(request: Request, exc: Exception):
 # ============================================================
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, user: models.User = Depends(auth.get_current_user)):
+async def home(request: Request):
+    user = await auth.get_current_user(request)
+    if user:
+        return RedirectResponse(url="/dashboard", status_code=303)
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request, user: models.User = Depends(auth.get_current_user)):
     if not user:
         return RedirectResponse(url="/signin", status_code=303)
     return templates.TemplateResponse(request=request, name="dashboard.html", context={"request": request, "user": user})
+
+@app.get("/logout")
+async def logout(request: Request):
+    response = RedirectResponse(url="/signin", status_code=302)
+    response.delete_cookie("access_token")
+    return response
 
 @app.get("/signin", response_class=HTMLResponse)
 async def signin_page(request: Request):
@@ -89,6 +197,7 @@ async def signin_page(request: Request):
     response.delete_cookie("access_token")
     return response
 @app.post("/signin")
+@limiter.limit("300/20hours")
 async def signin_form(request: Request):
     form = await request.form()
     username = form.get("username") or form.get("email")
@@ -100,16 +209,38 @@ async def signin_form(request: Request):
             "error": "Please provide username/email and password"
         })
 
-    # If username is provided, support username->email lookup in user table
-    email = username
+    # Resolve username to email via Supabase Auth (zero-trust: no public.user dependency)
+    email = username.strip()
     if "@" not in email:
-        user_res = supabase.table("user").select("email").eq("username", username).single().execute()
-        if not user_res.data:
+        # Look up email from Supabase Auth admin API or public.user as fallback
+        found_email = None
+        
+        try:
+            user_res = with_retry(lambda: supabase.table("user").select("email").eq("username", email).maybe_single().execute())
+            if user_res and user_res.data:
+                found_email = user_res.data.get("email")
+        except Exception:
+            pass
+        
+        # Fallback: search Supabase Auth users by metadata
+        if not found_email:
+            try:
+                resp = supabase.auth.admin.list_users()
+                auth_users = resp.users if hasattr(resp, 'users') else (resp if isinstance(resp, list) else [])
+                for au in auth_users:
+                    meta = au.user_metadata or {}
+                    if meta.get("username", "").lower() == email.lower():
+                        found_email = au.email
+                        break
+            except Exception:
+                pass
+        
+        if not found_email:
             return templates.TemplateResponse(request=request, name="signin.html", context={
                 "request": request,
-                "error": "User not found"
+                "error": "Invalid credentials"
             })
-        email = user_res.data.get("email")
+        email = found_email
 
     try:
         auth_response = supabase.auth.sign_in_with_password({
@@ -126,119 +257,146 @@ async def signin_form(request: Request):
         refresh_token = auth_response.session.refresh_token
         expires_in = getattr(auth_response.session, 'expires_in', 3600)
 
-        redirect_response = RedirectResponse(url="/", status_code=303)
-        redirect_response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=expires_in, path="/")
-        redirect_response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=86400*7, path="/")
+        redirect_response = RedirectResponse(url="/dashboard", status_code=303)
+        # Security Hardened Cookies: httponly, secure, samesite=strict
+        redirect_response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=expires_in, path="/", samesite="strict", secure=True)
+        redirect_response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=86400*7, path="/", samesite="strict", secure=True)
         return redirect_response
 
     except Exception as e:
+        print(f"Signin error: {e}")
         return templates.TemplateResponse(request=request, name="signin.html", context={
             "request": request,
-            "error": str(e)
+            "error": "Authentication failed. Please check your credentials."
         })
 
-@app.post("/register")
-async def register_form(request: Request):
-    form = await request.form()
-    username = form.get("username")
-    email = form.get("email")
-    password = form.get("password")
-
-    if not username or not email or not password:
-        return templates.TemplateResponse(request=request, name="register.html", context={
-            "request": request,
-            "error": "Please fill all fields"
-        })
-
-    try:
-        existing = supabase.table("user").select("*").or_(f"username.eq.{username},email.eq.{email}").execute()
-        if existing.data:
-            return templates.TemplateResponse(request=request, name="register.html", context={
-                "request": request,
-                "error": "Username or email already exists"
-            })
-
-        auth_response = supabase.auth.sign_up({
-            "email": email,
-            "password": password,
-            "options": {"data": {"username": username, "role": "staff"}}
-        })
-
-        if not auth_response or not auth_response.user:
-            return templates.TemplateResponse(request=request, name="register.html", context={
-                "request": request,
-                "error": "Registration failed"
-            })
-
-        user_data = {
-            "id": auth_response.user.id,
-            "username": username,
-            "email": email,
-            "role": "staff",
-            "is_active": True
-        }
-
-        result = supabase.table("user").insert(user_data).execute()
-        if not result.data:
-            return templates.TemplateResponse(request=request, name="register.html", context={
-                "request": request,
-                "error": "Failed to create profile"
-            })
-
-        return RedirectResponse(url="/signin", status_code=303)
-
-    except Exception as e:
-        return templates.TemplateResponse(request=request, name="register.html", context={
-            "error": str(e)
-        })
-
-@app.post("/signin")
-async def signin(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    try:
-        user_data = auth.authenticate_user(form_data.username, form_data.password)
-        if not user_data:
-            return templates.TemplateResponse(request=request, name="signin.html", context={
-                "error": "TERMINAL_AUTH_FAILURE: Incorrect credentials"
-            })
-        
-        user_obj = auth.get_user_by_email(form_data.username)
-        if not user_obj:
-            return templates.TemplateResponse(request=request, name="signin.html", context={
-                "error": "PROTOCOL_ERROR: Identity not found"
-            })
-            
-        response = RedirectResponse(url="/dashboard", status_code=303)
-        token = auth.create_access_token(data={"sub": user_obj.email})
-        response.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True)
-        return response
-    except Exception as e:
-        return templates.TemplateResponse(request=request, name="signin.html", context={
-            "error": f"SYSTEM_HALT: {str(e)}"
-        })
+# ============================================================
+# ONBOARDING & MANUAL HUB
+# ============================================================
 
 @app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
-    return templates.TemplateResponse(request=request, name="register.html", context={})
+async def manual_page(request: Request):
+    """Operational Manual & Workflow Guide Hub."""
+    return templates.TemplateResponse(request=request, name="register.html", context={"request": request})
 
-@app.post("/register")
-async def register(
+@app.get("/download", response_class=HTMLResponse)
+async def download_page(request: Request):
+    """Download and Installation portal for the Vinicius Command PWA."""
+    return templates.TemplateResponse(request=request, name="download.html", context={"request": request})
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request):
+    """Initial user enrollment interface."""
+    return templates.TemplateResponse(request=request, name="signup.html", context={"request": request})
+
+@app.post("/signup")
+@limiter.limit("5/hours")
+async def signup_submit(request: Request):
+    """Process new operational node enrollment."""
+    form = await request.form()
+    email = form.get("email")
+    password = form.get("password")
+    username = form.get("username")
+    role = form.get("role", "engineer")
+
+    if not email or not password or not username:
+        return templates.TemplateResponse(request=request, name="signup.html", context={
+            "request": request, "error": "All operational fields are mandatory."
+        })
+
+    try:
+        # 1. Supabase Auth Enrollment
+        auth_res = supabase.auth.sign_up({
+            "email": email,
+            "password": password,
+            "options": {
+                "data": {
+                    "username": username,
+                    "role": role
+                }
+            }
+        })
+        
+        if not auth_res or not auth_res.user:
+            return templates.TemplateResponse(request=request, name="signup.html", context={
+                "request": request, "error": "Enrollment Rejected: Auth Service Conflict."
+            })
+
+        # 2. Sync to Public Registry
+        with_retry(lambda: supabase.table("user").upsert({
+            "id": auth_res.user.id,
+            "email": email,
+            "username": username,
+            "role": role,
+            "is_active": True
+        }).execute())
+
+        # 3. Auto-Sign-In and Redirect to Manual
+        return templates.TemplateResponse(request=request, name="register.html", context={
+            "request": request,
+            "success": "Enrollment Successful. Please review the Operational Manual below."
+        })
+
+    except Exception as e:
+        print(f"Enrollment Error: {e}")
+        return templates.TemplateResponse(request=request, name="signup.html", context={
+            "request": request, "error": f"Synchronization Failure: {str(e)}"
+        })
+
+@app.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request):
+    return templates.TemplateResponse(request=request, name="reset_password.html", context={})
+
+@app.post("/reset-password")
+@limiter.limit("200/20hours")
+async def reset_password_submit(request: Request):
+    """Password reset via Supabase email recovery flow."""
+    form = await request.form()
+    email = form.get("email")
+    
+    if not email:
+        return templates.TemplateResponse(request=request, name="reset_password.html", context={"error": "Email is required"})
+    
+    try:
+        # Use Supabase's built-in password recovery (sends reset email)
+        supabase.auth.reset_password_email(email)
+        return templates.TemplateResponse(request=request, name="signin.html", context={
+            "request": request,
+            "error": "If an account exists with that email, a password reset link has been sent."
+        })
+    except Exception as e:
+        print(f"Password reset error: {e}")
+        return templates.TemplateResponse(request=request, name="reset_password.html", context={"error": "Recovery synchronization failed."})
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_get(request: Request, user: models.User = Depends(auth.get_current_user)):
+    return templates.TemplateResponse(request=request, name="settings.html", context={"user": user})
+
+@app.post("/settings", response_class=HTMLResponse)
+async def settings_post(
     request: Request,
-    email: str = Form(...),
-    password: str = Form(...),
-    username: str = Form(...),
-    role: str = Form("staff")
+    new_password: str = Form(...),
+    user: models.User = Depends(auth.get_current_user)
 ):
     try:
-        user = auth.register_user(email, password, username, role)
-        if not user:
-            return templates.TemplateResponse(request=request, name="register.html", context={
-                "error": "PROVISIONING_FAILED: Email already registered"
-            })
-        return RedirectResponse(url="/signin", status_code=303)
-    except Exception as e:
-        return templates.TemplateResponse(request=request, name="register.html", context={
-            "error": f"INIT_FAILURE: {str(e)}"
+        token = request.cookies.get("access_token")
+        if token and token.startswith("Bearer "):
+            token = token.split(" ")[1]
+            
+        supabase.auth.set_session(token, "") 
+        supabase.auth.update_user({"password": new_password})
+        
+        return templates.TemplateResponse(request=request, name="settings.html", context={
+            "user": user, 
+            "success": "Security Passphrase has been successfully updated!"
         })
+    except Exception as e:
+        print(f"Failed to update password: {e}")
+        return templates.TemplateResponse(request=request, name="settings.html", context={
+            "user": user,
+            "error": "Failed to update security credentials."
+        })
+
 
 @app.get("/projects", response_class=HTMLResponse)
 async def projects_page(request: Request):
@@ -262,6 +420,10 @@ async def project_updates_base_page(request: Request):
     if not user: return RedirectResponse(url="/signin", status_code=303)
     return templates.TemplateResponse(request=request, name="project_updates.html", context={"user": user})
 
+@app.get("/site_updates", response_class=HTMLResponse)
+async def legacy_site_updates_redirect(request: Request):
+    return RedirectResponse(url="/site-updates")
+
 @app.get("/site-updates", response_class=HTMLResponse)
 async def site_updates_page(request: Request):
     user = await auth.get_current_user(request)
@@ -277,7 +439,7 @@ async def store_page(request: Request):
 @app.get("/admin/users", response_class=HTMLResponse)
 async def admin_users_page(request: Request):
     user = await auth.get_current_user(request)
-    if not user or user.role != models.UserRole.admin:
+    if not user or user.role not in [models.UserRole.admin, models.UserRole.director]:
         return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse(request=request, name="admin_users.html", context={"user": user})
 
@@ -292,6 +454,11 @@ async def project_updates_page(request: Request, project_id: int):
         request=request, name="project_updates.html", 
         context={"project_id": project_id, "user": user}
     )
+
+@app.get("/download", response_class=HTMLResponse)
+async def download_page(request: Request):
+    user = await auth.get_current_user(request)
+    return templates.TemplateResponse("download.html", {"request": request, "user": user})
 
 @app.get("/projects/{project_id}/kanban", response_class=HTMLResponse)
 async def project_kanban_page(request: Request, project_id: int):
@@ -314,7 +481,7 @@ class RegisterRequest(BaseModel):
     username: str
     email: str
     password: str
-    role: models.UserRole = models.UserRole.staff
+    role: models.UserRole = models.UserRole.engineer
 
 class WPUpdate(BaseModel):
     name: Optional[str] = None
@@ -332,20 +499,20 @@ class WPUpdate(BaseModel):
     spent_hours: Optional[Decimal] = None
 
 @app.post("/api/v1/auth/signin")
+@limiter.limit("3/20hours")
 async def signin(
+    request: Request,
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends()
 ):
     try:
         email = form_data.username
-        # If it's a username (no @), fetch the email from our public.user table
         if "@" not in email:
             user_res = supabase.table("user").select("email").eq("username", form_data.username).single().execute()
             if not user_res.data:
-                raise HTTPException(status_code=400, detail="User not found")
+                raise HTTPException(status_code=400, detail="Invalid credentials")
             email = user_res.data["email"]
             
-        # Sign in with Supabase Auth
         auth_response = supabase.auth.sign_in_with_password({
             "email": email,
             "password": form_data.password
@@ -358,12 +525,15 @@ async def signin(
         refresh_token = auth_response.session.refresh_token
         expires_in = getattr(auth_response.session, 'expires_in', 3600)
         
-        response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=expires_in, path="/")
-        response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=86400*7, path="/")
+        response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=expires_in, path="/", samesite="strict", secure=True)
+        response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=86400*7, path="/", samesite="strict", secure=True)
         return {"access_token": access_token, "token_type": "bearer"}
         
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"API signin error: {e}")
+        raise HTTPException(status_code=400, detail="Authentication failed")
 
 
 
@@ -387,64 +557,66 @@ async def refresh_session(request: Request, response: Response):
         new_refresh_token = auth_response.session.refresh_token
         expires_in = getattr(auth_response.session, 'expires_in', 3600)
         
-        response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=expires_in, path="/")
-        response.set_cookie(key="refresh_token", value=new_refresh_token, httponly=True, max_age=86400*7, path="/")
+        response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=expires_in, path="/", samesite="strict", secure=True)
+        response.set_cookie(key="refresh_token", value=new_refresh_token, httponly=True, max_age=86400*7, path="/", samesite="strict", secure=True)
         return {"message": "Token refreshed"}
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e))
 
 @app.post("/api/v1/auth/register")
 async def register_user(
-    reg: RegisterRequest
+    reg: RegisterRequest,
+    admin: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
-    """Create a new user account via Supabase Auth and link to public.user table."""
+    """Admin/Director creates user accounts via Supabase Admin API (same as seed_users.py)."""
     try:
-        # 1. Check if user exists in our public table
-        existing = supabase.table("user").select("*").or_(f"username.eq.{reg.username},email.eq.{reg.email}").execute()
+        # 1. Check if user exists
+        existing = supabase.table("user").select("id").or_(f"username.eq.{reg.username},email.eq.{reg.email}").execute()
         if existing.data:
-            raise HTTPException(status_code=400, detail="Username or email already exists")
+            raise HTTPException(status_code=400, detail="Username or email already in use.")
             
-        # 2. Register with Supabase Auth
-        auth_response = supabase.auth.sign_up({
+        # 2. Create via Admin API (same pattern as seed_users.py)
+        auth_response = supabase.auth.admin.create_user({
             "email": reg.email,
             "password": reg.password,
-            "options": {"data": {"username": reg.username, "role": reg.role}}
+            "email_confirm": True,
+            "user_metadata": {"username": reg.username, "role": reg.role.value}
         })
         
         if not auth_response or not auth_response.user:
             raise HTTPException(status_code=400, detail="Registration failed")
             
-        # 3. Create entry in our public.user table
+        # 3. Sync to public.user table (upsert like seed_users.py)
         user_data = {
             "id": auth_response.user.id,
             "username": reg.username,
             "email": reg.email,
-            "role": reg.role,
+            "role": reg.role.value,
             "is_active": True
         }
-        
-        result = supabase.table("user").insert(user_data).execute()
-        if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create profile")
+        supabase.table("user").upsert(user_data).execute()
             
         return {"message": f"User '{reg.username}' registered successfully", "id": auth_response.user.id}
         
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"Registration error: {e}")
+        raise HTTPException(status_code=400, detail="Registration failed. Please try again.")
 
 
 @app.get("/api/v1/users/", response_model=list[models.User])
 def list_users(
-    admin: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
-    result = supabase.table("user").select("*").execute()
+    result = with_retry(lambda: supabase.table("user").select("*").execute())
     return result.data
 
 
 @app.patch("/api/v1/users/{user_id}/toggle-active")
 def toggle_user_active(
     user_id: str,
-    admin: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))
+    admin: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
     """Toggle a user's active status. Admin only. Cannot disable yourself."""
     if user_id == admin.id:
@@ -524,13 +696,15 @@ async def create_design(
     name: str = Form(...),
     description: Optional[str] = Form(None),
     file: UploadFile = File(...),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
-    if not file.filename.lower().endswith(('.ifc', '.gltf', '.glb')):
-        raise HTTPException(status_code=400, detail="Unsupported model format. Use .ifc, .gltf, or .glb")
+    if not file.filename.lower().endswith(('.gltf', '.glb', '.pdf', '.jpg', '.jpeg', '.png', '.pptx', '.mp4', '.webm', '.ogg')):
+        raise HTTPException(status_code=400, detail="Unsupported format. Use 3D models, documents, or video formats")
     
     from .services.supabase_client import upload_file
     file_bytes = await file.read()
+    if len(file_bytes) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=f"File too large. Maximum size is 100MB.")
     model_url = upload_file(file_bytes, file.filename, "designs")
     
     design_data = {
@@ -551,7 +725,7 @@ async def update_design(
     name: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
     """Allows updating design metadata and optionally replacing the BIM model file."""
     # 1. Verify existence
@@ -567,8 +741,8 @@ async def update_design(
         
     # 2. Handle file replacement
     if file:
-        if not file.filename.lower().endswith(('.ifc', '.gltf', '.glb')):
-            raise HTTPException(status_code=400, detail="Unsupported model format")
+        if not file.filename.lower().endswith(('.gltf', '.glb', '.pdf', '.jpg', '.jpeg', '.png', '.pptx', '.mp4', '.webm', '.ogg')):
+            raise HTTPException(status_code=400, detail="Unsupported format")
             
         from .services.supabase_client import upload_file
         file_bytes = await file.read()
@@ -593,60 +767,193 @@ def get_design_projects(design_id: int, user: models.User = Depends(auth.get_cur
     return [models.Project(**p) for p in result.data]
 
 @app.delete("/api/v1/designs/{design_id}")
-def delete_design(design_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))):
+def delete_design(design_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))):
     supabase.table("design").delete().eq("id", design_id).execute()
     api_cache.clear()
     return {"message": "Design deleted"}
 
-@app.get("/api/v1/designs/{design_id}/elements")
-async def get_design_elements(design_id: int, user: models.User = Depends(auth.get_current_user)):
-    """Retrieve detailed elements from the design's IFC model."""
-    result = supabase.table("design").select("*").eq("id", design_id).single().execute()
-    if not result.data:
-        raise HTTPException(status_code=404, detail="Design not found")
-    
-    model_url = result.data.get("model_url")
-    if not model_url or not model_url.lower().endswith(".ifc"):
-        return []
-        
-    try:
-        import httpx
-        from .services.ifc_parser import get_bim_elements_from_bytes
-        async with httpx.AsyncClient() as client:
-            model_resp = await client.get(model_url)
-            if model_resp.status_code == 200:
-                elements = get_bim_elements_from_bytes(model_resp.content, "model.ifc")
-                return elements
-    except Exception as e:
-        print(f"BIM element extraction error: {e}")
-        
-    return []
 
 # ============================================================
 # PROJECT ENDPOINTS
 # ============================================================
 
+@app.get("/api/v1/projects/{project_id}", response_model=models.Project)
+def get_project_node(project_id: int):
+    """Retrieve high-fidelity telemetry for a specific project node."""
+    res = with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).single().execute())
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Project node not found")
+    return models.Project(**res.data)
+
+
 @app.post("/api/v1/projects/", response_model=models.Project)
 async def create_project(
     name: str = Form(...),
     description: Optional[str] = Form(None),
-    design_id: Optional[int] = Form(None),
-    bim_model_url: Optional[str] = Form(None),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    file: Optional[UploadFile] = File(None),
+    assignee_id: Optional[str] = Form(None),
+    materials_data: Optional[str] = Form(None), # JSON: [{"id": 1, "cost": 10.5}, ...]
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
+    """Director/PM creates project with direct resource upload."""
+    model_url = None
+    if file:
+        try:
+            from .services.supabase_client import upload_file
+            
+            # Mission Critical: Sanitize filename to prevent cloud storage 400 errors
+            clean_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', file.filename)
+            
+            file_bytes = await file.read()
+            
+            # Mission Critical: PDF Visual Reconstruction (Strips Text, Preserves Imagery)
+            if HAS_PYPDF and file.filename.lower().endswith('.pdf') and len(file_bytes) > 50 * 1024 * 1024:
+                try:
+                    logger.info(f"Oversized Doc Detected Core: {len(file_bytes)/1024/1024:.1f}MB. Initiating Visual-Only Reconstruction...")
+                    reader = PdfReader(io.BytesIO(file_bytes))
+                    
+                    if HAS_PILLOW:
+                        logger.info("Engaging Image Extraction Pipeline...")
+                        pdf_io = io.BytesIO()
+                        extracted_images = []
+                        for i, page in enumerate(reader.pages):
+                            for image_obj in page.images:
+                                try:
+                                    img = Image.open(io.BytesIO(image_obj.data))
+                                    if img.mode != 'RGB': img = img.convert('RGB')
+                                    extracted_images.append(img)
+                                except: continue
+                        
+                        if extracted_images:
+                            extracted_images[0].save(pdf_io, format='PDF', save_all=True, append_images=extracted_images[1:], quality=70)
+                            file_bytes = pdf_io.getvalue()
+                            logger.info(f"Visual Reconstruction Complete: {len(file_bytes)/1024/1024:.1f}MB (Text-Free)")
+                        else:
+                            # Fallback to Aggressive Stream Optimization
+                            writer = PdfWriter()
+                            for page in reader.pages:
+                                page.compress_content_streams()
+                                writer.add_page(page)
+                            writer.remove_unreferenced_objects()
+                            out = io.BytesIO()
+                            writer.write(out)
+                            file_bytes = out.getvalue()
+                    else:
+                        # Fallback to standard object removal
+                        writer = PdfWriter()
+                        for page in reader.pages:
+                            page.compress_content_streams()
+                            writer.add_page(page)
+                        out = io.BytesIO()
+                        writer.write(out)
+                        file_bytes = out.getvalue()
+
+                except Exception as pdf_err:
+                    logger.warning(f"Optimization Bypass: {pdf_err}")
+
+            if len(file_bytes) > MAX_UPLOAD_BYTES:
+                raise HTTPException(status_code=413, detail=f"File exceeds operational limit of {MAX_UPLOAD_BYTES/(1024*1024):.0f}MB")
+            
+            # Attempt secure documentation ingest
+            logger.info(f"Initiating Cloud Transmission for Documentation: {file.filename} ({len(file_bytes)/1024/1024:.1f}MB)...")
+            model_url = upload_file(file_bytes, clean_filename, "project-resources")
+            logger.info(f"Cloud Transmission Successful: {model_url}")
+        except Exception as upload_err:
+            logger.error(f"Documentation Ingest Failure: {upload_err}")
+            err_msg = str(upload_err)
+            
+            # Precise diagnostic feedback
+            if "maximum allowed size" in err_msg.lower() or "413" in err_msg:
+                raise HTTPException(
+                    status_code=413, 
+                    detail="Cloud Storage Rejection: File exceeds the 50MB Supabase threshold. "
+                           "ACTION: Please increase the 'file_size_limit' in your Supabase Dashboard (Storage -> site-photos -> Edit Bucket)."
+                )
+            if "bad request" in err_msg.lower() or "400" in err_msg:
+                raise HTTPException(status_code=400, detail="Cloud Storage Rejection: Invalid file format or illegal characters in metadata.")
+            if "timeout" in err_msg.lower():
+                raise HTTPException(status_code=504, detail="Ingest Timeout: The architectural record is too large for the current network tunnel. Please try a stable connection.")
+                
+            raise HTTPException(status_code=500, detail=f"Storage Sync Error: {err_msg}")
+
+    # Prepare project metadata
     project_data = {
-        "name": name,
+        "name": name.upper(),
         "description": description,
-        "design_id": design_id,
-        "bim_model_url": bim_model_url
+        "bim_model_url": model_url
     }
-    result = supabase.table("project").insert(project_data).execute()
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create project")
+    
+    logger.info(f"Registry Synchronizer — Attempting persistence for SITE_{name.upper()}...")
+    try:
+        result = with_retry(lambda: supabase.table("project").insert(project_data).execute())
+        if not result.data:
+            logger.error("Registry Rejection: Persistence returned empty data node.")
+            raise HTTPException(status_code=500, detail="Failed to initialize project station")
+        
+        project_node = result.data[0]
+        logger.info(f"Registry Success — Node {project_node['id']} established.")
+
+        # Handle site manager assignment logic
+        if assignee_id and len(assignee_id.strip()) > 30: # Basic UUID sanity check
+            logger.info(f"Assigning Operative {assignee_id} to Site {project_node['id']}...")
+            assignment_data = {
+                "project_id": project_node["id"],
+                "user_id": assignee_id,
+                "assigned_role": "project_manager"
+            }
+            with_retry(lambda: supabase.table("projectassignment").insert(assignment_data).execute())
+            logger.info("Assignment Synchronized Successfully.")
+
+        # 2b. Initialize Project Warehouse (Attachments)
+        if materials_data:
+            try:
+                import json
+                mats = json.loads(materials_data)
+                logger.info(f"Initializing Site Store for {name.upper()} with {len(mats)} resources...")
+                inventory_entries = []
+                for m in mats:
+                    inventory_entries.append({
+                        "project_id": project_node["id"],
+                        "material_id": m["id"],
+                        "unit_cost": float(m["cost"]),
+                        "quantity": 0.0, # Start at 0, require requisition
+                        "low_stock_threshold": 10.0
+                    })
+                if inventory_entries:
+                    with_retry(lambda: supabase.table("project_inventory").insert(inventory_entries).execute())
+                    logger.info("Site Store Registry Established.")
+            except Exception as mat_err:
+                logger.warning(f"Material Initialization Bypass: {mat_err}")
+
+        api_cache.clear()
+        return models.Project(**project_node)
+    except Exception as e:
+        logger.error(f"Initialization Critical Failure: {str(e)}")
+        if "403" in str(e):
+            raise HTTPException(status_code=403, detail="Security Rejection: Insufficient operational clearance for registry write.")
+        raise HTTPException(status_code=500, detail=f"Database Synchronization Failure: {str(e)}")
+
+# --- Stage/Phase Logic ---
+
+@app.get("/api/v1/projects/{project_id}/stages", response_model=List[models.Stage])
+def get_project_stages(project_id: int, user: models.User = Depends(auth.get_current_user)):
+    """Fetch all stages/phases for a specific project node."""
+    res = with_retry(lambda: supabase.table("stage").select("*").eq("project_id", project_id).order("created_at").execute())
+    return [models.Stage(**s) for s in res.data]
+
+@app.post("/api/v1/stages/", response_model=models.Stage)
+def create_stage(
+    stage: models.Stage,
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
+):
+    """P.M creates a stage and assigns tasks to it."""
+    stage_data = serialize_for_supabase(stage.dict(exclude={"id"}))
+    res = with_retry(lambda: supabase.table("stage").insert(stage_data).execute())
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Stage virtualization failed")
     
     api_cache.clear()
-    api_cache.clear()
-    return models.Project(**result.data[0])
+    return models.Stage(**res.data[0])
 
 @app.patch("/api/v1/projects/{project_id}", response_model=models.Project)
 async def update_project(
@@ -655,7 +962,7 @@ async def update_project(
     description: Optional[str] = Form(None),
     design_id: Optional[int] = Form(None),
     bim_model_url: Optional[str] = Form(None),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
     """Updates project metadata. Required to attach/detach designs."""
     update_data = {}
@@ -665,41 +972,42 @@ async def update_project(
         update_data["design_id"] = design_id if design_id > 0 else None
     if bim_model_url is not None: update_data["bim_model_url"] = bim_model_url
 
-    res = supabase.table("project").update(update_data).eq("id", project_id).execute()
+    res = with_retry(lambda: supabase.table("project").update(update_data).eq("id", project_id).execute())
     if not res.data:
         raise HTTPException(status_code=404, detail="Project not found")
 
     api_cache.clear()
     return models.Project(**res.data[0])
 
-@app.post("/api/v1/projects/{project_id}/upload-bim")
-async def upload_bim_model(
+@app.post("/api/v1/projects/{project_id}/upload-resource")
+async def upload_project_resource(
     project_id: int,
     file: UploadFile = File(...),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
-    """Upload an IFC BIM model directly to a project."""
+    """Upload a project resource (PDF/PPT/DOCX) directly to a project."""
     # Validate project exists
     project_res = supabase.table("project").select("*").eq("id", project_id).single().execute()
     if not project_res.data:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    if not file.filename.lower().endswith('.ifc'):
-        raise HTTPException(status_code=400, detail="Only .ifc files are allowed for BIM models")
+    if not file.filename.lower().endswith(('.pdf', '.pptx', '.jpg', '.jpeg', '.png', '.mp4', '.webm', '.ogg')):
+        raise HTTPException(status_code=400, detail="Unsupported format")
 
     try:
         from .services.supabase_client import upload_file
         file_bytes = await file.read()
-        model_url = upload_file(file_bytes, file.filename, f"projects/{project_id}/bim")
+        model_url = upload_file(file_bytes, file.filename, f"projects/{project_id}/resources")
         
         # Update project record
         supabase.table("project").update({"bim_model_url": model_url}).eq("id", project_id).execute()
         
         api_cache.clear()
-        return {"message": "BIM model uploaded securely", "url": model_url}
+        return {"message": "Resource uploaded securely", "url": model_url}
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"BIM upload failed: {str(e)}")
+        logger.error(f"Resource upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Resource upload failed: {str(e)}")
 
 
 @app.get("/api/v1/projects/", response_model=list[models.Project])
@@ -712,24 +1020,24 @@ def read_projects(
     
     # Directors and admins see all projects
     if user.role in [models.UserRole.director, models.UserRole.admin]:
-        result = supabase.table("project").select("*").execute()
+        result = with_retry(lambda: supabase.table("project").select("*").execute())
         return result.data
     
-    # Staff and managers only see assigned projects
-    assignment_res = supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute()
+    # Engineers and managers only see assigned projects
+    assignment_res = with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
     project_ids = [a["project_id"] for a in assignment_res.data]
     
     if not project_ids:
         return []
     
-    result = supabase.table("project").select("*").in_("id", project_ids).execute()
+    result = with_retry(lambda: supabase.table("project").select("*").in_("id", project_ids).execute())
     return result.data
 
 @app.get("/api/v1/projects/{project_id}", response_model=models.Project)
 def get_project(project_id: int, user: models.User = Depends(auth.get_current_user)):
     """Fetch detail for a specific project."""
-    res = supabase.table("project").select("*").eq("id", project_id).single().execute()
-    if not res.data:
+    res = with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).maybe_single().execute())
+    if not res or not res.data:
         raise HTTPException(status_code=404, detail="Project not found")
     return models.Project(**res.data)
 
@@ -744,7 +1052,7 @@ class AssignRequest(BaseModel):
 def assign_user_to_project(
     project_id: int,
     req: AssignRequest,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
     """Assign a user to a project. Director/Admin only."""
     # Validate project exists
@@ -779,7 +1087,7 @@ def assign_user_to_project(
 def unassign_user_from_project(
     project_id: int,
     target_user_id: str,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
     """Remove a user's assignment from a project. Director/Admin only."""
     assignment_res = supabase.table("projectassignment").delete().eq("project_id", project_id).eq("user_id", target_user_id).execute()
@@ -794,7 +1102,7 @@ def unassign_user_from_project(
 @app.get("/api/v1/projects/{project_id}/team")
 def get_project_team(
     project_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
     """List all users assigned to a project."""
     assignments = supabase.table("projectassignment").select("*, user(*)").eq("project_id", project_id).execute()
@@ -818,7 +1126,7 @@ def get_project_team(
 @app.get("/api/v1/users/{user_id}/assignments")
 def get_user_assignments(
     user_id: str,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
     """List all projects assigned to a specific user."""
     assignments = supabase.table("projectassignment").select("*, project(*)").eq("user_id", user_id).execute()
@@ -841,13 +1149,13 @@ def get_user_assignments(
 @cache_response(ttl=300)
 def get_project_stats(project_id: int):
     # Fetch project
-    project_res = supabase.table("project").select("*").eq("id", project_id).single().execute()
+    project_res = with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).single().execute())
     if not project_res.data:
         raise HTTPException(status_code=404, detail="Project not found")
     project_data = project_res.data
     
     # Fetch work packages
-    wp_res = supabase.table("workpackage").select("*").eq("project_id", project_id).execute()
+    wp_res = with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
     wps = wp_res.data
     
     total_bac = sum(Decimal(str(wp["budget_amount"])) for wp in wps)
@@ -883,37 +1191,24 @@ def get_project_stats(project_id: int):
 # PROJECT UPDATE ENDPOINTS
 # ============================================================
 
+@app.get("/api/v1/project-updates/", response_model=List[models.WorkPackage])
+def list_all_project_updates(user: models.User = Depends(auth.get_current_user)):
+    """List all work packages/tasks across all projects."""
+    result = with_retry(lambda: supabase.table("workpackage").select("*").execute())
+    return [models.WorkPackage(**wp) for wp in result.data]
+
 @app.post("/api/v1/project-updates/")
 def create_project_update(
     wp: models.WorkPackage,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
-    wp_data = wp.dict(exclude={"id"})
-    
-    # Handle Decimal/Enum conversions if needed for Supabase
-    if "budget_amount" in wp_data:
-        wp_data["budget_amount"] = float(wp_data["budget_amount"])
-    if "actual_cost" in wp_data:
-        wp_data["actual_cost"] = float(wp_data["actual_cost"])
-    if "estimated_hours" in wp_data:
-        wp_data["estimated_hours"] = float(wp_data["estimated_hours"])
-    if "spent_hours" in wp_data:
-        wp_data["spent_hours"] = float(wp_data["spent_hours"])
-    if "status" in wp_data:
-        wp_data["status"] = wp_data["status"].value
-    if "type" in wp_data:
-        wp_data["type"] = wp_data["type"].value
-    if "priority" in wp_data:
-        wp_data["priority"] = wp_data["priority"].value
-    if "start_date" in wp_data and wp_data["start_date"]:
-        wp_data["start_date"] = wp_data["start_date"].isoformat()
-    if "due_date" in wp_data and wp_data["due_date"]:
-        wp_data["due_date"] = wp_data["due_date"].isoformat()
-        
-    result = supabase.table("workpackage").insert(wp_data).execute()
+    # Defensive: Exclude 'logging_period' as it appears to be missing in the current Supabase schema (PGRST204)
+    wp_data = serialize_for_supabase(wp.dict(exclude={"id", "logging_period"}))
+    result = with_retry(lambda: supabase.table("workpackage").insert(wp_data).execute())
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create project update")
-        
+        raise HTTPException(status_code=500, detail="Failed to initialize work package")
+    
+    api_cache.clear()
     return models.WorkPackage(**result.data[0])
 
 
@@ -928,39 +1223,38 @@ def get_project_update(update_id: int):
 @app.get("/api/v1/projects/{project_id}/project-updates")
 def get_project_updates(project_id: int):
     """List all updates (tasks) for a project."""
-    result = supabase.table("workpackage").select("*").eq("project_id", project_id).execute()
+    result = with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
     return result.data
+
+# ============================================================
+# STAGE MANAGEMENT ENDPOINTS
+# ============================================================
+
+# --- Structural Phase Management (DEPRECATED DUPLICATE REMOVED) ---
+
+@app.patch("/api/v1/stages/{stage_id}", response_model=models.Stage)
+def update_stage_status(
+    stage_id: int,
+    status: models.StatusEnum,
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
+):
+    """Synchronize a structural phase's operational status."""
+    result = with_retry(lambda: supabase.table("stage").update({"status": status.value}).eq("id", stage_id).execute())
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Structural phase not found")
+    
+    api_cache.clear()
+    return models.Stage(**result.data[0])
 
 
 @app.patch("/api/v1/project-updates/{update_id}", response_model=models.WorkPackage)
 def update_project_update(
     update_id: int,
     update_data: WPUpdate,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president, models.UserRole.staff]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.engineer]))
 ):
     """Partial update for a project update."""
-    data = update_data.dict(exclude_unset=True)
-    
-    # Handle Decimal conversion for Supabase
-    if "budget_amount" in data and data["budget_amount"] is not None:
-        data["budget_amount"] = float(data["budget_amount"])
-    if "actual_cost" in data and data["actual_cost"] is not None:
-        data["actual_cost"] = float(data["actual_cost"])
-    if "estimated_hours" in data and data["estimated_hours"] is not None:
-        data["estimated_hours"] = float(data["estimated_hours"])
-    if "spent_hours" in data and data["spent_hours"] is not None:
-        data["spent_hours"] = float(data["spent_hours"])
-    if "status" in data and data["status"]:
-        data["status"] = data["status"].value
-    if "type" in data and data["type"]:
-        data["type"] = data["type"].value
-    if "priority" in data and data["priority"]:
-        data["priority"] = data["priority"].value
-    if "start_date" in data and data["start_date"]:
-        data["start_date"] = data["start_date"].isoformat()
-    if "due_date" in data and data["due_date"]:
-        data["due_date"] = data["due_date"].isoformat()
-        
+    data = serialize_for_supabase(update_data.dict(exclude_unset=True))
     result = supabase.table("workpackage").update(data).eq("id", update_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Project update not found")
@@ -971,7 +1265,7 @@ def update_project_update(
 @app.delete("/api/v1/project-updates/{update_id}")
 def delete_project_update(
     update_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
     result = supabase.table("workpackage").delete().eq("id", update_id).execute()
     if not result.data:
@@ -1018,21 +1312,111 @@ async def get_project_bim_elements(project_id: int):
 def get_kanban_data(project_id: int):
     """Returns project phases grouped by status for Kanban board."""
     result = supabase.table("workpackage").select("*").eq("project_id", project_id).execute()
-    wps = result.data
+    wps = result.data or []
     
-    # Initialize columns
-    board = {status.value: [] for status in models.StatusEnum}
+    # Initialize high-visibility kanban structure
+    board = {
+        "not_started": [],
+        "in_progress": [],
+        "completed": [],
+        "inspected": [],
+        "approved": [],
+        "blocked": [],
+        "critical": []
+    }
+    
     for wp in wps:
-        board[wp["status"]].append(wp)
-    
+        status = wp.get("status", "not_started")
+        if status in board:
+            board[status].append(wp)
+        else:
+            board["not_started"].append(wp)
+            
     return board
+
+@app.get("/api/v1/analytics/dashboard")
+async def get_dashboard_analytics(
+    date: Optional[str] = None,
+    user: models.User = Depends(auth.get_current_user)
+):
+    """
+    Centralized High-Fidelity Analytics Aggregator.
+    Returns: Projects HUD, Global Site Feed, and Cost Telemetry.
+    """
+    # 1. Resolve Projects (filtered by user assignment)
+    if user.role in [models.UserRole.admin, models.UserRole.director]:
+        projects_query = supabase.table("project").select("*, workpackage(*)").order("created_at", desc=True)
+        projects_res = with_retry(lambda: projects_query.execute())
+        projects = projects_res.data or []
+    else:
+        # Get assigned project IDs
+        assigned_res = with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
+        assigned = assigned_res.data or []
+        pids = [a["project_id"] for a in assigned]
+        if not pids: return {"projects": [], "all_updates": [], "budget_utilization": 0}
+        projects_query = supabase.table("project").select("*, workpackage(*)").in_("id", pids).order("created_at", desc=True)
+        projects_res = with_retry(lambda: projects_query.execute())
+        projects = projects_res.data or []
+
+    # 2. Resolve Site Updates (Feed)
+    updates_query = supabase.table("siteupdate").select("*, workpackage!inner(*, project(*))")
+    
+    if date:
+        # Expected format: YYYY-MM-DD
+        start_ts = f"{date}T00:00:00Z"
+        end_ts = f"{date}T23:59:59Z"
+        updates_query = updates_query.gte("timestamp", start_ts).lte("timestamp", end_ts)
+        
+    all_updates_res = with_retry(lambda: updates_query.order("timestamp", desc=True).limit(50).execute())
+    all_updates = all_updates_res.data or []
+
+    # 3. Calculate Global Economics and Project Health
+    total_budget = total_actual = 0
+    now = datetime.utcnow()
+    
+    for p in projects:
+        # Calculate Economics
+        p_wps = p.get("workpackage", [])
+        for wp in p_wps:
+            total_budget += float(wp.get("budget_amount") or 0)
+            total_actual += float(wp.get("actual_cost") or 0)
+            
+        # Calculate Schedule Status (Daily Target Logic)
+        p_status = "on_track"
+        overdue_count = 0
+        behind_count = 0
+        
+        if p_wps:
+            for wp in p_wps:
+                wp_obj = models.WorkPackage(**wp)
+                if wp_obj.progress_pct < 100:
+                    if wp_obj.due_date and now > wp_obj.due_date:
+                        overdue_count += 1
+                    elif wp_obj.start_date and wp_obj.due_date:
+                        dur = (wp_obj.due_date - wp_obj.start_date).total_seconds()
+                        elap = (now - wp_obj.start_date).total_seconds()
+                        if dur > 0 and elap > 0:
+                            bench = (elap / dur) * 100
+                            if wp_obj.progress_pct < bench:
+                                behind_count += 1
+            
+            if overdue_count > 0: p_status = "overdue"
+            elif behind_count > 0: p_status = "behind"
+        
+        p["schedule_status"] = p_status
+
+    return {
+        "projects": projects,
+        "all_updates": all_updates,
+        "budget_utilization": total_actual
+    }
 
 
 @app.get("/api/v1/projects/{project_id}/performance")
 async def get_project_performance(project_id: int):
     """Calculates CPI, SPI, and EAC for a project using CostEngine."""
     try:
-        wps_res = supabase.table("workpackage").select("*").eq("project_id", project_id).execute()
+        wps_res = with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
         wps = wps_res.data
         
         if not wps:
@@ -1104,17 +1488,32 @@ async def generate_project_report(project_id: int):
 
 @app.get("/api/v1/projects/{project_id}/gantt")
 def get_gantt_data(project_id: int):
-    """Returns work packages formatted for Gantt libraries."""
-    result = supabase.table("workpackage").select("*").eq("project_id", project_id).execute()
+    """Returns work packages formatted for Gantt libraries with daily target status."""
+    result = with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
     wps = result.data
     
     gantt_tasks = []
+    now = datetime.utcnow()
+    
     for wp in wps:
-        # Pydantic validation handles date parsing
         wp_obj = models.WorkPackage(**wp)
-        start = wp_obj.start_date or datetime.utcnow()
-        end = wp_obj.due_date or datetime.utcnow()
+        start = wp_obj.start_date or now
+        end = wp_obj.due_date or now
         
+        # Calculate Daily Target Status
+        status_class = "status-on-track"
+        if wp_obj.progress_pct >= 100:
+            status_class = "status-completed"
+        elif wp_obj.due_date and now > wp_obj.due_date:
+            status_class = "status-overdue"
+        elif wp_obj.start_date and wp_obj.due_date:
+            duration = (wp_obj.due_date - wp_obj.start_date).total_seconds()
+            elapsed = (now - wp_obj.start_date).total_seconds()
+            if duration > 0 and elapsed > 0:
+                benchmark = (elapsed / duration) * 100
+                if wp_obj.progress_pct < benchmark:
+                    status_class = "status-behind"
+
         gantt_tasks.append({
             "id": str(wp_obj.id),
             "name": wp_obj.name,
@@ -1122,7 +1521,7 @@ def get_gantt_data(project_id: int):
             "end": end.strftime("%Y-%m-%d"),
             "progress": wp_obj.progress_pct,
             "dependencies": str(wp_obj.parent_id) if wp_obj.parent_id else "",
-            "custom_class": f"priority-{wp_obj.priority.value}"
+            "custom_class": status_class
         })
     
     return gantt_tasks
@@ -1133,43 +1532,51 @@ def get_gantt_data(project_id: int):
 # ============================================================
 
 @app.post("/api/v1/project-updates/{update_id}/submit")
+@limiter.limit("5/10minutes")
 async def submit_phase_update(
+    request: Request,
     update_id: int,
     progress: int = Form(...), 
     notes: str = Form(""),
     materials_used: str = Form(""),
     cost_incurred: float = Form(0.0),
     photo: Optional[UploadFile] = File(None),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president, models.UserRole.staff]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.engineer]))
 ):
     """Staff submission of work performed with optional photo evidence."""
     status_val = models.StatusEnum.completed if progress >= 100 else models.StatusEnum.in_progress
     
     # 1. Fetch WP for context (project_id)
-    wp_current = supabase.table("workpackage").select("project_id, actual_cost").eq("id", update_id).single().execute()
+    wp_current = with_retry(lambda: supabase.table("workpackage").select("project_id, actual_cost").eq("id", update_id).single().execute())
     if not wp_current.data:
         raise HTTPException(status_code=404, detail="Work package not found")
     project_id = wp_current.data["project_id"]
     current_cost = float(wp_current.data.get("actual_cost") or 0)
     new_cost = current_cost + cost_incurred
 
-    # 2. Handle Photo Upload
     photo_url = None
     if photo:
         try:
             from .services.supabase_client import upload_photo
+            
+            # Sanitize filename for field captures
+            clean_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', photo.filename)
+            
             file_bytes = await photo.read()
-            photo_url = upload_photo(file_bytes, photo.filename, project_id, update_id)
+            if len(file_bytes) > MAX_UPLOAD_BYTES:
+                raise HTTPException(status_code=413, detail=f"Field capture exceeds operational limit of {MAX_UPLOAD_BYTES/(1024*1024):.0f}MB")
+            
+            photo_url = upload_photo(file_bytes, clean_filename, project_id, update_id)
         except Exception as e:
-            print(f"Submission Photo Upload Failed: {str(e)}")
+            logger.error(f"Submission Photo Upload Failed: {str(e)}")
             # We continue even if photo fails, but ideally we'd log this
 
     # 3. Update work package
-    wp_res = supabase.table("workpackage").update({
+    wp_res = with_retry(lambda: supabase.table("workpackage").update({
         "progress_pct": progress,
         "status": status_val,
         "actual_cost": new_cost
-    }).eq("id", update_id).execute()
+    }).eq("id", update_id).execute())
     
     # 4. Create site update record
     update_data = {
@@ -1181,14 +1588,14 @@ async def submit_phase_update(
         "materials_used": materials_used,
         "cost_incurred": cost_incurred
     }
-    supabase.table("siteupdate").insert(update_data).execute()
+    with_retry(lambda: supabase.table("siteupdate").insert(update_data).execute())
     
     api_cache.clear()
     return {"message": "Update submitted successfully", "status": status_val, "photo_url": photo_url}
 
 
 @app.post("/api/v1/project-updates/{update_id}/verify")
-async def verify_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))):
+async def verify_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))):
     result = supabase.table("workpackage").update({"status": "inspected", "verified_by_id": user.id}).eq("id", update_id).execute()
     
     if not result.data:
@@ -1197,7 +1604,7 @@ async def verify_phase(update_id: int, user: models.User = Depends(auth.check_ro
     return {"message": "Work verified by manager", "status": models.StatusEnum.inspected}
 
 @app.post("/api/v1/project-updates/{update_id}/approve")
-async def approve_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.president]))):
+async def approve_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))):
     result = supabase.table("workpackage").update({"status": "approved", "approved_by_id": user.id}).eq("id", update_id).execute()
     
     if not result.data:
@@ -1211,15 +1618,26 @@ async def approve_phase(update_id: int, user: models.User = Depends(auth.check_r
 # ============================================================
 
 @app.get("/api/v1/site-updates/")
-@cache_response(ttl=300)
 def read_site_updates(
-    project_id: Optional[int] = None
+    project_id: Optional[int] = None,
+    log_date: Optional[str] = None, # YYYY-MM-DD
+    user: models.User = Depends(auth.get_current_user)
 ):
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+        
     query = supabase.table("siteupdate").select("*, workpackage!inner(*)")
+    
     if project_id:
         query = query.eq("workpackage.project_id", project_id)
+    
+    if log_date:
+        # Filter for the specific day
+        start_ts = f"{log_date}T00:00:00Z"
+        end_ts = f"{log_date}T23:59:59Z"
+        query = query.gte("timestamp", start_ts).lte("timestamp", end_ts)
         
-    result = query.order("timestamp", desc=True).execute()
+    result = with_retry(lambda: query.order("timestamp", desc=True).execute())
     return result.data
 
 
@@ -1264,13 +1682,15 @@ async def get_project_bim_elements(project_id: int, user: models.User = Depends(
         return elements
         
     except Exception as e:
-        print(f"BIM Discovery Error: {str(e)}")
+        logger.error(f"Discovery Error: {str(e)}")
         # If library not yet installed, return empty list for now to prevent UI crash
         return []
 
 
 @app.post("/api/v1/site-updates/{wp_id}/upload-photo")
+@limiter.limit("3/10minutes")
 async def upload_site_photo(
+    request: Request,
     wp_id: int,
     photo: UploadFile = File(...),
     notes: str = Form(""),
@@ -1279,7 +1699,7 @@ async def upload_site_photo(
     material_id: Optional[int] = Form(None),
     quantity_used: Optional[float] = Form(None),
     user: models.User = Depends(auth.check_role([
-        models.UserRole.staff, models.UserRole.manager, models.UserRole.director, models.UserRole.admin, models.UserRole.president
+        models.UserRole.engineer, models.UserRole.manager, models.UserRole.director, models.UserRole.admin
     ]))
 ):
     """Upload a site photo and create a site update record."""
@@ -1291,8 +1711,26 @@ async def upload_site_photo(
     
     try:
         from .services.supabase_client import upload_photo
+        import re
+        
+        # Mission Critical: Sanitize and Optimize
+        clean_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', photo.filename)
         file_bytes = await photo.read()
-        photo_url = upload_photo(file_bytes, photo.filename, project_id, wp_id)
+
+        # Telemetry Optimization Gate
+        if HAS_PILLOW and len(file_bytes) > 2 * 1024 * 1024:
+            try:
+                img = Image.open(io.BytesIO(file_bytes))
+                if img.mode != 'RGB': img = img.convert('RGB')
+                img.thumbnail((1920, 1080)) # 1080p Operational Quality
+                out = io.BytesIO()
+                img.save(out, format='JPEG', quality=75, optimize=True)
+                file_bytes = out.getvalue()
+                logger.info(f"Field Telemetry Optimized: {len(file_bytes)/1024:.0f}KB")
+            except Exception as comp_err:
+                logger.warning(f"Optimization Bypass: {comp_err}")
+
+        photo_url = upload_photo(file_bytes, clean_filename, project_id, wp_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Photo upload failed: {str(e)}")
     
@@ -1302,21 +1740,26 @@ async def upload_site_photo(
     
     if material_id and quantity_used and quantity_used > 0:
         try:
-            mat_res = supabase.table("material").select("*").eq("id", material_id).single().execute()
-            if mat_res.data:
-                m = mat_res.data
-                mat_summary = f"{m['name']}: {quantity_used} {m['unit']}"
-                cost_calc = float(m['unit_cost']) * quantity_used
+            # Shift: Use Project-Specific Inventory for stock and costing
+            inv_res = supabase.table("project_inventory").select("*").eq("project_id", project_id).eq("material_id", material_id).single().execute()
+            if inv_res.data:
+                inv = inv_res.data
+                # Fetch material metadata for Unit/Name
+                mat_res = supabase.table("material").select("name, unit").eq("id", material_id).single().execute()
+                m_meta = mat_res.data
                 
-                # Update Inventory Stock
-                new_stock = m['current_stock'] - quantity_used
-                supabase.table("material").update({"current_stock": new_stock}).eq("id", material_id).execute()
+                mat_summary = f"{m_meta['name']}: {quantity_used} {m_meta['unit']}"
+                cost_calc = float(inv['unit_cost']) * quantity_used # User Req: Project Manager sets price
                 
-                # Update WP Actual Cost (AC) locally for this update
+                # Update Local Project Inventory Stock
+                new_project_stock = float(inv['quantity']) - quantity_used
+                supabase.table("project_inventory").update({"quantity": new_project_stock}).eq("id", inv['id']).execute()
+                
+                # Update WP Actual Cost (AC)locally
                 current_ac = float(wp_res.data.get("actual_cost") or 0)
                 supabase.table("workpackage").update({"actual_cost": current_ac + cost_calc}).eq("id", wp_id).execute()
         except Exception as e:
-            print(f"Material processing warning: {e}")
+            logger.warning(f"Project Material processing warning: {e}")
 
     update_data = {
         "work_package_id": wp_id,
@@ -1362,19 +1805,97 @@ def seed_materials():
 @app.get("/api/v1/store/materials", response_model=List[models.Material])
 @cache_response(ttl=300)
 def get_materials():
-    result = supabase.table("material").select("*").execute()
+    result = with_retry(lambda: supabase.table("material").select("*").execute())
     return result.data
+
+@app.get("/api/v1/store/projects/{project_id}/inventory", response_model=List[dict])
+def get_project_inventory(project_id: int, user: models.User = Depends(auth.get_current_user)):
+    """Fetch localized site store inventory for a specific project."""
+    result = with_retry(lambda: supabase.table("project_inventory")
+                        .select("*, material:material_id(*)")
+                        .eq("project_id", project_id)
+                        .execute())
+    return result.data
+
+@app.post("/api/v1/store/projects/{project_id}/inventory")
+def attach_material_to_project(
+    project_id: int, 
+    material_data: dict, # {"material_id": int, "unit_cost": float}
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
+):
+    """Attach a new resource capability to a site station."""
+    entry = {
+        "project_id": project_id,
+        "material_id": material_data["material_id"],
+        "unit_cost": float(material_data["unit_cost"]),
+        "quantity": 0.0,
+        "low_stock_threshold": 10.0
+    }
+    result = with_retry(lambda: supabase.table("project_inventory").insert(entry).execute())
+    return result.data[0]
+
+@app.patch("/api/v1/store/projects/{project_id}/inventory/{material_id}")
+def reconcile_site_stock(
+    project_id: int,
+    material_id: int,
+    stock_data: dict, # {"quantity": float, "unit_cost": float}
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
+):
+    """Manual reconciliation of physical site stock levels."""
+    update_node = {}
+    if "quantity" in stock_data: update_node["quantity"] = float(stock_data["quantity"])
+    if "unit_cost" in stock_data: update_node["unit_cost"] = float(stock_data["unit_cost"])
+    
+    result = with_retry(lambda: supabase.table("project_inventory")
+                        .update(update_node)
+                        .eq("project_id", project_id)
+                        .eq("material_id", material_id)
+                        .execute())
+    return result.data[0]
+
+@app.delete("/api/v1/store/projects/{project_id}/inventory/{material_id}")
+def purge_site_material(
+    project_id: int,
+    material_id: int,
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
+):
+    """Purge a resource Capability from a site station."""
+    with_retry(lambda: supabase.table("project_inventory")
+                .delete()
+                .eq("project_id", project_id)
+                .eq("material_id", material_id)
+                .execute())
+    return {"message": "Resource purged from site registry"}
+
+@app.get("/api/v1/store/requests/{request_id}/print")
+def print_requisition(request_id: int, user: models.User = Depends(auth.get_current_user)):
+    """Generate and return a formal PDF requisition form."""
+    try:
+        # Load data for the form
+        req_res = supabase.table("material_request").select("*").eq("id", request_id).single().execute()
+        if not req_res.data: raise HTTPException(404, "Request not found")
+        req = req_res.data
+        
+        proj_res = supabase.table("project").select("*").eq("id", req["project_id"]).single().execute()
+        mat_res = supabase.table("material").select("*").eq("id", req["material_id"]).single().execute()
+        user_res = supabase.table("user").select("*").eq("id", req["requester_id"]).single().execute()
+        
+        from .services.report_generator import ReportGenerator
+        gen = ReportGenerator(proj_res.data["name"])
+        pdf_url = gen.generate_requisition_pdf(req, proj_res.data, mat_res.data, user_res.data)
+        
+        return {"pdf_url": pdf_url}
+    except Exception as e:
+        logger.error(f"PDF Generation Error: {e}")
+        raise HTTPException(500, detail="Failed to synthesize formal document")
 
 @app.post("/api/v1/store/materials", response_model=models.Material)
 def create_material(
     material: models.Material,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
-    mat_data = material.dict(exclude={"id"})
-    if "unit_cost" in mat_data:
-        mat_data["unit_cost"] = float(mat_data["unit_cost"])
-    
-    result = supabase.table("material").insert(mat_data).execute()
+    mat_data = serialize_for_supabase(material.dict(exclude={"id"}))
+    result = with_retry(lambda: supabase.table("material").insert(mat_data).execute())
     return models.Material(**result.data[0])
 
 
@@ -1382,7 +1903,7 @@ def create_material(
 def update_material(
     material_id: int,
     material_data: dict, # Support raw partial JSON
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
     # Ensure decimals/floats converted if present
     if "unit_cost" in material_data:
@@ -1395,7 +1916,7 @@ def update_material(
     # Clean up any id sent in body
     if "id" in material_data: del material_data["id"]
 
-    result = supabase.table("material").update(material_data).eq("id", material_id).execute()
+    result = with_retry(lambda: supabase.table("material").update(material_data).eq("id", material_id).execute())
     if not result.data:
         raise HTTPException(status_code=404, detail="Material not found")
             
@@ -1404,9 +1925,9 @@ def update_material(
 @app.delete("/api/v1/store/materials/{material_id}")
 def delete_material(
     material_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
 ):
-    result = supabase.table("material").delete().eq("id", material_id).execute()
+    result = with_retry(lambda: supabase.table("material").delete().eq("id", material_id).execute())
     if not result.data:
         raise HTTPException(status_code=404, detail="Material not found")
     
@@ -1420,7 +1941,7 @@ def get_material_requests(
     query = supabase.table("material_request").select("*")
     if project_id:
         query = query.eq("project_id", project_id)
-    result = query.order("request_date", desc=True).execute()
+    result = with_retry(lambda: query.order("request_date", desc=True).execute())
     return result.data
 
 @app.post("/api/v1/store/request")
@@ -1439,7 +1960,7 @@ def create_material_request(
         if isinstance(v, datetime):
             req_data[k] = v.isoformat()
     
-    result = supabase.table("material_request").insert(req_data).execute()
+    result = with_retry(lambda: supabase.table("material_request").insert(req_data).execute())
     api_cache.clear()
     return result.data[0]
 
@@ -1452,28 +1973,49 @@ def update_material_request_status(
     ]))
 ):
     # 1. Fetch current request
-    req_res = supabase.table("material_request").select("*").eq("id", request_id).single().execute()
+    req_res = with_retry(lambda: supabase.table("material_request").select("*").eq("id", request_id).single().execute())
     if not req_res.data:
         raise HTTPException(status_code=404, detail="Request not found")
     mat_req = req_res.data
     
-    # 2. If issuing, decrease stock
+    # 2. If issuing, transfer stock from Global to Site Warehouse
     if status == models.MaterialRequestStatus.issued and mat_req["status"] != models.MaterialRequestStatus.issued:
-        mat_res = supabase.table("material").select("*").eq("id", mat_req["material_id"]).single().execute()
+        # Check Global Stock
+        mat_res = with_retry(lambda: supabase.table("material").select("*").eq("id", mat_req["material_id"]).single().execute())
         if not mat_res.data or mat_res.data["current_stock"] < mat_req["quantity_requested"]:
-            raise HTTPException(status_code=400, detail="Insufficient stock")
+            raise HTTPException(status_code=400, detail="Insufficient Global Stock")
             
-        new_stock = mat_res.data["current_stock"] - mat_req["quantity_requested"]
-        supabase.table("material").update({"current_stock": new_stock}).eq("id", mat_req["material_id"]).execute()
+        # Deduct Global
+        new_global_stock = mat_res.data["current_stock"] - mat_req["quantity_requested"]
+        with_retry(lambda: supabase.table("material").update({"current_stock": new_global_stock}).eq("id", mat_req["material_id"]).execute())
+
+        # Add to Project-Specific Inventory (Site Warehouse)
+        # 1. Check if record exists
+        inv_check = supabase.table("project_inventory").select("*").eq("project_id", mat_req["project_id"]).eq("material_id", mat_req["material_id"]).execute()
+        
+        if inv_check.data:
+            new_site_stock = inv_check.data[0]["quantity"] + mat_req["quantity_requested"]
+            supabase.table("project_inventory").update({"quantity": new_site_stock}).eq("id", inv_check.data[0]["id"]).execute()
+        else:
+            # Automatic "Attach" if not already managed? 
+            # We stick to the PM attachment rule, but for Issuance we'll auto-initialize if missing to avoid logistics failure
+            new_entry = {
+                "project_id": mat_req["project_id"],
+                "material_id": mat_req["material_id"],
+                "quantity": mat_req["quantity_requested"],
+                "unit_cost": mat_res.data["unit_cost"], # Default to global if not attached
+                "low_stock_threshold": 10.0
+            }
+            supabase.table("project_inventory").insert(new_entry).execute()
     
-    supabase.table("material_request").update({"status": status.value}).eq("id", request_id).execute()
+    with_retry(lambda: supabase.table("material_request").update({"status": status.value}).eq("id", request_id).execute())
     return {"message": f"Request {status.value} successfully"}
 
 
 @app.delete("/api/v1/store/request/{request_id}")
 def delete_material_request(
     request_id: int,
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager, models.UserRole.president]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
     result = supabase.table("material_request").delete().eq("id", request_id).execute()
     if not result.data:

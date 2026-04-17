@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Vinicius Command — Register Account{% endblock %}
+
+{% block body %}
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; background: var(--bg-deep);">
+    <div class="glass-card reveal-text" style="max-width: 480px; width: 100%; padding: 2.5rem; border-top: 6px solid #eab308; background: #000000; color: #FFFFFF;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <a href="/" style="text-decoration: none; color: inherit; display: block;">
+                <img src="/static/assets/logo.png" alt="Vinicius Logo" style="width: 40px; height: 40px; object-fit: contain; margin: 0 auto 1rem; filter: drop-shadow(0 0 12px rgba(234, 179, 8, 0.4)); display: block;">
+                <h1 style="font-size: 1.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.04em; margin-bottom: 0.25rem; color: #FFFFFF;">Account Enrollment</h1>
+            </a>
+            <p style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">Register Operational Node</p>
+        </div>
+
+        {% if error %}
+        <div style="margin-bottom: 1.5rem; color: var(--text-primary); background: rgba(234,179,8,0.15); border: 1px solid rgba(234,179,8,0.25); padding: 0.75rem; border-radius: var(--radius-sm); text-align: center; font-size: 0.8rem; font-weight: 700; backdrop-filter: blur(5px);">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/signup" style="display: flex; flex-direction: column; gap: 1.15rem;">
+            <div>
+                <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem; opacity: 0.9;">System Username</label>
+                <input type="text" name="username" required class="modern-input" style="font-weight: 600; padding: 0.85rem; width: 100%; box-sizing: border-box; font-size: 0.9rem;" placeholder="e.g., ops_manager">
+            </div>
+            
+            <div>
+                <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem; opacity: 0.9;">Corporate Email</label>
+                <input type="email" name="email" required class="modern-input" style="font-weight: 600; padding: 0.85rem; width: 100%; box-sizing: border-box; font-size: 0.9rem;" placeholder="name@vinicius.int">
+            </div>
+
+            <div>
+                <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem; opacity: 0.9;">Secure Passphrase</label>
+                <input type="password" name="password" required class="modern-input" style="font-weight: 600; padding: 0.85rem; width: 100%; box-sizing: border-box; font-size: 0.9rem;" placeholder="••••••••">
+            </div>
+
+            <div style="margin-top: 0.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.75rem; opacity: 0.9;">Authorized Role Designation</label>
+                <div class="modern-input" style="width: 100%; padding: 0.85rem; font-weight: 700; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); color: var(--brand-red); letter-spacing: 0.1em;">
+                    <i class="fas fa-hard-hat" style="margin-right: 0.5rem;"></i> FIELD ENGINEER (Standard)
+                </div>
+                <input type="hidden" name="role" value="engineer">
+                <p style="color: var(--text-muted); font-size: 0.55rem; margin-top: 0.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.4;">
+                    Note: Manager and Executive roles must be provisioned via Corporate Administrative override.
+                </p>
+            </div>
+
+            <button type="submit" class="btn-modern btn-primary" style="width: 100%; padding: 1rem; justify-content: center; font-weight: 900; margin-top: 1rem; font-size: 0.9rem; background: #eab308; box-shadow: 0 0 20px rgba(234, 179, 8, 0.2);">COMPLETE ENROLLMENT</button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.75rem; font-weight: 700;">
+            Already have an account? <a href="/signin" style="color: #eab308; text-decoration: none; font-weight: 900;">Authenticate here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

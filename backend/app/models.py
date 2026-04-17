@@ -6,16 +6,15 @@ from pydantic import BaseModel, Field
 
 
 class UserRole(str, Enum):
-    staff = "staff"
+    engineer = "engineer"
     manager = "manager"
     director = "director"
     admin = "admin"
-    president = "president"
 
 class StatusEnum(str, Enum):
     not_started = "not_started"
     in_progress = "in_progress"
-    completed = "completed"        # Staff completed task
+    completed = "completed"        # Engineer completed task
     inspected = "inspected"        # Manager verified
     approved = "approved"          # Director final approval
     blocked = "blocked"
@@ -39,6 +38,13 @@ class WPPriority(str, Enum):
     high = "high"
     immediate = "immediate"
 
+class LoggingPeriod(str, Enum):
+    daily = "daily"
+    weekly = "weekly"
+    bi_weekly = "bi_weekly"
+    monthly = "monthly"
+    periodic = "periodic"
+
 class Design(BaseModel):
     id: Optional[int] = None
     name: str
@@ -51,19 +57,27 @@ class Project(BaseModel):
     name: str
     description: Optional[str] = None
     design_id: Optional[int] = None
-    bim_model_url: Optional[str] = None # Legacy support
+    bim_model_url: Optional[str] = None # Primary Project Resource (Replaced Blueprints)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Stage(BaseModel):
+    id: Optional[int] = None
+    project_id: int
+    name: str
+    status: StatusEnum = StatusEnum.not_started
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class WorkPackage(BaseModel):
     id: Optional[int] = None
     project_id: int
+    stage_id: Optional[int] = None # Linked to structural stage
     bim_element_id: Optional[str] = None
     name: str
     status: StatusEnum = StatusEnum.not_started
-    progress_pct: int = 0
-    budget_amount: Decimal = Decimal("0")
-    actual_cost: Decimal = Decimal("0")
+    progress_pct: int = Field(default=0, ge=0, le=100)
+    budget_amount: Decimal = Field(default=Decimal("0"), ge=0)
+    actual_cost: Decimal = Field(default=Decimal("0"), ge=0)
     
     verified_by_id: Optional[str] = None  # UUID for Supabase Auth
     approved_by_id: Optional[str] = None  # UUID for Supabase Auth
@@ -71,6 +85,7 @@ class WorkPackage(BaseModel):
     
     type: WPType = WPType.task
     priority: WPPriority = WPPriority.normal
+    logging_period: LoggingPeriod = LoggingPeriod.daily
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     parent_id: Optional[int] = None
@@ -90,14 +105,14 @@ class SiteUpdate(BaseModel):
     gps_long: Optional[float] = None
     weather_info: Optional[str] = None
     materials_used: Optional[str] = None
-    cost_incurred: Decimal = Decimal("0")
+    cost_incurred: Decimal = Field(default=Decimal("0"), ge=0)
 
 
 class User(BaseModel):
     id: str  # This is the UUID from Supabase Auth
     username: str
     email: str
-    role: UserRole = UserRole.staff
+    role: UserRole = UserRole.engineer
     is_active: bool = True
 
 
@@ -128,6 +143,16 @@ class MaterialUsage(BaseModel):
     material_id: int
     quantity_used: float
     usage_date: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ProjectInventory(BaseModel):
+    id: Optional[int] = None
+    project_id: int
+    material_id: int
+    quantity: float = 0
+    unit_cost: Decimal = Decimal("0")
+    low_stock_threshold: float = 10.0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class ProjectAssignment(BaseModel):

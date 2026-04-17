@@ -3,212 +3,295 @@
 {% block page_title %}Operational Personnel{% endblock %}
 
 {% block content %}
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 2.5rem;">
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
     <!-- User Registration -->
-    <div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 3rem;">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-            <div style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);"></div>
-            <h3 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0;">Register Personnel</h3>
+    <div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div
+                style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);">
+            </div>
+            <h3
+                style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0;">
+                Register Personnel</h3>
         </div>
-        <form id="registerForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <form id="registerForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Account ID</label>
-                <input type="text" name="username" placeholder="SIGN_IN_ID..." required class="modern-input" style="font-weight: 700; text-transform: uppercase;">
+                <label
+                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Account
+                    ID</label>
+                <input type="text" name="username" placeholder="SIGN_IN_ID..." required class="modern-input"
+                    style="font-weight: 700; text-transform: uppercase;">
             </div>
             <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Email</label>
-                <input type="email" name="email" placeholder="EMAIL@PROTOCOL.COM" required class="modern-input" style="font-weight: 700;">
+                <label
+                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Email</label>
+                <input type="email" name="email" placeholder="EMAIL@PROTOCOL.COM" required class="modern-input"
+                    style="font-weight: 700;">
             </div>
             <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Credential</label>
-                <input type="password" name="password" required minlength="8" class="modern-input" style="font-weight: 700;">
+                <label
+                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Credential</label>
+                <input type="password" name="password" required minlength="8" class="modern-input"
+                    style="font-weight: 700;">
             </div>
             <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Authority Level</label>
+                <label
+                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Authority
+                    Level</label>
                 <select name="role" required class="modern-input" style="font-weight: 700;">
-                    <option value="staff">FIELD_STAFF</option>
+                    <option value="engineer">SITE_ENGINEER</option>
                     <option value="manager">OPERATIONS_MANAGER</option>
                     <option value="director">SYSTEM_DIRECTOR</option>
-                    <option value="admin">GLOBAL_ADMIN</option>
-<option value="president">PRESIDENT</option>
                 </select>
             </div>
-            <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 1.5rem;">
-                <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 3.5rem; font-weight: 900;">+ REGISTER PERSONNEL</button>
+            <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 1rem;">
+                <button type="submit" class="btn-modern btn-primary"
+                    style="padding: 0.75rem 2rem; font-size: 0.8rem; font-weight: 900;">+ REGISTER PERSONNEL</button>
             </div>
         </form>
     </div>
 
     <!-- Deployment Matrix -->
-    <div class="glass-card reveal-text reveal-delay-1" style="border-right: 5px solid var(--accent-blue); padding: 3rem;">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-            <div style="width: 14px; height: 14px; background: var(--accent-blue); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-blue);"></div>
-            <h3 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0; color: var(--accent-blue);">Deployment Matrix</h3>
+    <div class="glass-card reveal-text reveal-delay-1"
+        style="border-right: 5px solid var(--accent-blue); padding: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div
+                style="width: 14px; height: 14px; background: var(--accent-blue); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-blue);">
+            </div>
+            <h3
+                style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0; color: var(--accent-blue);">
+                Deployment Matrix</h3>
         </div>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2.5rem; line-height: 1.6; font-weight: 600; opacity: 0.8;">Assign strategic assets to project nodes.</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <p
+            style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; line-height: 1.6; font-weight: 600; opacity: 0.8;">
+            Assign strategic assets to project nodes.</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target Project</label>
-                <select id="assignProject" class="modern-input" style="font-weight: 700;"><option value="">SELECT...</option></select>
+                <label
+                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target
+                    Project</label>
+                <select id="assignProject" class="modern-input" style="font-weight: 700;">
+                    <option value="">SELECT...</option>
+                </select>
             </div>
             <div>
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target Personnel</label>
-                <select id="assignUser" class="modern-input" style="font-weight: 700;"><option value="">SELECT...</option></select>
+                <label
+                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target
+                    Personnel</label>
+                <select id="assignUser" class="modern-input" style="font-weight: 700;">
+                    <option value="">SELECT...</option>
+                </select>
             </div>
             <div style="grid-column: span 2;">
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Role</label>
+                <label
+                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Role</label>
                 <select id="assignRole" class="modern-input" style="font-weight: 700;">
                     <option value="member">CORE_TEAM_MEMBER</option>
                     <option value="project_manager">LEAD_MANAGER</option>
                 </select>
             </div>
-            <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 2rem;">
-                <button onclick="assignUserToProject()" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; background: var(--accent-blue); border-color: var(--accent-blue); font-weight: 900;">🔗 DEPLOY</button>
+            <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 1rem;">
+                <button onclick="assignUserToProject()" class="btn-modern btn-primary"
+                    style="padding: 0.75rem 2rem; font-size: 0.8rem; background: var(--accent-blue); border-color: var(--accent-blue); font-weight: 900;">🔗
+                    DEPLOY</button>
             </div>
         </div>
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
     <!-- User Registry -->
-    <div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem;">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-            <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
-            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">Global Personnel Registry</h3>
+    <div class="glass-card reveal-text reveal-delay-2" style="padding: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;">
+            </div>
+            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">
+                Global Personnel Registry</h3>
         </div>
-        <div id="usersList" style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <p style="color: var(--text-muted); text-align: center; padding: 4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">Synchronizing...</p>
+        <div id="usersList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <p
+                style="color: var(--text-muted); text-align: center; padding: 2rem; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">
+                Synchronizing...</p>
         </div>
     </div>
 
     <!-- Deployment Feed -->
-    <div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem;">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-            <div style="width: 10px; height: 10px; background: var(--accent-blue); border-radius: 2px; opacity: 0.5;"></div>
-            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--accent-blue);">Deployment Summary</h3>
+    <div class="glass-card reveal-text reveal-delay-2" style="padding: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div style="width: 10px; height: 10px; background: var(--accent-blue); border-radius: 2px; opacity: 0.5;">
+            </div>
+            <h3
+                style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--accent-blue);">
+                Deployment Summary</h3>
         </div>
-        <div id="assignmentsList" style="display: flex; flex-direction: column; gap: 1rem;">
-            <p style="color: var(--text-muted); text-align: center; padding: 4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.4;">Select Target...</p>
+        <div id="assignmentsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <p
+                style="color: var(--text-muted); text-align: center; padding: 2rem; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.4;">
+                Select Target...</p>
         </div>
     </div>
 </div>
 
 <style>
-.toggle-switch { position:relative; display:inline-block; width:48px; height:26px; cursor:pointer; }
-.toggle-switch input { opacity:0; width:0; height:0; }
-.toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:50px; transition:0.4s; }
-.toggle-slider:before { content:''; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.4s; }
-.toggle-switch input:checked + .toggle-slider { background:#10b981; border-color:#10b981; }
-.toggle-switch input:checked + .toggle-slider:before { transform:translateX(22px); }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 26px;
+        cursor: pointer;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        transition: 0.4s;
+    }
+
+    .toggle-slider:before {
+        content: '';
+        position: absolute;
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        border-radius: 50%;
+        transition: 0.4s;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+        background: #10b981;
+        border-color: #10b981;
+    }
+
+    .toggle-switch input:checked+.toggle-slider:before {
+        transform: translateX(22px);
+    }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-const roleColors = { admin: '#E31E24', director: '#10B981', manager: '#3B82F6', staff: '#FF9800' };
-let allUsers = [], allProjects = [];
+    const roleColors = { admin: '#E31E24', director: '#10B981', manager: '#3B82F6', engineer: '#FF9800' };
+    let allUsers = [], allProjects = [];
 
-async function loadUsers() {
-    try {
-        const resp = await fetch('/api/v1/users/'); allUsers = await resp.json();
-        const container = document.getElementById('usersList');
-        if (allUsers.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; opacity:0.5;">No personnel found.</p>'; return; }
-        
-        const userSelect = document.getElementById('assignUser');
-        userSelect.innerHTML = '<option value="">SELECT...</option>';
-        allUsers.filter(u => u.role === 'staff' || u.role === 'manager').forEach(u => {
-            userSelect.innerHTML += `<option value="${u.id}">${u.username.toUpperCase()} (${u.role.toUpperCase()})</option>`;
-        });
-        
-        const assignPromises = allUsers.map(async u => {
-            let c = 0; try { const r = await fetch(`/api/v1/users/${u.id}/assignments`); if (r.ok) c = (await r.json()).length; } catch(e) {} return { ...u, assignmentCount: c };
-        });
-        const usersData = await Promise.all(assignPromises);
-        
-        container.innerHTML = usersData.map((u, idx) => {
-            const rc = roleColors[u.role] || '#64748b';
-            return `<div class="glass-card reveal-text reveal-delay-${(idx%4)+1}" style="display:flex; justify-content:space-between; align-items:center; border-left:5px solid ${rc}; padding:1.75rem 2.5rem; background:rgba(255,255,255,0.02);">
-                <div style="display:flex; align-items:center; gap:1.5rem;">
-                    <div style="background:rgba(255,255,255,0.03); width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; border:1px solid rgba(255,255,255,0.08);">👤</div>
+    async function loadUsers() {
+        try {
+            const resp = await fetch('/api/v1/users/');
+            allUsers = await resp.json();
+            // Hide Admin from systems display
+            allUsers = allUsers.filter(u => u.role !== 'admin');
+
+            const container = document.getElementById('usersList');
+            if (allUsers.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; opacity:0.5;">No personnel found.</p>'; return; }
+
+            const userSelect = document.getElementById('assignUser');
+            userSelect.innerHTML = '<option value="">SELECT...</option>';
+            allUsers.filter(u => u.role === 'engineer' || u.role === 'manager').forEach(u => {
+                userSelect.innerHTML += `<option value="${u.id}">${u.username.toUpperCase()} (${u.role.toUpperCase()})</option>`;
+            });
+
+            const assignPromises = allUsers.map(async u => {
+                let c = 0; try { const r = await fetch(`/api/v1/users/${u.id}/assignments`); if (r.ok) c = (await r.json()).length; } catch (e) { } return { ...u, assignmentCount: c };
+            });
+            const usersData = await Promise.all(assignPromises);
+
+            container.innerHTML = usersData.map((u, idx) => {
+                const rc = roleColors[u.role] || '#64748b';
+                return `<div class="glass-card reveal-text reveal-delay-${(idx % 4) + 1}" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-left:4px solid ${rc}; padding:1rem 1.25rem; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <div style="background:rgba(255,255,255,0.03); width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; border:1px solid rgba(255,255,255,0.08);">👤</div>
                     <div>
-                        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.25rem;"><strong style="font-size:1.1rem; color:white; font-weight:900; text-transform:uppercase;">${u.username}</strong>
-                        <span style="background:${rc}15; color:${rc}; padding:3px 10px; border-radius:4px; font-size:0.6rem; font-weight:900; text-transform:uppercase; border:1px solid ${rc}30;">${u.role}</span></div>
-                        <div style="color:var(--text-muted); font-size:0.75rem; font-weight:800; opacity:0.7;">${u.email}</div>
+                        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.15rem;"><strong style="font-size:0.9rem; color:white; font-weight:900; text-transform:uppercase;">${u.username}</strong>
+                        <span style="background:${rc}15; color:${rc}; padding:2px 6px; border-radius:3px; font-size:0.55rem; font-weight:900; text-transform:uppercase; border:1px solid ${rc}30;">${u.role}</span></div>
+                        <div style="color:var(--text-muted); font-size:0.65rem; font-weight:800; opacity:0.7;">${u.email}</div>
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:3rem;">
-                    <div style="text-align:right;"><div style="color:white; font-size:1.25rem; font-weight:900;">${u.assignmentCount}</div><div style="color:var(--text-muted); font-size:0.6rem; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Assignments</div></div>
-                    <div style="display:flex; align-items:center; gap:1rem;">
-                        <span style="color:${u.is_active ? '#10b981' : '#ef4444'}; font-size:0.7rem; font-weight:900; text-transform:uppercase;">${u.is_active ? 'ACTIVE' : 'DISABLED'}</span>
-                        <label class="toggle-switch" onclick="toggleUser('${u.id}', event)"><input type="checkbox" ${u.is_active ? 'checked' : ''} disabled><span class="toggle-slider"></span></label>
-                    </div>
+                <div style="display:flex; align-items:center; gap:1.5rem;">
+                    <div style="text-align:right;"><div style="color:white; font-size:1.1rem; font-weight:900;">${u.assignmentCount}</div><div style="color:var(--text-muted); font-size:0.55rem; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Assignments</div></div>
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <span style="color:${u.is_active ? '#10b981' : '#ef4444'}; font-size:0.6rem; font-weight:900; text-transform:uppercase;">${u.is_active ? 'ACTIVE' : 'DISABLED'}</span>
+                            <label class="toggle-switch" onclick="toggleUser('${u.id}', event)"><input type="checkbox" ${u.is_active ? 'checked' : ''} disabled><span class="toggle-slider"></span></label>
+                        </div>
                 </div>
             </div>`;
-        }).join('');
-    } catch(err) { console.error(err); }
-}
+            }).join('');
+        } catch (err) { console.error(err); }
+    }
 
-async function loadProjectTeam(projectId) {
-    const container = document.getElementById('assignmentsList');
-    if (!projectId) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; opacity:0.4;">Select Target...</p>'; return; }
-    try {
-        const resp = await fetch(`/api/v1/projects/${projectId}/team`); if (!resp.ok) throw new Error();
-        const team = await resp.json();
-        if (team.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; opacity:0.5;">No personnel deployed</p>'; return; }
-        container.innerHTML = team.map(m => {
-            const rc = roleColors[m.role] || '#64748b';
-            return `<div class="glass-card" style="padding:1.5rem; border-left:3px solid ${rc}; background:rgba(255,255,255,0.01);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                    <span style="font-size:0.95rem; color:white; font-weight:800; text-transform:uppercase;">${m.username}</span>
-                    <button onclick="unassignUser(${projectId}, '${m.user_id}')" style="background:none; border:none; color:var(--brand-red); cursor:pointer; font-size:1.25rem; opacity:0.4;">×</button>
+    async function loadProjectTeam(projectId) {
+        const container = document.getElementById('assignmentsList');
+        if (!projectId) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; opacity:0.4;">Select Target...</p>'; return; }
+        try {
+            const resp = await fetch(`/api/v1/projects/${projectId}/team`); if (!resp.ok) throw new Error();
+            const team = await resp.json();
+            if (team.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:2rem; font-size:0.8rem; font-weight:900; text-transform:uppercase; opacity:0.5;">No personnel deployed</p>'; return; }
+            container.innerHTML = team.map(m => {
+                const rc = roleColors[m.role] || '#64748b';
+                return `<div class="glass-card" style="padding:1rem; border-left:3px solid ${rc}; background:rgba(255,255,255,0.01);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                    <span style="font-size:0.85rem; color:white; font-weight:800; text-transform:uppercase;">${m.username}</span>
+                    <button onclick="unassignUser(${projectId}, '${m.user_id}')" style="background:none; border:none; color:var(--brand-red); cursor:pointer; font-size:1.1rem; opacity:0.4;">×</button>
                 </div>
-                <div style="color:${m.assigned_role === 'project_manager' ? 'var(--accent-blue)' : 'var(--text-muted)'}; font-size:0.65rem; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">
-                    ${m.assigned_role === 'project_manager' ? '⚡ LEAD_MANAGER' : 'FIELD_STAFF'}
+                <div style="color:${m.assigned_role === 'project_manager' ? 'var(--accent-blue)' : 'var(--text-muted)'}; font-size:0.6rem; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">
+                    ${m.assigned_role === 'project_manager' ? '⚡ LEAD_MANAGER' : 'SITE_ENGINEER'}
                 </div>
             </div>`;
-        }).join('');
-    } catch(err) { container.innerHTML = '<p style="color:var(--brand-red); text-align:center; padding:2rem;">Error loading team</p>'; }
-}
+            }).join('');
+        } catch (err) { container.innerHTML = '<p style="color:var(--brand-red); text-align:center; padding:2rem;">Error loading team</p>'; }
+    }
 
-async function assignUserToProject() {
-    const pid = document.getElementById('assignProject').value, uid = document.getElementById('assignUser').value, role = document.getElementById('assignRole').value;
-    if (!pid || !uid) { alert('Select both project and user.'); return; }
-    try {
-        const resp = await fetch(`/api/v1/projects/${pid}/assign`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, assigned_role: role }) });
-        if (resp.ok) { alert('Asset deployed.'); loadProjectTeam(pid); loadUsers(); } else { const e = await resp.json(); alert(e.detail || 'Failed'); }
-    } catch(err) { alert('PROTOCOL_FAILURE: Terminal connection lost.'); }
-}
+    async function assignUserToProject() {
+        const pid = document.getElementById('assignProject').value, uid = document.getElementById('assignUser').value, role = document.getElementById('assignRole').value;
+        if (!pid || !uid) { alert('Select both project and user.'); return; }
+        try {
+            const resp = await fetch(`/api/v1/projects/${pid}/assign`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: uid, assigned_role: role }) });
+            if (resp.ok) { alert('Asset deployed.'); loadProjectTeam(pid); loadUsers(); } else { const e = await resp.json(); alert(e.detail || 'Failed'); }
+        } catch (err) { alert('PROTOCOL_FAILURE: Terminal connection lost.'); }
+    }
 
-async function unassignUser(pid, uid) {
-    if (!confirm('Remove this user?')) return;
-    const resp = await fetch(`/api/v1/projects/${pid}/unassign/${uid}`, { method: 'DELETE' });
-    if (resp.ok) { loadProjectTeam(pid); loadUsers(); }
-}
+    async function unassignUser(pid, uid) {
+        if (!confirm('Remove this user?')) return;
+        const resp = await fetch(`/api/v1/projects/${pid}/unassign/${uid}`, { method: 'DELETE' });
+        if (resp.ok) { loadProjectTeam(pid); loadUsers(); }
+    }
 
-document.getElementById('assignProject').addEventListener('change', (e) => loadProjectTeam(e.target.value));
+    document.getElementById('assignProject').addEventListener('change', (e) => loadProjectTeam(e.target.value));
 
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault(); const fd = new FormData(e.target);
-    const resp = await fetch('/api/v1/auth/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: fd.get('username'), email: fd.get('email'), password: fd.get('password'), role: fd.get('role') }) });
-    if (resp.ok) { alert('User registered!'); e.target.reset(); loadUsers(); } else { const err = await resp.json(); alert(err.detail || 'Failed'); }
-});
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault(); const fd = new FormData(e.target);
+        const resp = await fetch('/api/v1/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: fd.get('username'), email: fd.get('email'), password: fd.get('password'), role: fd.get('role') }) });
+        if (resp.ok) { alert('User registered!'); e.target.reset(); loadUsers(); } else { const err = await resp.json(); alert(err.detail || 'Failed'); }
+    });
 
-async function toggleUser(userId, event) {
-    event.preventDefault(); event.stopPropagation();
-    if (!confirm('Toggle user status?')) return;
-    const resp = await fetch(`/api/v1/users/${userId}/toggle-active`, { method: 'PATCH' });
-    if (resp.ok) { loadUsers(); } else { const err = await resp.json(); alert(err.detail || 'Failed'); }
-}
+    async function toggleUser(userId, event) {
+        event.preventDefault(); event.stopPropagation();
+        if (!confirm('Toggle user status?')) return;
+        const resp = await fetch(`/api/v1/users/${userId}/toggle-active`, { method: 'PATCH' });
+        if (resp.ok) { loadUsers(); } else { const err = await resp.json(); alert(err.detail || 'Failed'); }
+    }
 
-async function loadProjects() {
-    try {
-        const resp = await fetch('/api/v1/projects/'); allProjects = await resp.json();
-        const pSelect = document.getElementById('assignProject');
-        pSelect.innerHTML = '<option value="">SELECT...</option>';
-        allProjects.forEach(p => { pSelect.innerHTML += `<option value="${p.id}">${p.name.toUpperCase()}</option>`; });
-    } catch(err) {}
-}
 
-loadUsers(); loadProjects();
+
+    async function loadProjects() {
+        try {
+            const resp = await fetch('/api/v1/projects/'); allProjects = await resp.json();
+            const pSelect = document.getElementById('assignProject');
+            pSelect.innerHTML = '<option value="">SELECT...</option>';
+            allProjects.forEach(p => { pSelect.innerHTML += `<option value="${p.id}">${p.name.toUpperCase()}</option>`; });
+        } catch (err) { }
+    }
+
+    loadUsers(); loadProjects();
 </script>
 {% endblock %}

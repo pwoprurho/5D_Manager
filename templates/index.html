@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}5D PMS - Terminal Interface{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh;">
+    <div class="glass-card reveal-text" style="max-width: 700px; width: 100%; padding: 4rem; text-align: center; border-top: 6px solid var(--brand-red); background: #000000; color: #FFFFFF;">
+        <a href="{{ '/dashboard' if user else '/' }}" style="text-decoration: none; display: block;">
+            <img src="/static/assets/logo.png" 
+                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRTNGNjIyIiBzdHJva2Utd2lkdGg9IjhweCIvPjxwYXRoIGQ9Ik01MCAzMCBMNzAgNzAgTDMwIDcwIFoiIGZpbGw9IiNFM0Y2MjIiLz48L3N2Zz4='" 
+                 style="height: 70px; margin-bottom: 2rem; filter: drop-shadow(0 0 10px rgba(227, 24, 55, 0.5));" alt="5D Logo">
+            <h1 style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 1rem; color: #FFFFFF;">5D_MANAGEMENT_TERMINAL</h1>
+        </a>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 3rem; line-height: 1.6;">
+            Next-generation site coordination and architectural registry system.<br>
+            Authentication required for access to operational hierarchy.
+        </p>
+
+        <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 3rem; flex-wrap: wrap;">
+            <a href="/signin" class="btn-modern btn-primary" style="padding: 1rem 3rem; text-decoration: none;">INITIALIZE LOGIN <i class="fas fa-arrow-right"></i></a>
+            <a href="/register" class="btn-modern btn-ghost" style="padding: 1rem 2rem; border-color: rgba(227,30,36,0.3); color: var(--brand-red); text-decoration: none;">OPERATIONS REGISTRY / GUIDE</a>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; text-align: left;">
+            <div style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-left: 3px solid var(--accent-blue); border-radius: 4px;">
+                <h4 style="color: white; font-size: 0.85rem; font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">Media Orchestration</h4>
+                <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0;">Cross-compatible generic slide viewer rendering architectural updates.</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-left: 3px solid #10B981; border-radius: 4px;">
+                <h4 style="color: white; font-size: 0.85rem; font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">Asset Logistics</h4>
+                <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0;">Automated inventory calculation mapping exact field quantities against cost estimates.</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-left: 3px solid var(--brand-orange); border-radius: 4px;">
+                <h4 style="color: white; font-size: 0.85rem; font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">Role Matrices</h4>
+                <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0;">Engineers transmit constraints; Managers verify; HQ authorizes global operations.</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-left: 3px solid var(--brand-red); border-radius: 4px;">
+                <h4 style="color: white; font-size: 0.85rem; font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">Zero Trust Lockdown</h4>
+                <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0;">Active security thresholds suspend access upon incorrect recovery responses.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

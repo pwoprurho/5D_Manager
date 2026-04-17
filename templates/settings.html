@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Account Settings{% endblock %}
+
+{% block content %}
+<div class="glass-card reveal-text" style="max-width: 600px; padding: 3rem; border-top: 6px solid var(--accent-blue); margin: 0 auto;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
+        <div style="width: 12px; height: 12px; background: var(--accent-blue); border-radius: 3px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);"></div>
+        <h3 style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-primary);">Security Parameters</h3>
+    </div>
+
+    {% if success %}
+    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10B981; padding: 1rem; border-radius: 4px; font-size: 0.8rem; font-weight: 800; margin-bottom: 1.5rem; text-align: center;">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div style="background: rgba(227, 30, 36, 0.1); border: 1px solid rgba(227, 30, 36, 0.3); color: var(--text-primary); padding: 1rem; border-radius: 4px; font-size: 0.8rem; font-weight: 800; margin-bottom: 1.5rem; text-align: center;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Visual Interface Settings -->
+    <div style="margin-bottom: 3rem; border-bottom: 1px dashed var(--glass-border); padding-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="width: 12px; height: 12px; background: var(--brand-red); border-radius: 3px; box-shadow: 0 0 10px rgba(227, 30, 36, 0.4);"></div>
+            <h3 style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-primary);">Visual Interface</h3>
+        </div>
+        
+        <div style="background: var(--glass-bg); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--glass-border);">
+            <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 1rem;">Operating Environment Theme</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button type="button" onclick="setAppTheme('dark')" id="theme-btn-dark" class="btn-modern btn-ghost" style="width: 100%; padding: 1.25rem; font-weight: 900; font-size: 0.7rem; letter-spacing: 0.1em; border-radius: 12px;">
+                    <i class="fas fa-moon" style="margin-right: 8px;"></i> VOID (DARK)
+                </button>
+                <button type="button" onclick="setAppTheme('light')" id="theme-btn-light" class="btn-modern btn-ghost" style="width: 100%; padding: 1.25rem; font-weight: 900; font-size: 0.7rem; letter-spacing: 0.1em; border-radius: 12px;">
+                    <i class="fas fa-sun" style="margin-right: 8px;"></i> BRIGHT MOOD (LIGHT)
+                </button>
+            </div>
+            <p style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; margin-top: 1rem; opacity: 0.8;">
+                Switching to "Bright Mood" utilizes the brand-standard vivid palette from Vinicius International.
+            </p>
+        </div>
+    </div>
+
+    <form method="post" action="/settings" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">Current Operational ID</label>
+            <input type="text" value="{{ user.username }}" readonly class="modern-input" style="font-weight: 600; opacity: 0.7; cursor: not-allowed; width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--input-text);">
+        </div>
+
+        <div>
+            <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">Current Role</label>
+            <input type="text" value="{{ user.role|string|replace('UserRole.', '')|upper }}" readonly class="modern-input" style="font-weight: 600; opacity: 0.7; cursor: not-allowed; width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--input-text);">
+        </div>
+
+        <div style="border-top: 1px dashed var(--glass-border); padding-top: 2rem; margin-top: 1rem;">
+            <label style="color: var(--text-muted); font-size: 0.70rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">Update Security Passphrase</label>
+            <input type="password" name="new_password" required minlength="8" class="modern-input" placeholder="Enter new secure passphrase..." style="font-weight: 600; width: 100%; box-sizing: border-box; margin-bottom: 0.5rem; background: var(--input-bg); color: var(--input-text);">
+            <p style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; margin: 0;">Minimum 8 characters required.</p>
+        </div>
+
+        <button type="submit" class="btn-modern btn-primary" style="padding: 1rem; font-weight: 900; margin-top: 1rem;">UPDATE SECURITY CONFIGURATION</button>
+    </form>
+</div>
+
+<script>
+    function setAppTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('vinicius-theme', theme);
+        
+        // Update layout header icon if exists
+        if (typeof updateThemeIcon === 'function') {
+            updateThemeIcon(theme);
+        }
+        
+        updateActiveThemeBtn(theme);
+        
+        // Optional: show toast
+        if (window.showToast) {
+            showToast(`Environment switched to ${theme.toUpperCase()} mode`, 'info');
+        }
+    }
+
+    function updateActiveThemeBtn(theme) {
+        const darkBtn = document.getElementById('theme-btn-dark');
+        const lightBtn = document.getElementById('theme-btn-light');
+        
+        if (theme === 'dark') {
+            darkBtn.style.background = 'rgba(227, 30, 36, 0.1)';
+            darkBtn.style.borderColor = 'var(--brand-red)';
+            darkBtn.style.color = 'var(--brand-red)';
+            
+            lightBtn.style.background = 'transparent';
+            lightBtn.style.borderColor = 'var(--glass-border)';
+            lightBtn.style.color = 'var(--text-muted)';
+        } else {
+            lightBtn.style.background = 'rgba(227, 30, 36, 0.1)';
+            lightBtn.style.borderColor = 'var(--brand-red)';
+            lightBtn.style.color = 'var(--brand-red)';
+            
+            darkBtn.style.background = 'transparent';
+            darkBtn.style.borderColor = 'var(--glass-border)';
+            darkBtn.style.color = 'var(--text-muted)';
+        }
+    }
+
+    // Initialize buttons
+    updateActiveThemeBtn(document.documentElement.getAttribute('data-theme') || 'dark');
+</script>
+{% endblock %}

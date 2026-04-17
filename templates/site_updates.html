@@ -3,249 +3,311 @@
 {% block page_title %}Daily Logs{% endblock %}
 
 {% block content %}
-<div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;">
+<div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem; background: var(--bg-card);">
     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
         <div style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);"></div>
-        <h3 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0;">Submit Daily Report</h3>
+        <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0;">LOG_DAILY_PROGRESS</h3>
     </div>
     
     <form id="uploadForm" enctype="multipart/form-data" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
         <div style="grid-column: span 1;">
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Project Context</label>
-            <select id="projectFilter" required class="modern-input" style="font-weight: 700;"><option value="">Select Project...</option></select>
+            <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Project Context</label>
+            <select id="projectFilter" required class="modern-input" style="font-weight: 700; background: var(--bg-deep);"><option value="">Select Project...</option></select>
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Work Package</label>
-            <select id="wpFilter" name="wp_id" required class="modern-input" style="font-weight: 700;"><option value="">Select Package...</option></select>
+            <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target Task</label>
+            <select id="wpFilter" name="wp_id" required class="modern-input" style="font-weight: 700; background: var(--bg-deep);"><option value="">SELECT TASK...</option></select>
         </div>
         <div style="grid-column: span 2;">
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Observations</label>
-            <input type="text" name="notes" placeholder="DESCRIBE PROGRESS..." class="modern-input" style="font-weight: 700; text-transform: uppercase;">
+            <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Observations</label>
+            <input type="text" name="notes" placeholder="DESCRIBE PROGRESS..." class="modern-input" style="font-weight: 700; text-transform: uppercase; background: var(--bg-deep);">
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Material Contributed</label>
-            <select id="matSelect" name="material_id" class="modern-input" style="font-weight: 700;"><option value="">None Used</option></select>
+            <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Material Contributed</label>
+            <select id="matSelect" name="material_id" class="modern-input" style="font-weight: 700; background: var(--bg-deep);"><option value="">None Used</option></select>
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Quantity Spent</label>
-            <input type="number" name="quantity_used" value="0" step="0.01" class="modern-input" style="font-weight: 800;">
+            <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Quantity Spent</label>
+            <input type="number" name="quantity_used" value="0" step="0.01" class="modern-input" style="font-weight: 800; background: var(--bg-deep);">
         </div>
         <div style="grid-column: span 4;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem;">Geographical Update Synchronization</p>
-                <div id="gpsStatus" style="font-size: 0.65rem; font-weight: 900; color: var(--text-muted); letter-spacing: 0.1em;">🛰️ GPS_STANDBY</div>
+                <p style="color: var(--text-muted); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">Completion Metrics</p>
             </div>
             <div style="display: flex; align-items: center; gap: 2rem;">
-                <input type="range" id="completionSlider" name="completion_pct" min="0" max="100" value="50" style="flex: 1; accent-color: var(--brand-red); cursor: pointer;">
+                <input type="range" id="completionSlider" name="progress" min="0" max="100" value="50" style="flex: 1; accent-color: var(--brand-red); cursor: pointer;">
                 <span id="completionVal" style="font-size: 2rem; font-weight: 900; color: var(--brand-red); min-width: 80px; text-align: right;">50%</span>
             </div>
             <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden; margin-top: 1.5rem;">
                 <div id="completionBar" style="height: 100%; width: 50%; background: linear-gradient(90deg, var(--brand-red), var(--brand-orange)); border-radius: 2px; transition: width 0.3s;"></div>
             </div>
         </div>
-        <input type="hidden" name="gps_lat" id="gps_lat">
-        <input type="hidden" name="gps_long" id="gps_long">
-        <div style="grid-column: span 4; display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2rem;">
-            <div style="flex: 1; max-width: 400px;">
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Photo Evidence</label>
-                <input type="file" name="photo" accept="image/*" class="modern-input" style="padding: 0.75rem 1rem; font-size: 0.8rem; font-weight: 700;">
+        <div style="grid-column: span 4; display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2rem; gap: 2rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 280px;">
+                <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Photo Evidence / Site Telemetry</label>
+                <div style="display: flex; gap: 0.75rem; align-items: stretch;">
+                    <div style="position: relative; flex: 1;">
+                        <input type="file" id="fileInput" name="photo" accept="image/*" class="modern-input" style="padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-deep); width: 100%;">
+                        <span id="fileBadge" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.5rem; background: var(--brand-red); color: white; padding: 2px 6px; border-radius: 4px; display: none;">LOADED</span>
+                    </div>
+                    
+                    <button type="button" onclick="document.getElementById('cameraInput').click()" class="btn-modern btn-ghost" style="padding: 0; width: 50px; background: rgba(255,152,0,0.1); border-color: rgba(255,152,0,0.3); color: var(--brand-orange); display: flex; align-items: center; justify-content: center;" title="Quick Camera">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <!-- Dedicated Camera Input -->
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleCameraCapture(this)">
+                </div>
+
+                <!-- Mission Critical Progress Monitor -->
+                <div id="dispatchProgressWrapper" style="display: none; margin-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span id="statusText" style="font-size: 0.55rem; color: var(--brand-red); font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;">INITIATING_DISPATCH...</span>
+                        <span id="percentText" style="font-size: 0.65rem; color: white; font-weight: 900;">0%</span>
+                    </div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                        <div id="dispatchProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #E31E24, #FF9800); box-shadow: 0 0 10px rgba(227,30,36,0.3); transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; font-weight: 900;">📷 DISPATCH_UPDATE</button>
+            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 4rem; font-weight: 900; white-space: nowrap;"><i class="fas fa-satellite-dish"></i> DISPATCH_UPDATE</button>
         </div>
     </form>
 </div>
 
-<div class="glass-card reveal-text reveal-delay-2" style="height: 400px; margin-bottom: 2.5rem; overflow: hidden; border: 1px solid var(--glass-border); padding: 0;">
-    <div id="map" style="width: 100%; height: 100%; background: #020617;"></div>
-</div>
-
-<div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem; border-color: rgba(255,255,255,0.05);">
+<div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem; background: var(--bg-card); border-top: 1px solid var(--glass-border);">
     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-        <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
-        <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0; color: var(--text-secondary);">Infrastructure Timeline Feed</h3>
+        <div style="width: 10px; height: 10px; background: var(--brand-red); border-radius: 2px;"></div>
+        <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-primary);">INFRASTRUCTURE_TIMELINE</h3>
     </div>
     <div id="feedList" style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
-            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.7;">Scanning Telemetry Streams...</p>
-        </div>
+        <!-- Feed populated via JS -->
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+// Global Telemetry Buffer
+let activeCapture = null;
+
 const slider = document.getElementById('completionSlider');
 const valDisplay = document.getElementById('completionVal');
 const bar = document.getElementById('completionBar');
-slider.oninput = () => { valDisplay.textContent = slider.value + '%'; bar.style.width = slider.value + '%'; };
 
-let map;
-function initMap() {
-    map = L.map('map', { zoomControl: false }).setView([9.0820, 8.6753], 6); // Nigeria center
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CartoDB'
-    }).addTo(map);
+if (slider) {
+    slider.oninput = () => { 
+        valDisplay.textContent = slider.value + '%'; 
+        bar.style.width = slider.value + '%'; 
+    };
 }
 
-// GPS Fetch
-if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(pos => {
-        document.getElementById('gps_lat').value = pos.coords.latitude;
-        document.getElementById('gps_long').value = pos.coords.longitude;
-        document.getElementById('gpsStatus').innerHTML = `🛰️ GPS_LOCKED: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-        document.getElementById('gpsStatus').style.color = 'var(--brand-red)';
-    });
+// Telemetry Logic Node
+function handleCameraCapture(input) {
+    if (input.files && input.files[0]) {
+        activeCapture = input.files[0];
+        const badge = document.getElementById('fileBadge');
+        if(badge) {
+            badge.style.display = 'block';
+            badge.textContent = 'CAMERA';
+            badge.style.background = 'var(--brand-orange)';
+        }
+    }
 }
 
-async function loadUpdates() {
-    const [updatesResp, projectsResp, wpResp] = await Promise.all([
-        fetch('/api/v1/site-updates/'), fetch('/api/v1/projects/'), fetch('/api/v1/project-updates/')
-    ]);
-    const updates = await updatesResp.json();
-    const projects = projectsResp.ok ? await projectsResp.json() : [];
-    const workPackages = wpResp.ok ? await wpResp.json() : [];
-    const wpMap = {}; workPackages.forEach(wp => { wpMap[wp.id] = wp; });
-    const projectMap = {}; projects.forEach(p => { projectMap[p.id] = p; });
-    
-    // Update Map
-    if (map) {
-        map.eachLayer((layer) => { if (!!layer.toGeoJSON) layer.remove(); });
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-        
-        const markers = [];
-        updates.forEach(u => {
-            if (u.gps_lat && u.gps_long) {
-                const marker = L.circleMarker([u.gps_lat, u.gps_long], {
-                    radius: 8,
-                    fillColor: "#E31E24",
-                    color: "#fff",
-                    weight: 1,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map).bindPopup(`<b style="color:#000">${projectMap[wpMap[u.work_package_id]?.project_id]?.name || 'SITE'}</b><br>${u.notes}`);
-                markers.push([u.gps_lat, u.gps_long]);
+// Bind File Input to Buffer
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('fileInput');
+    if(fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                activeCapture = this.files[0];
+                const badge = document.getElementById('fileBadge');
+                if(badge) {
+                    badge.style.display = 'block';
+                    badge.textContent = 'FILE';
+                    badge.style.background = 'var(--brand-red)';
+                }
             }
         });
-        if (markers.length > 0) map.fitBounds(markers);
     }
-
-    const container = document.getElementById('feedList');
-    if (updates.length === 0) { container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">No telemetry available</div>'; return; }
-    
-    container.innerHTML = updates.map((u, idx) => {
-        const wp = wpMap[u.work_package_id];
-        const project = wp ? projectMap[wp.project_id] : null;
-        return `
-        <div class="glass-card reveal-text reveal-delay-${(idx % 4) + 1}" style="border-left: 5px solid var(--brand-red); padding: 2rem; background: rgba(255,255,255,0.01);">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
-                <div style="display: flex; gap: 1.5rem; align-items: center;">
-                    <div style="width: 40px; height: 40px; background: rgba(227,30,36,0.1); border: 1px solid rgba(227,30,36,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--brand-red); font-size: 0.7rem;">${u.id}</div>
-                    <div>
-                        <h4 style="font-size: 1.1rem; font-weight: 900; color: white; text-transform: uppercase; margin:0;">${project ? project.name : 'OFF_GRID'}</h4>
-                        <span style="color: var(--brand-red); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">${wp ? wp.name : 'ORPHAN_NODE'}</span>
-                    </div>
-                </div>
-                <div style="text-align: right; background: rgba(15,23,42,0.6); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--glass-border);">
-                    <div style="color: white; font-size: 0.7rem; font-weight: 900;">${new Date(u.timestamp).toLocaleDateString()}</div>
-                    <div style="color: var(--brand-red); font-size: 0.6rem; font-weight: 900; opacity: 0.8; letter-spacing: 0.1em; margin-top:2px;">${new Date(u.timestamp).toLocaleTimeString()}</div>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: ${u.photo_url ? '1fr 200px' : '1fr'}; gap: 2rem;">
-                <div>
-                    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; font-weight: 600;">${u.notes || 'No observations recorded.'}</p>
-                    <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
-                        ${u.materials_used ? `
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 0.55rem; font-weight: 900; color: var(--brand-orange); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Material Expenditure</span>
-                            <span style="color: white; font-size: 0.75rem; font-weight: 800;">${u.materials_used} (₦${Number(u.cost_incurred).toLocaleString()})</span>
-                        </div>
-                        ` : ''}
-                        ${u.gps_lat ? `
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 0.55rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Telemetry Fix</span>
-                            <span style="color: white; font-size: 0.75rem; font-weight: 800;">${u.gps_lat.toFixed(4)}, ${u.gps_long.toFixed(4)}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-                ${u.photo_url ? `
-                <div onclick="window.open('${u.photo_url}')" style="cursor: pointer; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-border); aspect-ratio: 1; transition: transform 0.3s;">
-                    <img src="${u.photo_url}" style="width: 100%; height: 100%; object-fit: cover;" />
-                </div>
-                ` : ''}
-            </div>
-        </div>`;
-    }).join('');
-}
-
-document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = e.submitter;
-    const oldText = btn.textContent;
-    btn.textContent = 'TRANSMITTING...';
-    btn.disabled = true;
-
-    try {
-        const fd = new FormData(e.target);
-        const wpId = fd.get('wp_id'); 
-        const completionPct = fd.get('completion_pct');
-        
-        // Use hidden GPS fields
-        const gps_lat = document.getElementById('gps_lat').value;
-        const gps_long = document.getElementById('gps_long').value;
-        if (gps_lat) fd.append('gps_lat', gps_lat);
-        if (gps_long) fd.append('gps_long', gps_long);
-
-        const resp = await fetch(`/api/v1/site-updates/${wpId}/upload-photo`, { method: 'POST', body: fd });
-        if (completionPct && wpId) {
-            const pfd = new FormData(); 
-            pfd.append('progress', completionPct); 
-            pfd.append('notes', fd.get('notes') || '');
-            await fetch(`/api/v1/project-updates/${wpId}/submit`, { method: 'POST', body: pfd });
-        }
-        
-        if (resp.ok) { 
-            e.target.reset(); 
-            slider.value = 50; 
-            valDisplay.textContent = '50%'; 
-            bar.style.width = '50%'; 
-            loadUpdates(); 
-        } else { 
-            const err = await resp.json(); 
-            alert(err.detail || 'Failed'); 
-        }
-    } catch (e) {
-        alert("Transmission error.");
-    } finally {
-        btn.textContent = oldText;
-        btn.disabled = false;
-    }
+    loadUpdates(); 
+    loadDropdowns();
 });
 
-let allProjects = [];
-async function loadDropdowns() {
-    const pResp = await fetch('/api/v1/projects/');
-    allProjects = await pResp.json();
-    const pSelect = document.getElementById('projectFilter');
-    pSelect.innerHTML = '<option value="">Select Project...</option>';
-    allProjects.forEach(p => { pSelect.innerHTML += `<option value="${p.id}">${p.name.toUpperCase()}</option>`; });
-    pSelect.addEventListener('change', async () => {
-        const projectId = pSelect.value;
-        const wpResp = await fetch(`/api/v1/projects/${projectId}/project-updates`);
-        const phases = await wpResp.json();
-        const wpSelect = document.getElementById('wpFilter');
-        wpSelect.innerHTML = '<option value="">SELECT TARGET UPDATE...</option>' + 
-             phases.map(p => `<option value="${p.id}">${p.name.toUpperCase()}</option>`).join('');
-    });
-
-    const mResp = await fetch('/api/v1/store/materials');
-    const materials = await mResp.json();
-    const mSelect = document.getElementById('matSelect');
-    if (mSelect) {
-        mSelect.innerHTML = '<option value="">NONE INVOLVED</option>' + 
-            materials.map(m => `<option value="${m.id}">${m.name.toUpperCase()} (${m.unit})</option>`).join('');
-    }
+async function loadUpdates() {
+    try {
+        const [updatesResp, projectsResp, wpResp] = await Promise.all([
+            fetch('/api/v1/site-updates/', { credentials: 'same-origin' }), 
+            fetch('/api/v1/projects/', { credentials: 'same-origin' }), 
+            fetch('/api/v1/project-updates/', { credentials: 'same-origin' })
+        ]);
+        const updates = await updatesResp.json();
+        const projects = projectsResp.ok ? await projectsResp.json() : [];
+        const workPackages = wpResp.ok ? await wpResp.json() : [];
+        const wpMap = {}; workPackages.forEach(wp => { wpMap[wp.id] = wp; });
+        const projectMap = {}; projects.forEach(p => { projectMap[p.id] = p; });
+        
+        const container = document.getElementById('feedList');
+        if (updates.length === 0) { 
+            container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">NO_TELEMETRY_FOUND</div>'; 
+            return; 
+        }
+        
+        container.innerHTML = updates.map((u, idx) => {
+            const wp = wpMap[u.work_package_id];
+            const project = wp ? projectMap[wp.project_id] : null;
+            return `
+            <div class="glass-card reveal-text" style="padding: 2.5rem; background: var(--bg-panel); border: 1px solid var(--glass-border); border-left: 5px solid var(--brand-red);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                        <div style="width: 44px; height: 44px; background: var(--bg-deep); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--brand-red); font-size: 0.75rem; border: 1px solid var(--brand-red);">${u.id}</div>
+                        <div>
+                            <h4 class="serif-brand" style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin:0;">${project ? project.name : 'V_PROJECT_ALPHA'}</h4>
+                            <span style="color: var(--brand-red); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">${wp ? wp.name : 'SITE_UPDATE'}</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right; font-size: 0.65rem; color: var(--text-muted); font-weight: 800;">
+                        <div>${new Date(u.timestamp).toLocaleDateString()}</div>
+                        <div style="color: var(--brand-red); margin-top: 4px;">${new Date(u.timestamp).toLocaleTimeString()}</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: ${u.photo_url ? '1fr 240px' : '1fr'}; gap: 2.5rem; align-items: start;">
+                    <div>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; font-weight: 500; margin-top: 0;">${u.notes || 'Routine maintenance sequence completed. No anomalies detected.'}</p>
+                        <div style="display: flex; gap: 2.5rem; margin-top: 1.5rem;">
+                            ${u.materials_used ? `
+                            <div>
+                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Material Expense</div>
+                                <div style="font-weight: 700; color: var(--text-primary); font-size: 0.75rem;">${u.materials_used}</div>
+                            </div>` : ''}
+                            ${u.cost_incurred ? `
+                            <div>
+                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Financial Impact</div>
+                                <div style="font-weight: 700; color: var(--brand-red); font-size: 0.75rem;">NGN ${Number(u.cost_incurred).toLocaleString()}</div>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                    ${u.photo_url ? `
+                    <div onclick="window.open('${u.photo_url}')" style="cursor: pointer; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-border); aspect-ratio: 16/9; box-shadow: var(--glow-red);">
+                        <img src="${u.photo_url}" style="width: 100%; height: 100%; object-fit: cover;" />
+                    </div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) { console.error("Telemetry fetch failure", e); }
 }
-initMap(); loadUpdates(); loadDropdowns();
+
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const oldText = btn.innerHTML;
+    const progressWrapper = document.getElementById('dispatchProgressWrapper');
+    const progressBar = document.getElementById('dispatchProgressBar');
+    const percentText = document.getElementById('percentText');
+    const statusText = document.getElementById('statusText');
+    
+    // 1. Initial State
+    btn.innerHTML = 'TRANSMITTING...';
+    btn.disabled = true;
+    progressWrapper.style.display = 'block';
+    progressBar.style.width = '0%';
+    percentText.textContent = '0%';
+    statusText.textContent = 'INITIATING_UPLINK...';
+
+    const fd = new FormData(e.target);
+    const wpId = fd.get('wp_id'); 
+    
+    if (!wpId) {
+        showNotification("SITE_ERROR: No Target Task selected.", "error");
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        progressWrapper.style.display = 'none';
+        return;
+    }
+    
+    if (activeCapture) {
+        fd.set('photo', activeCapture);
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `/api/v1/site-updates/${wpId}/upload-photo`, true);
+    xhr.withCredentials = true;
+
+    // Track Upload Progress
+    xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            progressBar.style.width = percent + '%';
+            percentText.textContent = percent + '%';
+            if (percent < 30) statusText.textContent = 'PACKAGING_TELEMETRY...';
+            else if (percent < 70) statusText.textContent = 'UPLINKING_DATA...';
+            else if (percent < 100) statusText.textContent = 'PHASING_TO_HQ...';
+            else statusText.textContent = 'FINALIZING_ARCHIVE...';
+        }
+    };
+
+    xhr.onload = () => {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+            const resp = JSON.parse(xhr.responseText);
+            e.target.reset(); 
+            activeCapture = null; 
+            document.getElementById('fileBadge').style.display = 'none';
+            if(slider) {
+                slider.value = 50; 
+                valDisplay.textContent = '50%'; 
+                bar.style.width = '50%';
+            } 
+            setTimeout(() => progressWrapper.style.display = 'none', 1000);
+            loadUpdates(); 
+            showNotification("DISPATCH_SUCCESS: Telemetry archived at HQ.");
+        } else {
+            let detail = "Access Denied";
+            try { detail = JSON.parse(xhr.responseText).detail || detail; } catch(e) {}
+            showNotification(`TELEMETRY_REJECTED: ${detail}`, "error");
+            progressWrapper.style.display = 'none';
+        }
+    };
+
+    xhr.onerror = () => {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        progressWrapper.style.display = 'none';
+        showNotification("NETWORK_SYNC_FAILURE: Check site connectivity.", "error");
+    };
+
+    xhr.send(fd);
+});
+
+async function loadDropdowns() {
+    try {
+        const pResp = await fetch('/api/v1/projects/', { credentials: 'same-origin' });
+        const projects = await pResp.json();
+        const pSelect = document.getElementById('projectFilter');
+        pSelect.innerHTML = '<option value="">Select Project...</option>' + 
+            projects.map(p => `<option value="${p.id}">${p.name.toUpperCase()}</option>`).join('');
+            
+        pSelect.addEventListener('change', async () => {
+            const projectId = pSelect.value;
+            const wpResp = await fetch(`/api/v1/projects/${projectId}/project-updates`, { credentials: 'same-origin' });
+            const phases = await wpResp.json();
+            const wpSelect = document.getElementById('wpFilter');
+            wpSelect.innerHTML = '<option value="">SELECT TARGET TASK...</option>' + 
+                 phases.map(p => `<option value="${p.id}">${p.name.toUpperCase()}</option>`).join('');
+        });
+
+        const mResp = await fetch('/api/v1/store/materials', { credentials: 'same-origin' });
+        const materials = await mResp.json();
+        const mSelect = document.getElementById('matSelect');
+        if (mSelect) {
+            mSelect.innerHTML = '<option value="">NONE INVOLVED</option>' + 
+                materials.map(m => `<option value="${m.id}">${m.name.toUpperCase()} (BENEATH_STOCK: ${m.current_stock})</option>`).join('');
+        }
+    } catch(e) { console.error("Dropdown load failure", e); }
+}
+
+
 </script>
 {% endblock %}

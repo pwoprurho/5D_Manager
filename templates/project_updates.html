@@ -1,17 +1,24 @@
 {% extends "layout.html" %}
 
-{% block page_title %}Tasks{% endblock %}
+{% block page_title %}Project Stage Updates{% endblock %}
 
 {% block content %}
 <!-- Context Synchronization Header -->
-<div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 2.5rem 3rem; margin-bottom: 2.5rem;">
+<div class="glass-card reveal-text"
+    style="border-left: 5px solid var(--brand-red); padding: 2.5rem 3rem; margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; justify-content: space-between;">
         <div>
-            <h2 id="projectTitleHeader" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.04em; margin: 0; text-transform: uppercase; line-height: 1;">Initializing Context...</h2>
-            <p id="projectDescHeader" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.7;">Project Update Orchestration Terminal</p>
+            <h2 id="projectTitleHeader"
+                style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.04em; margin: 0; text-transform: uppercase; line-height: 1;">
+                Initializing Context...</h2>
+            <p id="projectDescHeader"
+                style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.7;">
+                Project Update Orchestration Terminal</p>
         </div>
         <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <div id="projectBadge" style="display: none; background: rgba(227,30,36,0.15); color: var(--brand-red); padding: 10px 24px; border-radius: 50px; font-weight: 900; font-size: 0.65rem; border: 1px solid rgba(227,30,36,0.3); letter-spacing: 0.2em;">LINK ESTABLISHED</div>
+            <div id="projectBadge"
+                style="display: none; background: rgba(227,30,36,0.15); color: var(--brand-red); padding: 10px 24px; border-radius: 50px; font-weight: 900; font-size: 0.65rem; border: 1px solid rgba(227,30,36,0.3); letter-spacing: 0.2em;">
+                LINK ESTABLISHED</div>
         </div>
     </div>
 </div>
@@ -21,19 +28,51 @@
 {% set role_str = user.role|string %}
 {% if 'admin' in role_str or 'director' in role_str or 'manager' in role_str %}
 <!-- Create Project Update -->
-<div class="glass-card reveal-text reveal-delay-1" style="display: none; border-top: 2px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;" id="createUpdateCard">
+<div class="glass-card reveal-text reveal-delay-1"
+    style="display: none; border-top: 2px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem;"
+    id="createUpdateCard">
     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-        <div style="width: 12px; height: 12px; background: var(--brand-red); border-radius: 3px; box-shadow: var(--glow-red);"></div>
-        <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">Initialize Project Update</h3>
+        <div
+            style="width: 12px; height: 12px; background: var(--brand-red); border-radius: 3px; box-shadow: var(--glow-red);">
+        </div>
+        <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">
+            Stage Orchestrator</h3>
     </div>
-    
+
+    <!-- Create Stage Form -->
+    <div
+        style="background: rgba(227,30,36,0.05); padding: 1.5rem; border: 1px dashed rgba(227,30,36,0.2); border-radius: 4px; margin-bottom: 2.5rem;">
+        <h4
+            style="font-size: 0.8rem; font-weight: 900; color: var(--brand-red); text-transform: uppercase; margin-bottom: 1rem;">
+            Initialize New Phase</h4>
+        <form id="createStageForm" style="display: flex; gap: 1rem;">
+            <input type="text" name="name" placeholder="NEW PHASE NAME (E.G. FOUNDATION)" required class="modern-input"
+                style="font-size: 0.8rem; flex: 1; font-weight: 700; text-transform: uppercase;">
+            <button type="submit" class="btn-modern btn-ghost"
+                style="padding: 0.8rem 2rem; border-color: var(--brand-red); color: var(--brand-red); font-weight: 900;">+
+                ADD PHASE</button>
+        </form>
+    </div>
+
+    <div style="height: 1px; background: rgba(255,255,255,0.05); margin-bottom: 2.5rem;"></div>
+
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+        <h4 style="font-size: 0.8rem; font-weight: 900; color: white; text-transform: uppercase;">Deploy Task to Phase
+        </h4>
+    </div>
+
+
     <form id="createUpdateForm" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
         <div style="grid-column: span 2;">
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Update Subject</label>
-            <input type="text" name="name" placeholder="E.G. FOUNDATION_EXCAVATION" required class="modern-input" style="font-weight: 700; text-transform: uppercase;">
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Update
+                Subject</label>
+            <input type="text" name="name" placeholder="E.G. FOUNDATION_EXCAVATION" required class="modern-input"
+                style="font-weight: 700; text-transform: uppercase;">
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Priority</label>
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Priority</label>
             <select name="priority" class="modern-input" style="font-weight: 700;">
                 <option value="low">LOW</option>
                 <option value="normal" selected>NORMAL</option>
@@ -42,25 +81,36 @@
             </select>
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Design File</label>
-            <select name="bim_element_id" id="bimElementsSelect" class="modern-input" style="font-weight: 700;">
-                <option value="">NO DESIGN LINKED</option>
+            <label
+                style="color: var(--text-muted); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; display: block; margin-bottom: 0.75rem;">Structural
+                Stage</label>
+            <select name="stage_id" id="stageSelect" class="modern-input" style="font-weight: 700;">
+                <option value="">SELECT PROJECT STAGE...</option>
             </select>
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Budget (NGN)</label>
-            <input type="number" name="budget_amount" value="0" step="0.01" class="modern-input" style="font-weight: 700;">
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Budget
+                (NGN)</label>
+            <input type="number" name="budget_amount" value="0" step="0.01" class="modern-input"
+                style="font-weight: 700;">
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target Start</label>
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target
+                Start</label>
             <input type="date" name="start_date" class="modern-input" style="font-weight: 700;">
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target End</label>
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target
+                End</label>
             <input type="date" name="due_date" class="modern-input" style="font-weight: 700;">
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Phase Type</label>
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Phase
+                Type</label>
             <select name="type" class="modern-input" style="font-weight: 700;">
                 <option value="task" selected>TASK</option>
                 <option value="phase">PHASE</option>
@@ -69,17 +119,49 @@
             </select>
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Est. Hours</label>
-            <input type="number" name="estimated_hours" value="0" step="0.5" class="modern-input" style="font-weight: 700;">
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Logging
+                Frequency</label>
+            <select name="logging_period" class="modern-input" style="font-weight: 700;">
+                <option value="daily" selected>DAILY (Focus)</option>
+                <option value="weekly">WEEKLY</option>
+                <option value="bi_weekly">BI-WEEKLY</option>
+                <option value="monthly">MONTHLY</option>
+                <option value="periodic">PERIODIC</option>
+            </select>
         </div>
         <div>
-            <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Assignee</label>
+            <label
+                style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Est.
+                Hours</label>
+            <input type="number" name="estimated_hours" value="0" step="0.5" class="modern-input"
+                style="font-weight: 700;">
+        </div>
+        <div>
+            <label
+                style="color: var(--text-muted); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; display: block; margin-bottom: 0.75rem;">Lead
+                Engineer</label>
             <select name="assignee_id" id="assigneeSelect" class="modern-input" style="font-weight: 700;">
                 <option value="">UNASSIGNED</option>
             </select>
         </div>
-        <div style="display: flex; align-items: flex-end; grid-column: span 1;">
-            <button type="submit" class="btn-modern btn-primary" style="padding: 1.25rem 2rem; border-radius: var(--radius-sm); font-weight: 900; width: 100%;">+ AUTHORIZE</button>
+        <div style="display: flex; align-items: flex-end; grid-column: span 1; gap: 1rem; flex-direction: column;">
+            <!-- Task Deployment Telemetry -->
+            <div id="taskProgressWrapper" style="display: none; width: 100%; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span id="taskStatusText"
+                        style="font-size: 0.5rem; color: var(--brand-red); font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;">UPLINKING...</span>
+                    <span id="taskPercentText" style="font-size: 0.6rem; color: white;">0%</span>
+                </div>
+                <div style="height: 2px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                    <div id="taskProgressBar"
+                        style="width: 0%; height: 100%; background: var(--brand-red); transition: width 0.3s ease;">
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn-modern btn-primary"
+                style="padding: 1.25rem 2rem; border-radius: var(--radius-sm); font-weight: 900; width: 100%;">+
+                AUTHORIZE</button>
         </div>
     </form>
 </div>
@@ -89,195 +171,350 @@
 <div class="glass-card reveal-text reveal-delay-2" style="border-color: rgba(255,255,255,0.05); padding: 3rem;">
     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
         <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;"></div>
-        <h3 style="font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-muted);">Active Project Updates</h3>
+        <h3
+            style="font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--text-muted);">
+            Active Tasks in Project</h3>
     </div>
     <div id="updateGridBody" style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
-            <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
-            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.7;">Loading Terminal Data...</p>
+        <div
+            style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
+            <div
+                style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;">
+            </div>
+            <p
+                style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.7;">
+                Loading Terminal Data...</p>
         </div>
     </div>
 </div>
 
 <style>
-@keyframes spin { to { transform: rotate(360deg); } }
-.progress-bar { background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, var(--brand-red), var(--brand-orange)); border-radius: 2px; }
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 
+    .progress-bar {
+        background: rgba(255, 255, 255, 0.05);
+        height: 4px;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--brand-red), var(--brand-orange));
+        border-radius: 2px;
+    }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
+    const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
 
-async function loadContext() {
-    const pid = localStorage.getItem('currentProjectId');
-    if (!pid) {
-        alert("TERMINAL_ERROR: No active site context detected. Return to Sites to select a project.");
-        window.location.href = '/projects';
-        return;
-    }
-
-    try {
-        // 1. Load project details and users in parallel
-        const [projResp, usersResp] = await Promise.all([
-            fetch(`/api/v1/projects/${pid}`),
-            fetch('/api/v1/users/')
-        ]);
-        
-        if (!projResp.ok) throw new Error("PROJECT_FETCH_FAILED");
-        const project = await projResp.json();
-        const users = await usersResp.json();
-
-        // 2. Synchronize Header UI
-        const titleHeader = document.getElementById('projectTitleHeader');
-        const descHeader = document.getElementById('projectDescHeader');
-        if (titleHeader) titleHeader.textContent = project.name.toUpperCase();
-        if (descHeader) descHeader.textContent = project.description || "Project Orchestration Terminal";
-        document.getElementById('projectBadge').style.display = 'block';
-
-        // 3. Load BIM elements if a design is linked
-        const bSel = document.getElementById('bimElementsSelect');
-        if (bSel) {
-            if (project.design_id) {
-                bSel.innerHTML = '<option value="">EXTRACTING_BIM_STRUCTURE...</option>';
-                try {
-                    const eResp = await fetch(`/api/v1/designs/${project.design_id}/elements`);
-                    const elements = await eResp.json();
-                    
-                    if (elements && elements.length > 0) {
-                        const eOpts = elements.map(e => 
-                            `<option value="${e.guid}">${e.type}: ${e.name.toUpperCase()} (ID: ${e.id})</option>`
-                        ).join('');
-                        bSel.innerHTML = '<option value="NONE">SELECT ARCHITECTURAL ELEMENT...</option>' + eOpts;
-                    } else {
-                        bSel.innerHTML = '<option value="NONE">NO_IDENTIFIABLE_ELEMENTS_IN_MODEL</option>';
-                    }
-                } catch (e) {
-                    bSel.innerHTML = '<option value="NONE">ELEMENT_EXTRACTION_FAILURE</option>';
-                }
-            } else {
-                bSel.innerHTML = '<option value="NONE">NO_BLUEPRINT_LINKED</option>';
-            }
-        }
-
-        // 4. Populate Assignee list
-        const uSel = document.getElementById('assigneeSelect');
-        if (uSel && users.length > 0) {
-            const uOpts = users.map(u =>
-                `<option value="${u.id}">${u.username.toUpperCase()} (${u.role})</option>`
-            ).join('');
-            uSel.innerHTML = '<option value="">UNASSIGNED</option>' + uOpts;
-        }
-
-        // 5. Authorization Check
-        if (['admin', 'president', 'director', 'manager'].includes(userRole)) {
-            const card = document.getElementById('createUpdateCard');
-            if (card) card.style.display = 'block';
-        }
-
-        // 6. Load Task Registry
-        loadTasks(pid);
-
-    } catch (err) { 
-        console.error('CONTEXT_SYNC_FAILURE:', err);
-        alert("TERMINAL_LINK_FAILED: Site telemetry lost.");
-    }
-}
-
-async function loadTasks(pid) {
-    const container = document.getElementById('updateGridBody');
-    try {
-        const resp = await fetch(`/api/v1/projects/${pid}/project-updates`);
-        const tasks = await resp.json();
-
-        if (tasks.length === 0) {
-            container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.25em; opacity: 0.5;">No active tasks detected for this site</div>';
+    async function loadContext() {
+        const pid = localStorage.getItem('currentProjectId');
+        if (!pid) {
+            showNotification("TERMINAL_ERROR: No active site context detected.", "error");
+            window.location.href = '/projects';
             return;
         }
 
-        const statusColors = { 
-            not_started: '#94a3b8', 
-            in_progress: '#FF9800', 
-            completed: '#3B82F6', 
-            inspected: '#8B5CF6', 
-            approved: '#10B981', 
-            blocked: '#E31E24' 
+        try {
+            // 3. Load Project Stages & Meta
+            const [projResp, usersResp, stagesResp] = await Promise.all([
+                fetch(`/api/v1/projects/${pid}`),
+                fetch('/api/v1/users/'),
+                fetch(`/api/v1/projects/${pid}/stages`)
+            ]);
+
+            if (!projResp.ok) throw new Error("PROJECT_FETCH_FAILED");
+            const project = await projResp.json();
+            const users = await usersResp.json();
+            const stages = await stagesResp.json();
+
+            // Synchronize Header UI
+            const titleHeader = document.getElementById('projectTitleHeader');
+            const descHeader = document.getElementById('projectDescHeader');
+            if (titleHeader) titleHeader.textContent = project.name.toUpperCase();
+            if (descHeader) descHeader.textContent = project.description || "Project Orchestration Terminal";
+            document.getElementById('projectBadge').style.display = 'block';
+
+            const sSel = document.getElementById('stageSelect');
+            if (sSel) {
+                sSel.innerHTML = '<option value="">SELECT PROJECT STAGE...</option>' +
+                    stages.map(s => `<option value="${s.id}">${s.name.toUpperCase()}</option>`).join('');
+            }
+
+            // 4. Populate Assignee list
+            const uSel = document.getElementById('assigneeSelect');
+            if (uSel && users.length > 0) {
+                const uOpts = users.map(u =>
+                    `<option value="${u.id}">${u.username.toUpperCase()} (${u.role})</option>`
+                ).join('');
+                uSel.innerHTML = '<option value="">UNASSIGNED</option>' + uOpts;
+            }
+
+            // 5. Authorization Check
+            if (['admin', 'president', 'director', 'manager'].includes(userRole)) {
+                const card = document.getElementById('createUpdateCard');
+                if (card) card.style.display = 'block';
+            }
+
+            // 6. Load Task Registry
+            loadTasks(pid);
+
+        } catch (err) {
+            console.error('CONTEXT_SYNC_FAILURE:', err);
+            showNotification("TERMINAL_LINK_FAILED: Site telemetry lost.", "error");
+        }
+    }
+
+    async function loadTasks(pid) {
+        const container = document.getElementById('updateGridBody');
+        try {
+            const [tasksResp, stagesResp] = await Promise.all([
+                fetch(`/api/v1/projects/${pid}/project-updates`),
+                fetch(`/api/v1/projects/${pid}/stages`)
+            ]);
+            const tasks = await tasksResp.json();
+            const stages = await stagesResp.json();
+
+            if (tasks.length === 0) {
+                container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.25em; opacity: 0.5;">No active tasks detected for this site</div>';
+                return;
+            }
+
+            const statusColors = {
+                not_started: '#94a3b8',
+                in_progress: '#FF9800',
+                completed: '#3B82F6',
+                inspected: '#8B5CF6',
+                approved: '#10B981',
+                blocked: '#E31E24'
+            };
+
+            const stageMap = {};
+            stages.forEach(s => stageMap[s.id] = s.name);
+
+            const grouped = {};
+            tasks.forEach(t => {
+                const sId = t.stage_id || 'unassigned';
+                if (!grouped[sId]) grouped[sId] = [];
+                grouped[sId].push(t);
+            });
+
+            container.innerHTML = Object.keys(grouped).map(sId => {
+                const stageName = stageMap[sId] || 'UNASSIGNED_PHASE';
+                const stageTasks = grouped[sId];
+                const stageObj = stages.find(s => String(s.id) === String(sId));
+                const stageStatus = stageObj ? stageObj.status : 'not_started';
+                const isStageCompleted = stageStatus === 'completed' || stageStatus === 'approved';
+                
+                const completedCount = stageTasks.filter(t => t.status === 'completed' || t.status === 'approved').length;
+                const totalCount = stageTasks.length;
+
+                return `
+                    <div class="glass-card phase-container" style="margin-bottom: 3rem; padding: 0; overflow: hidden; border: 1px solid ${isStageCompleted ? 'rgba(16,185,129,0.2)' : 'var(--glass-border)'};">
+                        <!-- Phase Header -->
+                        <div style="background: ${isStageCompleted ? 'rgba(16,185,129,0.05)' : 'rgba(255,255,255,0.02)'}; padding: 1.5rem 2rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                                    <h3 style="font-size: 1.1rem; font-weight: 900; color: white; margin: 0; text-transform: uppercase; letter-spacing: -0.01em;">${stageName}</h3>
+                                    <span style="font-size: 0.55rem; font-weight: 900; background: ${isStageCompleted ? '#10B981' : '#94a3b8'}; color: white; padding: 2px 8px; border-radius: 4px;">${stageStatus.toUpperCase()}</span>
+                                </div>
+                                <div style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;">
+                                    PHASE_TELEMETRY: ${completedCount} / ${totalCount} TASKS SYNCED
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                ${['admin', 'manager', 'director'].includes(userRole) ? `
+                                    <button class="btn-modern btn-ghost" onclick="prepareTaskForStage('${sId}')" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-color: rgba(255,255,255,0.1);">+ DEPLOY_TASK</button>
+                                    ${!isStageCompleted ? `<button class="btn-modern btn-primary" onclick="completeStage(${sId})" style="padding: 0.5rem 1rem; font-size: 0.6rem; background: #10B981; border: none;">COMPLETE_PHASE</button>` : ''}
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <!-- Task List -->
+                        <div style="padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                            ${stageTasks.map((t, idx) => {
+                                const statusColor = statusColors[t.status] || '#94a3b8';
+                                return `
+                                    <div class="task-row" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 1rem 1.5rem; border-radius: 8px; transition: 0.2s;">
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                                <div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; shadow: 0 0 5px ${statusColor};"></div>
+                                                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0;">${t.name}</h4>
+                                                <span style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800; opacity: 0.6;">[ ID_${t.id} ]</span>
+                                            </div>
+                                            <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem; font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">
+                                                <span>PROG: ${t.progress_pct}%</span>
+                                                <span>PRIORITY: ${t.priority.toUpperCase()}</span>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 0.75rem;">
+                                            ${['admin', 'manager', 'director'].includes(userRole) ? `<button onclick="event.stopPropagation(); deleteTask(${t.id})" class="btn-modern btn-ghost" style="padding: 0.35rem 0.6rem; font-size: 0.6rem; border-color: rgba(227,30,36,0.1); color: var(--brand-red);">&times;</button>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) { console.error("TASK_LOAD_ERROR", err); }
+    }
+
+    document.getElementById('createStageForm')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const pid = localStorage.getItem('currentProjectId');
+        if (!pid) return;
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'SYNCING...';
+
+        const fd = new FormData(e.target);
+        const body = {
+            project_id: parseInt(pid),
+            name: fd.get('name').toUpperCase()
         };
 
-        container.innerHTML = tasks.map((t, idx) => {
-            const statusColor = statusColors[t.status] || '#94a3b8';
-            return `
-            <div class="glass-card update-card reveal-text reveal-delay-${(idx % 4) + 1}"
-                 style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border-left: 5px solid ${statusColor}; padding: 2.5rem; cursor: pointer;">
-                <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                        <span style="font-size: 0.55rem; background: rgba(227,30,36,0.1); color: var(--brand-red); padding: 4px 10px; border-radius: 4px; font-weight: 900;">SITE_TASK</span>
-                        <span style="font-size: 0.55rem; color: var(--text-muted); font-weight: 800;">REF_ID: ${t.id}</span>
-                    </div>
-                    <h4 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 1.5rem; color: white;">${t.name}</h4>
-                    <div class="progress-bar" style="max-width: 400px; margin-bottom: 1rem;"><div class="progress-fill" style="width: ${t.progress_pct}%"></div></div>
-                    <div style="display: flex; gap: 2rem; font-size: 0.7rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; flex-wrap: wrap;">
-                        <span>TYPE: ${t.type}</span>
-                        <span>STATUS: ${t.status.replace('_', ' ')}</span>
-                        <span>PROGRESS: ${t.progress_pct}%</span>
-                        <span>EST_HOURS: ${t.estimated_hours}H</span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    ${['admin', 'manager', 'director'].includes(userRole) ? `<button onclick="event.stopPropagation(); deleteTask(${t.id})" class="btn-modern btn-ghost" style="padding: 0.6rem; border-color: rgba(227,30,36,0.2); color: var(--brand-red);">&times;</button>` : ''}
-                </div>
-            </div>
-        `; }).join('');
-    } catch (err) { console.error("TASK_LOAD_ERROR", err); }
-}
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/v1/stages/', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.withCredentials = true;
 
-document.getElementById('createUpdateForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const pid = localStorage.getItem('currentProjectId');
-    if (!pid) return;
+        xhr.onload = () => {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                e.target.reset();
+                showNotification("PHASE_ESTABLISHED: New structural node active.");
+                loadContext();
+            } else {
+                showNotification("SYNC_REJECTED: Check terminal clearance.", "error");
+            }
+        };
+        xhr.onerror = () => {
+            btn.disabled = false; btn.innerHTML = origText;
+            showNotification("UPLINK_TIMEOUT: Remote registry unreachable.", "error");
+        };
+        xhr.send(JSON.stringify(body));
+    });
 
-    const fd = new FormData(e.target);
-    const body = {
-        project_id: parseInt(pid),
-        name: fd.get('name').toUpperCase(),
-        bim_element_id: fd.get('bim_element_id') || "NONE",
-        budget_amount: parseFloat(fd.get('budget_amount')) || 0,
-        type: fd.get('type'),
-        priority: fd.get('priority'),
-        estimated_hours: parseFloat(fd.get('estimated_hours')) || 0,
-        assignee_id: fd.get('assignee_id') || null,
-        status: 'not_started',
-        start_date: fd.get('start_date') ? new Date(fd.get('start_date')).toISOString() : null,
-        due_date: fd.get('due_date') ? new Date(fd.get('due_date')).toISOString() : null
+    document.getElementById('createUpdateForm')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const pid = localStorage.getItem('currentProjectId');
+        if (!pid) return;
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        const origText = btn.innerHTML;
+        const progressWrapper = document.getElementById('taskProgressWrapper');
+        const progressBar = document.getElementById('taskProgressBar');
+        const percentText = document.getElementById('taskPercentText');
+        const statusText = document.getElementById('taskStatusText');
+
+        btn.disabled = true;
+        btn.innerHTML = 'AUTHORIZING...';
+        progressWrapper.style.display = 'block';
+        progressBar.style.width = '0%';
+        percentText.textContent = '0%';
+
+        const fd = new FormData(e.target);
+        const body = {
+            project_id: parseInt(pid),
+            stage_id: fd.get('stage_id') ? parseInt(fd.get('stage_id')) : null,
+            name: fd.get('name').toUpperCase(),
+            bim_element_id: "NONE",
+            budget_amount: parseFloat(fd.get('budget_amount')) || 0,
+            type: fd.get('type'),
+            priority: fd.get('priority'),
+            logging_period: fd.get('logging_period') || 'daily',
+            estimated_hours: parseFloat(fd.get('estimated_hours')) || 0,
+            assignee_id: fd.get('assignee_id') || null,
+            status: 'not_started',
+            start_date: fd.get('start_date') ? new Date(fd.get('start_date')).toISOString() : null,
+            due_date: fd.get('due_date') ? new Date(fd.get('due_date')).toISOString() : null
+        };
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/v1/project-updates/', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.withCredentials = true;
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                progressBar.style.width = percent + '%';
+                percentText.textContent = percent + '%';
+                if (percent < 50) statusText.textContent = 'DEPLOYING_TASK...';
+                else statusText.textContent = 'FINALIZING_MISSION...';
+            }
+        };
+
+        xhr.onload = () => {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                e.target.reset();
+                setTimeout(() => progressWrapper.style.display = 'none', 1000);
+                showNotification("TASK_AUTHORIZED: Deployment sequence complete.");
+                loadContext();
+            } else {
+                showNotification("DEPLOY_REJECTED: Parameter mismatch.", "error");
+                progressWrapper.style.display = 'none';
+            }
+        };
+
+        xhr.onerror = () => {
+            btn.disabled = false; btn.innerHTML = origText;
+            progressWrapper.style.display = 'none';
+            showNotification("SYNC_TIMEOUT: Tactical data loss.", "error");
+        };
+
+        xhr.send(JSON.stringify(body));
+    });
+
+    window.deleteTask = async function (id) {
+        if (!confirm('EXTERMINATE_TASK? This operation is irreversible.')) return;
+        try {
+            const r = await fetch(`/api/v1/project-updates/${id}`, { method: 'DELETE' });
+            if (r.ok) loadContext();
+        } catch (e) { alert("DELETE_FAILURE"); }
     };
 
-    try {
-        const r = await fetch('/api/v1/project-updates/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        if (r.ok) { 
-            e.target.reset(); 
-            loadContext(); 
-        } else { 
-            const err = await r.json();
-            alert("TASK_CREATION_FAILED: " + (err.detail || "Unknown error")); 
+    window.completeStage = async function(stageId) {
+        if (!confirm('COMMENCE_PHASE_FINALIZATION? This will mark the structural stage as COMPLETED in the global registry.')) return;
+        
+        try {
+            const r = await fetch(`/api/v1/stages/${stageId}?status=completed`, {
+                method: 'PATCH',
+                credentials: 'same-origin'
+            });
+            if (r.ok) {
+                showNotification("PHASE_SYNCHRONIZED: Structural node marked as COMPLETED.");
+                loadContext();
+            } else {
+                showNotification("SYNC_FAILURE: Clear operational bottlenecks first.", "error");
+            }
+        } catch (e) {
+            showNotification("UPLINK_TIMEOUT: Remote registry unreachable.", "error");
         }
-    } catch (e) { alert("NETWORK_ERROR: Authorize protocol timeout."); }
-});
+    };
 
-window.deleteTask = async function(id) {
-    if (!confirm('EXTERMINATE_TASK? This operation is irreversible.')) return;
-    try {
-        const r = await fetch(`/api/v1/project-updates/${id}`, { method: 'DELETE' });
-        if (r.ok) loadContext();
-    } catch (e) { alert("DELETE_FAILURE"); }
-};
+    window.prepareTaskForStage = function (stageId) {
+        const sel = document.getElementById('stageSelect');
+        if (sel) sel.value = stageId;
+        const formDiv = document.getElementById('createUpdateCard');
+        if (formDiv) {
+            formDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
 
-loadContext();
+    loadContext();
 </script>
 {% endblock %}
-

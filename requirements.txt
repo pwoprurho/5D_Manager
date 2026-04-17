@@ -9,7 +9,6 @@ sqlmodel
 httpx
 pytest
 requests
-ifcopenshell
 starlette
 python-multipart
 gunicorn

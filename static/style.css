@@ -3,19 +3,19 @@
 
 :root {
     /* Color Palette */
-    --primary-blue: #1d4ed8;
+    --primary-blue: #2563eb;
     --primary-dark: #0f172a;
     --secondary-teal: #0ea5e9;
     --accent-gold: #f59e0b;
     --surface-light: #f8fafc;
-    --surface-mid: #edf2f7;
-    --text-strong: #0f172a;
-    --text-muted: #475569;
+    --surface-mid: #f1f5f9;
+    --text-strong: #000000;
+    --text-muted: #1e293b;
     --white: #ffffff;
 
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-size-base: 16px;
+    --font-size-base: clamp(14px, 1.2vw + 10px, 18px);
     --line-height-base: 1.6;
 
     /* Spacing */
@@ -424,17 +424,43 @@ body {
     border: 2px solid var(--primary-red);
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* ===== RESPONSIVE DESIGN & DYNAMIC DROPDOWN ===== */
+@media (max-width: 900px) {
+    .header-content {
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .nav-tabs {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+        justify-content: flex-start;
+        /* Dynamic sliding/scrolling bar for mobile */
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
 @media (max-width: 768px) {
     .header-content {
         flex-direction: column;
-        gap: var(--spacing-lg);
+        gap: var(--spacing-md);
         text-align: center;
     }
 
     .nav-tabs {
-        flex-wrap: wrap;
-        justify-content: center;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+        padding: var(--spacing-xs) 0;
+    }
+
+    .nav-tab {
+        flex: 0 0 auto;
     }
 
     .form-row {
@@ -450,7 +476,7 @@ body {
     }
 
     .upload-section h1 {
-        font-size: 2rem;
+        font-size: clamp(1.5rem, 4vw, 2rem);
     }
 }
 

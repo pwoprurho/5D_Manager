@@ -14,6 +14,8 @@
             <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem;">Infrastructure Execution Chronology</p>
         </div>
         <div style="display: flex; gap: 0.75rem;">
+            <button onclick="window.print()" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900; background: rgba(255,255,255,0.05);">PRINT_SCHEDULE</button>
+            <div style="width: 1px; background: var(--glass-border); margin: 0 0.5rem;"></div>
             <button onclick="ganttChart && ganttChart.change_view_mode('Day')" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">DAY</button>
             <button onclick="ganttChart && ganttChart.change_view_mode('Week')" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">WEEK</button>
             <button onclick="ganttChart && ganttChart.change_view_mode('Month')" class="btn-modern btn-primary" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">MONTH</button>
@@ -28,6 +30,12 @@
             <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.7;">Loading Timeline Data...</p>
         </div>
     </div>
+    <div class="gantt-legend">
+        <div class="legend-item"><div class="legend-color" style="background: #e31837;"></div>OVERDUE</div>
+        <div class="legend-item"><div class="legend-color" style="background: #fbbf24;"></div>BEHIND (MISSED DAILY TARGET)</div>
+        <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div>ON TRACK</div>
+        <div class="legend-item"><div class="legend-color" style="background: #0ea5e9;"></div>COMPLETED</div>
+    </div>
 </div>
 
 <style>
@@ -39,12 +47,63 @@
 .gantt .row-line { stroke: var(--glass-border); }
 .gantt .tick { stroke: var(--glass-border); }
 .gantt .today-highlight { fill: rgba(227, 30, 36, 0.08); }
-.gantt .bar { fill: var(--brand-red); rx: 4; ry: 4; }
-.gantt .bar-progress { fill: var(--brand-orange); }
+.gantt .bar { rx: 4; ry: 4; }
+.gantt .bar.status-completed { fill: #0ea5e9; }
+.gantt .bar.status-overdue { fill: #e31837; }
+.gantt .bar.status-behind { fill: #fbbf24; }
+.gantt .bar.status-on-track { fill: #10b981; }
+
+.gantt .bar-progress { fill: rgba(255,255,255,0.2); }
 .gantt .bar-label { fill: white; font-weight: 700; font-size: 0.7rem; }
-.gantt .handle { fill: var(--brand-red); }
+.gantt .handle { fill: rgba(255,255,255,0.5); }
 .gantt .header-text, .gantt .lower-text, .gantt .upper-text { fill: var(--text-muted); font-weight: 600; font-size: 0.7rem; }
+
+.gantt-legend {
+    display: flex; gap: 1.5rem; margin-top: 1.5rem; padding: 1rem; 
+    background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--glass-border);
+}
+.legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
+.legend-color { width: 10px; height: 10px; border-radius: 2px; }
+
+@media print {
+    body { background: white !important; color: black !important; padding: 0 !important; }
+    .sidebar, .top-nav, .btn-modern { display: none !important; }
+    .glass-card { background: white !important; border: 1px solid #eee !important; box-shadow: none !important; margin: 0 !important; padding: 1rem !important; }
+    #ganttContainer { overflow: visible !important; }
+    .gantt .bar { fill: #333 !important; }
+    .gantt .bar-progress { fill: #999 !important; }
+    .gantt .bar-label { fill: black !important; }
+    .gantt .grid-header { fill: #f9f9f9 !important; stroke: #eee !important; }
+    * { animation: none !important; transform: none !important; }
+}
+
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(1, 4, 9, 0.85); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center; z-index: 2000;
+}
+.modal-content {
+    width: 100%; max-width: 600px; padding: 0; border: 1px solid var(--glass-border);
+    background: var(--bg-deep); border-radius: var(--radius-md); overflow: hidden;
+}
 </style>
+
+<!-- Task History Modal -->
+<div id="historyModal" class="modal-overlay" onclick="if(event.target === this) closeHistoryModal()">
+    <div class="modal-content glass-card">
+        <div style="background: rgba(227, 30, 36, 0.1); padding: 1.5rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span style="font-size: 0.6rem; color: var(--brand-red); font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase;">Task Telemetry Record</span>
+                <h3 id="modalTaskName" style="font-size: 1rem; font-weight: 900; text-transform: uppercase; margin: 0; color: white;">HISTORY</h3>
+            </div>
+            <button onclick="closeHistoryModal()" class="btn-modern btn-ghost" style="padding: 0.3rem 0.6rem;">&times;</button>
+        </div>
+        <div style="padding: 1.5rem;">
+            <div id="historyList" style="display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto;">
+                <div style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.6rem;">SYNCHRONIZING...</div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -80,11 +139,50 @@ async function loadGantt() {
             bar_height: 30,
             bar_corner_radius: 4,
             padding: 20,
+            on_click: function (task) {
+                openTaskHistoryModal(task.id, task.name);
+            }
         });
     } catch(err) {
         console.error("Gantt load failed", err);
         document.getElementById('ganttContainer').innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--brand-red); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">TIMELINE_SYNC_ERROR</div>';
     }
+}
+
+window.openTaskHistoryModal = async function(taskId, taskName) {
+    document.getElementById('modalTaskName').textContent = taskName;
+    document.getElementById('historyModal').style.display = 'flex';
+    const list = document.getElementById('historyList');
+    list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem; border: 1px dashed var(--glass-border); font-size: 0.65rem;">FETCHING TELEMETRY...</div>';
+    
+    try {
+        const r = await fetch(`/api/v1/site-updates/`);
+        const allUpdates = await r.json();
+        const tUpdates = allUpdates.filter(u => String(u.work_package_id) === String(taskId)).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        if (tUpdates.length === 0) {
+            list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem; border: 1px dashed var(--glass-border); font-size: 0.65rem;">NO LOGS RECORDED</div>';
+            return;
+        }
+
+        list.innerHTML = tUpdates.map(u => `
+            <div style="padding: 1rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--brand-red); border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 900;">${new Date(u.timestamp).toLocaleString()}</span>
+                    ${u.photo_url ? '<i class="fas fa-camera" style="color: var(--brand-orange); font-size: 0.6rem;"></i>' : ''}
+                </div>
+                <div style="font-size: 0.85rem; color: white; font-weight: 800; margin-bottom: ${u.photo_url ? '1rem' : '0'};">${u.notes || 'PROGRESS LOGGED'}</div>
+                ${u.photo_url ? `<img src="${u.photo_url}" style="width: 100%; border-radius: 4px; border: 1px solid var(--glass-border);"/>` : ''}
+            </div>
+        `).join('');
+
+    } catch(e) {
+        list.innerHTML = '<div style="color: var(--brand-red);">SYNC_ERROR</div>';
+    }
+}
+
+window.closeHistoryModal = function() {
+    document.getElementById('historyModal').style.display = 'none';
 }
 
 loadGantt();

@@ -1,11 +1,12 @@
 -- ============================================================
--- 5D Project Management System - Supabase Schema (V11 - Final)
+-- 5D Project Management System - Supabase Schema (V12 - Orchestration Optimized)
 -- Run this in your Supabase SQL Editor (Dashboard > SQL Editor)
 -- ============================================================
 
 -- DROP ALL (Full Reset)
 DROP TABLE IF EXISTS projectassignment CASCADE;
 DROP TABLE IF EXISTS material_request CASCADE;
+DROP TABLE IF EXISTS project_inventory CASCADE;
 DROP TABLE IF EXISTS material CASCADE;
 DROP TABLE IF EXISTS siteupdate CASCADE;
 DROP TABLE IF EXISTS workpackage CASCADE;
@@ -19,6 +20,7 @@ DROP TYPE IF EXISTS status_enum CASCADE;
 DROP TYPE IF EXISTS wp_type CASCADE;
 DROP TYPE IF EXISTS wp_priority CASCADE;
 DROP TYPE IF EXISTS material_request_status CASCADE;
+DROP TYPE IF EXISTS logging_period CASCADE;
 
 -- ============================================================
 -- 1. ENUM TYPES
@@ -27,7 +29,8 @@ CREATE TYPE user_role AS ENUM ('engineer', 'manager', 'director', 'admin');
 CREATE TYPE status_enum AS ENUM ('not_started', 'in_progress', 'completed', 'inspected', 'approved', 'blocked', 'critical');
 CREATE TYPE wp_type AS ENUM ('task', 'bug', 'milestone', 'phase');
 CREATE TYPE wp_priority AS ENUM ('low', 'normal', 'high', 'immediate');
-CREATE TYPE material_request_status AS ENUM ('pending', 'approved', 'declined', 'delivered');
+CREATE TYPE material_request_status AS ENUM ('pending', 'approved', 'issued', 'rejected');
+CREATE TYPE logging_period AS ENUM ('daily', 'weekly', 'bi_weekly', 'monthly', 'periodic');
 
 -- ============================================================
 -- 2. USERS
@@ -88,7 +91,7 @@ CREATE TABLE stage (
 );
 
 -- ============================================================
--- 7. MATERIALS
+-- 7. MATERIALS (Master Registry)
 -- ============================================================
 CREATE TABLE material (
     id SERIAL PRIMARY KEY,
@@ -101,7 +104,21 @@ CREATE TABLE material (
 );
 
 -- ============================================================
--- 8. WORK PACKAGES
+-- 8. PROJECT INVENTORY (Site Warehouses)
+-- ============================================================
+CREATE TABLE project_inventory (
+    id SERIAL PRIMARY KEY,
+    project_id INTEGER NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+    material_id INTEGER NOT NULL REFERENCES material(id) ON DELETE CASCADE,
+    quantity DOUBLE PRECISION NOT NULL DEFAULT 0,
+    unit_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    low_stock_threshold DOUBLE PRECISION NOT NULL DEFAULT 10,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE(project_id, material_id)
+);
+
+-- ============================================================
+-- 9. WORK PACKAGES
 -- ============================================================
 CREATE TABLE workpackage (
     id SERIAL PRIMARY KEY,
@@ -117,6 +134,7 @@ CREATE TABLE workpackage (
     approved_by_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
     type wp_type NOT NULL DEFAULT 'task',
     priority wp_priority NOT NULL DEFAULT 'normal',
+    logging_period logging_period NOT NULL DEFAULT 'daily',
     start_date TIMESTAMP WITH TIME ZONE,
     due_date TIMESTAMP WITH TIME ZONE,
     parent_id INTEGER REFERENCES workpackage(id) ON DELETE SET NULL,
@@ -126,7 +144,7 @@ CREATE TABLE workpackage (
 );
 
 -- ============================================================
--- 9. MATERIAL REQUESTS
+-- 10. MATERIAL REQUESTS
 -- ============================================================
 CREATE TABLE material_request (
     id SERIAL PRIMARY KEY,
@@ -140,7 +158,7 @@ CREATE TABLE material_request (
 );
 
 -- ============================================================
--- 10. SITE UPDATES (Telemetry)
+-- 11. SITE UPDATES (Telemetry)
 -- ============================================================
 CREATE TABLE siteupdate (
     id SERIAL PRIMARY KEY,
@@ -157,12 +175,13 @@ CREATE TABLE siteupdate (
 );
 
 -- ============================================================
--- 11. ROW LEVEL SECURITY
+-- 12. ROW LEVEL SECURITY
 -- ============================================================
 ALTER TABLE "user" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projectassignment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stage ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workpackage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE siteupdate ENABLE ROW LEVEL SECURITY;
 ALTER TABLE material ENABLE ROW LEVEL SECURITY;
@@ -172,16 +191,19 @@ CREATE POLICY "authenticated_access" ON "user" FOR ALL TO authenticated USING (t
 CREATE POLICY "authenticated_access" ON project FOR ALL TO authenticated USING (true);
 CREATE POLICY "authenticated_access" ON projectassignment FOR ALL TO authenticated USING (true);
 CREATE POLICY "authenticated_access" ON stage FOR ALL TO authenticated USING (true);
+CREATE POLICY "authenticated_access" ON project_inventory FOR ALL TO authenticated USING (true);
 CREATE POLICY "authenticated_access" ON workpackage FOR ALL TO authenticated USING (true);
 CREATE POLICY "authenticated_access" ON siteupdate FOR ALL TO authenticated USING (true);
 CREATE POLICY "authenticated_access" ON material FOR ALL TO authenticated USING (true);
 CREATE POLICY "authenticated_access" ON material_request FOR ALL TO authenticated USING (true);
 
 -- ============================================================
--- 12. STORAGE BUCKETS
+-- 13. STORAGE BUCKETS
 -- ============================================================
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('site-photos', 'site-photos', true), ('3d-models', '3d-models', true)
+VALUES ('site-photos', 'site-photos', true), 
+       ('project-resources', 'project-resources', true), 
+       ('designs', 'designs', true)
 ON CONFLICT (id) DO NOTHING;
 
 DROP POLICY IF EXISTS "Public access for buckets" ON storage.objects;
