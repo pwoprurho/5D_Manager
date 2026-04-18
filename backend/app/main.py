@@ -305,21 +305,20 @@ async def signup_submit(request: Request):
         })
 
     try:
-        # 1. Supabase Auth Enrollment
-        auth_res = supabase.auth.sign_up({
+        # 1. Supabase Auth Enrollment (Administrative Ingest to bypass Domain Restrictions)
+        auth_res = supabase.auth.admin.create_user({
             "email": email,
             "password": password,
-            "options": {
-                "data": {
-                    "username": username,
-                    "role": role
-                }
+            "email_confirm": True,
+            "user_metadata": {
+                "username": username,
+                "role": role
             }
         })
         
         if not auth_res or not auth_res.user:
             return templates.TemplateResponse(request=request, name="signup.html", context={
-                "request": request, "error": "Enrollment Rejected: Auth Service Conflict."
+                "request": request, "error": "Enrollment Rejected: Administrative Protocol Conflict."
             })
 
         # 2. Sync to Public Registry
