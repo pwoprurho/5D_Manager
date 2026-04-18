@@ -230,7 +230,10 @@
                 fetch(`/api/v1/projects/${pid}/stages`)
             ]);
 
-            if (!projResp.ok) throw new Error("PROJECT_FETCH_FAILED");
+            if (!projResp.ok || !usersResp.ok || !stagesResp.ok) {
+                throw new Error("CONTEXT_SYNC_PARTIAL_FAILURE");
+            }
+
             const project = await projResp.json();
             const users = await usersResp.json();
             const stages = await stagesResp.json();

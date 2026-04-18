@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from pydantic import BaseModel
 from typing import List, Optional
@@ -778,7 +778,7 @@ def delete_design(design_id: int, user: models.User = Depends(auth.check_role([m
 # ============================================================
 
 @app.get("/api/v1/projects/{project_id}", response_model=models.Project)
-def get_project_node(project_id: int):
+def get_project_node(project_id: int, user: models.User = Depends(auth.get_current_user)):
     """Retrieve high-fidelity telemetry for a specific project node."""
     res = with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).single().execute())
     if not res.data:
@@ -1033,13 +1033,7 @@ def read_projects(
     result = with_retry(lambda: supabase.table("project").select("*").in_("id", project_ids).execute())
     return result.data
 
-@app.get("/api/v1/projects/{project_id}", response_model=models.Project)
-def get_project(project_id: int, user: models.User = Depends(auth.get_current_user)):
-    """Fetch detail for a specific project."""
-    res = with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).maybe_single().execute())
-    if not res or not res.data:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return models.Project(**res.data)
+
 
 
 # --- Project Assignment Endpoints ---
@@ -1372,7 +1366,7 @@ async def get_dashboard_analytics(
 
     # 3. Calculate Global Economics and Project Health
     total_budget = total_actual = 0
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     for p in projects:
         # Calculate Economics
@@ -1493,7 +1487,7 @@ def get_gantt_data(project_id: int):
     wps = result.data
     
     gantt_tasks = []
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     for wp in wps:
         wp_obj = models.WorkPackage(**wp)

@@ -1,84 +1,84 @@
 # 🏗️ Vinicius Project Command: 5D Infrastructure Management
 
-![Version](https://img.shields.io/badge/version-1.1.0-red)
+![Version](https://img.shields.io/badge/version-1.2.0-red)
 ![Frontend](https://img.shields.io/badge/UI-Vanilla%20JS-blue)
-![BIM](https://img.shields.io/badge/BIM-IFC-green)
+![Backend](https://img.shields.io/badge/Backend-FastAPI-green)
 
-**Vinicius Project Command** is a high-performance platform designed for modern infrastructure oversight. It integrates robust, OpenProject-inspired tracking with an advanced 5D project management suite, supporting direct IFC model alignments.
+**Vinicius Project Command** is a high-fidelity orchestration platform designed for streamlined infrastructure oversight. It focuses on the core pillars of project management: time, cost, and documentation, providing a tactical interface for multi-tier oversight.
 
 ---
 
-## 🛰️ System Design
+## 🛰️ System Architecture
 
-```mermaid
-graph TD
-    User((User/Architect)) -->|Upload IFC| WebUI[Frontend: Jinja2]
-    WebUI -->|API Request| FastAPI[Backend: FastAPI]
-    FastAPI -->|Tracking Metrics| WorkPackages[Work Packages & Routing]
-    WorkPackages -->|Project State| DB[(Database: Supabase)]
-    DB -->|Project Health| Dashboard[Real-time Analytics]
-```
+A simplified, robust pipeline for infrastructure telemetry:
+- **Collection**: Direct ingestion of project updates and financial records.
+- **Processing**: Automated calculation of project health metrics (CPI/EAC).
+- **Visualization**: Real-time Gantt timelines and tactical dashboards.
+- **Reporting**: Automated PDF generation for weekly project audits.
 
 ---
 
 ## 🚀 Key Modules
 
-### 1. **AI 3D Model Constructor (OCR Pipeline)**
-Transforms scattered documents into spatial assets.
-- **Multimodal OCR**: Simultaneously processes PDFs, JPEGs, and text specifications.
-- **Spatial Reasoning**: Gemini 3.0 generates raw Wavefront OBJ code from unstructured floor plans.
-- **Side-by-Side Verification**: Direct visual comparison between source blueprints and generated models.
+### 1. **Tactical Gantt Orchestrator**
+High-fidelity chronological tracking.
+- **Interactive Timelines**: Built with Frappe Gantt for smooth schedule visualization.
+- **Daily Target Logic**: Automatic status markers for "On Track", "Behind", and "Overdue" tasks.
+- **Task Telemetry**: Direct clickable access to historical logs for every work package.
 
-### 2. **3D Architecture Lab**
-Natural language to system visualization.
-- **Semantic Mapping**: Concepts (e.g., "Cloud DB", "API Gateway") are mapped to 3D primitives.
-- **Interactive Scenes**: Three.js-based viewer with real-time AI-assisted design updates.
+### 2. **Financial Cost Engine**
+Real-time economic oversight for complex projects.
+- **Performance Indices**: Automated tracking of CPI (Cost Performance Index).
+- **Forecast Analytics**: EAC (Estimate at Completion) calculations based on current burn rates.
+- **Budget Tracking**: Granular material cost assignment and inventory monitoring.
 
-### 3. **5D Project Command Suite**
-Advanced project monitoring and financial oversight.
-- **Work Packages**: Granular task management linked to physical BIM elements.
-- **Financial Metrics**: Automated calculation of CPI (Cost Performance Index) and EAC (Estimate at Completion).
-- **Multi-tier Governance**: Integrated approval workflow for Staff, Managers, and Directors.
+### 3. **Infrastructure Registry**
+Unified database for site personnel and resources.
+- **Personnel Governance**: Role-based access control for Directors, Managers, and Engineers.
+- **Resource Store**: Managed inventory catalog with localized cost tracking.
+- **Document Uploader**: Secure links for blueprints, CAD imagery, and PDF documentation.
 
 ---
 
 ## 🛠️ Technical Stack
 
-- **Backend**: Python 3.10+, FastAPI, SQLModel.
-- **Frontend**: Vanilla JS, Three.js, Cannon.js (Physics), CSS Glassmorphism.
-- **AI**: Google Gemini Pro & Flash (Multimodal).
-- **Infrastructure**: Uvicorn ASGI, SQLite (Local Data).
+- **Backend**: Python 3.10+, FastAPI (Asynchronous Performance).
+- **Database**: Supabase (PostgreSQL with Real-time synchronization).
+- **UI Architecture**: Vanilla JS (Dynamic Components), Jinja2 Templates, CSS Glassmorphism.
+- **Deployment**: Production-ready for Render/Gunicorn.
 
 ---
 
-## 📂 Project Structure
+## 🚦 Operational Protocol (Local Deployment)
 
-- `backend/app/`: Core logic, models, and API routes.
-- `backend/app/services/`: AI engines (Architecture, Plan, Cost).
-- `templates/`: Jinja2 HTML templates.
-- `static/`: 3D models, uploaded documents, and CSS.
-- `PROJECT_DOCUMENTATION.md`: Detailed technical deep-dive.
+To initialize the **Vinicius Command Terminal** on a local node, follow these sequential protocols:
+
+1. **Environment Preparation**
+   ```bash
+   python -m venv venv
+   .\venv\Scripts\activate
+   ```
+
+2. **Dependency Ingestion**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Database Provisioning (Optional)**
+   ```bash
+   python seed_users.py
+   ```
+
+4. **Terminal Activation**
+   ```powershell
+   .\venv\Scripts\python.exe -m uvicorn backend.app.main:app --reload --port 8000
+   ```
+
+5. **Access Node**: [http://localhost:8000](http://localhost:8000)
 
 ---
 
-## 🚦 Quick Start (Local)
-
-1. **Install**: `pip install -r requirements.txt`
-2. **Configure**: Copy `.env.example` to `.env` and fill in Supabase + Gemini credentials.
-3. **Run**: `uvicorn backend.app.main:app --reload --port 8000`
-4. **Access**: [http://localhost:8000](http://localhost:8000)
-
----
-
-## ☁️ Deploy to Render
-
-1. Push your repo to GitHub.
-2. Create a new **Web Service** on [Render](https://render.com).
-3. Connect your GitHub repository — Render will detect the `render.yaml` Blueprint.
-4. Set the following environment variables in the Render dashboard:
-   - `SECRET_KEY` (auto-generated)
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `GEMINI_API_KEY`
-5. Deploy — the service will start with Gunicorn + Uvicorn workers.
+## 🛡️ Security Hardware
+- **Auth Hardening**: Supabase GoTrue integration with role-based dependencies.
+- **Rate Limiting**: Integrated SlowAPI tracking for authentication protection.
+- **CSRF & HSTS**: Industrial-grade header protection for tactical routes.
