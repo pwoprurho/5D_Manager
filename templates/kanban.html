@@ -26,12 +26,12 @@ const projectId = localStorage.getItem('currentProjectId');
 const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
 
 const statusLabels = {
-    'not_started': 'AWAITING_ORCHESTRATION',
-    'in_progress': 'ACTIVE_CONSTRUCTION',
-    'completed': 'SUBMITTED_FOR_VERIFICATION',
+    'not_started': 'READY_FOR_FIELD_ENTRY',
+    'in_progress': 'LIVE_INSTALLATION',
+    'completed': 'FIELD_VALIDATION_PENDING',
     'inspected': 'QUALITY_VAL_PENDING',
-    'approved': 'INTEGRITY_CERTIFIED',
-    'blocked': 'SYSTEM_IMPEDIMENT'
+    'approved': 'INTEGRITY_VERIFIED',
+    'blocked': 'CRITICAL_IMPEDIMENT'
 };
 
 const statusColors = {

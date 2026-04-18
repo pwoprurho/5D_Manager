@@ -319,13 +319,35 @@
                 list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem; border: 1px dashed var(--glass-border); font-size: 0.65rem;">NO_PHASES_DEFINED</div>';
             } else {
                 list.innerHTML = stages.map(s => `
-                <div style="padding: 0.75rem 1rem; background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">${s.name.toUpperCase()}</span>
-                    <span class="status-pill" style="font-size: 0.55rem; background: var(--bg-deep); color: var(--text-muted); padding: 0.2rem 0.5rem; border-radius: 50px; font-weight: 800;">${s.status.toUpperCase()}</span>
+                <div style="padding: 1rem; background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">${s.name.toUpperCase()}</div>
+                        <span class="status-pill" style="font-size: 0.5rem; background: var(--bg-deep); color: var(--text-muted); padding: 0.15rem 0.51rem; border-radius: 50px; font-weight: 900; text-transform: uppercase;">${s.status}</span>
+                    </div>
+                    ${s.status !== 'completed' && s.status !== 'approved' && s.status !== 'inspected' ? `
+                        <button onclick="completeStage(${s.id}, ${s.project_id})" class="btn-modern btn-ghost" style="padding: 0.5rem 0.75rem; font-size: 0.6rem; border-color: var(--brand-red); color: var(--brand-red); width: auto;">CLOSE_PHASE</button>
+                    ` : '<i class="fas fa-check-double" style="color: #10B981; font-size: 0.8rem; margin-right: 0.5rem;"></i>'}
                 </div>
             `).join('');
             }
-        } catch (e) { list.innerHTML = 'SYNC_ERROR'; }
+        } catch (e) { list.innerHTML = '<div style="color: var(--brand-red); font-weight: 900; font-size: 0.6rem; text-align: center;">SYNC_ERROR</div>'; }
+    }
+
+    window.completeStage = async function(sid, pid) {
+        if (!confirm("CONFIRM_PHASE_COMPLETION: Mark this structural milestone as closed?")) return;
+        try {
+            const r = await fetch(`/api/v1/stages/${sid}?status=completed`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin'
+            });
+            if (r.ok) {
+                showNotification("PHASE_CLOSED: Remote registry updated.");
+                loadStages(pid);
+            } else {
+                showNotification("REGISTRY_ERROR: Failed to update phase status.", "error");
+            }
+        } catch (e) { showNotification("SYNC_FAILURE", "error"); }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
