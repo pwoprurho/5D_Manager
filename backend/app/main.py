@@ -367,6 +367,26 @@ async def reset_password_submit(request: Request):
         print(f"Password reset error: {e}")
         return templates.TemplateResponse(request=request, name="reset_password.html", context={"error": "Recovery synchronization failed."})
 
+@app.get("/update-password", response_class=HTMLResponse)
+async def update_password_page(request: Request):
+    """The landing page for Supabase email recovery links."""
+    return templates.TemplateResponse(request=request, name="update_password.html", context={"request": request})
+
+@app.post("/update-password")
+async def update_password_submit(req: UpdatePasswordRequest):
+    """Securely execute password update using recovery session."""
+    try:
+        # Establish temporary session from recovery token
+        supabase.auth.set_session(req.access_token, req.refresh_token or "")
+        
+        # Execute tactical password update
+        supabase.auth.update_user({"password": req.new_password})
+        
+        return {"status": "success", "message": "Passphrase updated successfully"}
+    except Exception as e:
+        print(f"Password reset confirmation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid or expired recovery session.")
+
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_get(request: Request, user: models.User = Depends(auth.get_current_user)):
     return templates.TemplateResponse(request=request, name="settings.html", context={"user": user})
@@ -477,10 +497,15 @@ async def project_gantt_page(request: Request, project_id: int):
 # ============================================================
 
 class RegisterRequest(BaseModel):
-    username: str
     email: str
+    username: str
     password: str
-    role: models.UserRole = models.UserRole.engineer
+    role: models.UserRole
+
+class UpdatePasswordRequest(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+    new_password: str
 
 class WPUpdate(BaseModel):
     name: Optional[str] = None
@@ -795,6 +820,19 @@ async def create_project(
     user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
     """Director/PM creates project with direct resource upload."""
+    
+    # 0. Registry Integrity: Ensure assignee exists before authorizing infrastructure persistence
+    if assignee_id and len(assignee_id.strip()) > 30:
+        try:
+            check = with_retry(lambda: supabase.table("user").select("id").eq("id", assignee_id).maybe_single().execute())
+            if not check.data:
+                logger.error(f"Registry Rejection: Operative ID {assignee_id} not found in personnel directory.")
+                raise HTTPException(status_code=400, detail=f"Invalid Assignment: Operative ID {assignee_id} does not exist in the tactical node.")
+        except HTTPException: raise
+        except Exception as e:
+            logger.error(f"Registry Validation Failure: {e}")
+            raise HTTPException(status_code=500, detail="Tactical Personnel Verification Failed.")
+
     model_url = None
     if file:
         try:

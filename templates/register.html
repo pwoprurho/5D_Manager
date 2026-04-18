@@ -36,7 +36,7 @@
             </div>
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center;">
                 <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; display: flex;">
-                    <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                    <video autoplay loop muted playsinline onclick="this.requestFullscreen()" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
                         <source src="/static/image/signin.mp4" type="video/mp4">
                     </video>
                 </div>
@@ -68,8 +68,10 @@
                         <li><i class="fas fa-user-tag" style="color: var(--accent-blue); margin-right: 0.75rem;"></i> Assign **Operational Roles** carefully.</li>
                     </ul>
                 </div>
-                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <img src="/static/assets/training/user_registry.png" alt="User Registry" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; display: flex;">
+                    <video autoplay loop muted playsinline onclick="this.requestFullscreen()" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
+                        <source src="/static/image/signup.mp4" type="video/mp4">
+                    </video>
                 </div>
             </div>
         </section>
@@ -81,8 +83,10 @@
                 <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Project Initialization & Ingest</h2>
             </div>
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center;">
-                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <img src="/static/assets/training/project_init.png" alt="Project Ingest" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; display: flex;">
+                    <video autoplay loop muted playsinline onclick="this.requestFullscreen()" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
+                        <source src="/static/image/create_project.mp4" type="video/mp4">
+                    </video>
                 </div>
                 <div style="line-height: 1.8; color: var(--text-muted);">
                     <div style="background: rgba(255,152,0,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: var(--brand-orange); font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: ANCHOR NEW ASSETS</div>
@@ -112,52 +116,79 @@
                         <li><i class="fas fa-sync" style="color: #10b981; margin-right: 0.75rem;"></i> Phases auto-populate the Schedule and Kanban.</li>
                     </ul>
                 </div>
-                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <img src="/static/assets/training/site_manager.png" alt="Site Manager" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; display: flex;">
+                    <video autoplay loop muted playsinline onclick="this.requestFullscreen()" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
+                        <source src="/static/image/create_phase_task.mp4" type="video/mp4">
+                    </video>
                 </div>
             </div>
         </section>
 
-        <!-- 5. Kanban -->
+        <!-- 5. Daily Logs -->
         <section style="margin-bottom: 6rem;">
             <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
-                <span style="font-size: 2rem; font-weight: 900; color: #8b5cf6; font-family: 'Playfair Display', serif;">05</span>
-                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Strategic Kanban Orchestration</h2>
+                <span style="font-size: 2rem; font-weight: 900; color: #3b82f6; font-family: 'Playfair Display', serif;">05</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Field Telemetry & Daily Logs</h2>
             </div>
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center;">
-                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <img src="/static/assets/training/kanban_board.png" alt="Kanban Board" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;">
+                    <div style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-video-slash" style="font-size: 3rem; color: var(--text-muted); opacity: 0.3; margin-bottom: 1rem;"></i>
+                        <p style="color: var(--text-muted); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Daily Log Tutorial — Pending Uplink</p>
+                    </div>
                 </div>
                 <div style="line-height: 1.8; color: var(--text-muted);">
-                    <div style="background: rgba(139,92,246,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #8b5cf6; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: REAL-TIME TELEMETRY MONITORING</div>
+                    <div style="background: rgba(59,130,246,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #3b82f6; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: CAPTURE REAL-TIME SITE DATA</div>
                     <ol style="padding-left: 1.5rem; font-weight: 500;">
-                        <li style="margin-bottom: 1rem;">Navigate to the **Global Work Board**.</li>
-                        <li style="margin-bottom: 1rem;">Tasks categorized by: Not Started, In Progress, Verified.</li>
-                        <li style="margin-bottom: 1rem;">Drag cards to update telemetry from the field.</li>
-                        <li>Priority tasks pulse in UI for quick intervention.</li>
+                        <li style="margin-bottom: 1rem;">Select an active **Work Package** from your dashboard.</li>
+                        <li style="margin-bottom: 1rem;">Click **SUBMIT DAILY LOG** to open the telemetry interface.</li>
+                        <li style="margin-bottom: 1rem;">Attach high-fidelity site imagery and record material usage.</li>
+                        <li>Sync the log to propagate progress to the **Analytics HUD**.</li>
                     </ol>
                 </div>
             </div>
         </section>
 
-        <!-- 6. Analytics -->
+        <!-- 6. Workboard -->
         <section style="margin-bottom: 6rem;">
             <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
-                <span style="font-size: 2rem; font-weight: 900; color: #ec4899; font-family: 'Playfair Display', serif;">06</span>
-                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Analytics HUD & Auditing</h2>
+                <span style="font-size: 2rem; font-weight: 900; color: #8b5cf6; font-family: 'Playfair Display', serif;">06</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Workboard Orchestration</h2>
+            </div>
+            <div style="grid: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center; display: grid;">
+                <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <img src="/static/assets/training/kanban_board.png" alt="Kanban Board" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                </div>
+                <div style="line-height: 1.8; color: var(--text-muted);">
+                    <div style="background: rgba(139,92,246,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #8b5cf6; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: REAL-TIME TELEMETRY MONITORING</div>
+                    <ul style="list-style-type: none; padding: 0; font-weight: 500;">
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-columns" style="color: #8b5cf6; margin-right: 0.75rem;"></i> Navigate to the **Global Work Board**.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-tasks" style="color: #8b5cf6; margin-right: 0.75rem;"></i> Tasks categorized by: Not Started, In Progress, Verified.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-mouse-pointer" style="color: #8b5cf6; margin-right: 0.75rem;"></i> Drag cards to update telemetry from the field.</li>
+                        <li><i class="fas fa-exclamation-triangle" style="color: #8b5cf6; margin-right: 0.75rem;"></i> Priority tasks pulse in UI for quick intervention.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Schedule & Reporting -->
+        <section style="margin-bottom: 6rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <span style="font-size: 2rem; font-weight: 900; color: #10b981; font-family: 'Playfair Display', serif;">07</span>
+                <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase; margin: 0; color: #FFFFFF;">Project Schedule & High-Fidelity Reporting</h2>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; align-items: center;">
                 <div style="line-height: 1.8; color: var(--text-muted);">
-                    <div style="background: rgba(236,72,153,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #ec4899; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: COST & PROGRESS EXTRACTION</div>
+                    <div style="background: rgba(16,185,129,0.1); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #10b981; font-weight: 900; font-size: 0.7rem; text-transform: uppercase;">GOAL: TEMPORAL VISUALIZATION & DOCUMENTATION</div>
                     <ul style="list-style-type: none; padding: 0; font-weight: 500;">
-                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-chart-line" style="color: #ec4899; margin-right: 0.75rem;"></i> Access the **Analytics HUD** for bird's-eye view.</li>
-                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-money-bill-wave" style="color: #ec4899; margin-right: 0.75rem;"></i> Monitor **Cost vs. Progress** variances.</li>
-                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-file-pdf" style="color: #ec4899; margin-right: 0.75rem;"></i> Click **GENERATE REPORT** for formal audits.</li>
-                        <li><i class="fas fa-cloud-download-alt" style="color: #ec4899; margin-right: 0.75rem;"></i> System compiles field data into high-fidelity PDF.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-calendar-alt" style="color: #10b981; margin-right: 0.75rem;"></i> Access the **Master Schedule** HUD for a Gantt-view of all site phases.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-search-plus" style="color: #10b981; margin-right: 0.75rem;"></i> Adjust timeline granularity to focus on critical path milestones.</li>
+                        <li style="margin-bottom: 1.25rem;"><i class="fas fa-print" style="color: #10b981; margin-right: 0.75rem;"></i> Use the **PRINT** command to generate a project summary for physical review.</li>
+                        <li><i class="fas fa-file-pdf" style="color: #10b981; margin-right: 0.75rem;"></i> Export high-fidelity PDF reports for stakeholders.</li>
                     </ul>
                 </div>
                 <div style="background: #000; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <img src="/static/assets/training/analytics_hud.png" alt="Analytics HUD" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
+                    <img src="/static/assets/training/schedule_hud.png" alt="Schedule HUD" style="width: 100%; display: block;" onerror="this.src='/static/assets/logo.png'">
                 </div>
             </div>
         </section>
