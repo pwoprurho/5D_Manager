@@ -12,3 +12,9 @@ requests
 starlette
 python-multipart
 gunicorn
+jinja2
+slowapi
+pillow
+pypdf
+fpdf2
+ifcopenshell
