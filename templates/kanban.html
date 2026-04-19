@@ -17,13 +17,71 @@
     </div>
 </div>
 
+<div id="memoApprovalHUD" class="reveal-text" style="display: none; margin-bottom: 2rem;">
+    <div class="glass-card" style="border-left: 5px solid var(--brand-orange); padding: 1.5rem;">
+        <h3 style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1.5rem; color: var(--brand-orange);">PENDING_INTELLIGENCE_MEMOS</h3>
+        <div id="memoList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+            <!-- Memos here -->
+        </div>
+    </div>
+</div>
+
+<div id="kanbanHUD" class="reveal-text" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5rem; margin-bottom: 2.5rem;">
+    <!-- Populated via JS -->
+    <div class="glass-card" style="padding: 1.5rem; border-top: 3px solid #FF9800; text-align: center;">
+        <div style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.15em;">LIVE_INSTALLS</div>
+        <div id="count-in_progress" style="font-size: 1.5rem; font-weight: 900; color: white;">0</div>
+    </div>
+    <div class="glass-card" style="padding: 1.5rem; border-top: 3px solid #3B82F6; text-align: center;">
+        <div style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.15em;">FIELD_VAL</div>
+        <div id="count-completed" style="font-size: 1.5rem; font-weight: 900; color: white;">0</div>
+    </div>
+    <div class="glass-card" style="padding: 1.5rem; border-top: 3px solid #8B5CF6; text-align: center;">
+        <div style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.15em;">QUALITY_VAL</div>
+        <div id="count-inspected" style="font-size: 1.5rem; font-weight: 900; color: white;">0</div>
+    </div>
+    <div class="glass-card" style="padding: 1.5rem; border-top: 3px solid #10B981; text-align: center;">
+        <div style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; letter-spacing: 0.15em;">INTEGRITY_SAFE</div>
+        <div id="count-approved" style="font-size: 1.5rem; font-weight: 900; color: white;">0</div>
+    </div>
+    <div class="glass-card pulse-red" style="padding: 1.5rem; border-top: 3px solid var(--brand-red); text-align: center; background: rgba(227,30,36,0.05);">
+        <div style="font-size: 0.6rem; color: var(--brand-red); font-weight: 900; letter-spacing: 0.15em;">IMPEDIMENTS</div>
+        <div id="count-blocked" style="font-size: 1.5rem; font-weight: 900; color: var(--brand-red);">0</div>
+    </div>
+</div>
+
 <div id="kanbanBoard" class="kanban-board reveal-text reveal-delay-1"></div>
+
+<!-- Memo Submission Modal -->
+<div id="memoModal" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+    <div class="glass-card reveal-text" style="width: 100%; max-width: 500px; padding: 2.5rem; border-top: 4px solid var(--brand-orange);">
+        <h3 id="memoModalTitle" style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; margin-bottom: 2rem;">DRAFT_INTELLIGENCE_MEMO</h3>
+        <input type="hidden" id="memoWPId">
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">Requested_Metrics (%)</label>
+            <input type="number" id="memoProgress" class="modern-input" placeholder="Enter completion level...">
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">Correction_Subject</label>
+            <input type="text" id="memoSubject" class="modern-input" placeholder="E.g. Mechanical completion adjustment">
+        </div>
+        <div style="margin-bottom: 2rem;">
+            <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">Evidence_Analysis</label>
+            <textarea id="memoContent" class="modern-input" rows="4" placeholder="Detail the rationale for this metric correction..."></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="submitMemo()" class="btn-modern btn-primary" style="flex: 2;">TRANSMIT_FOR_APPROVAL</button>
+            <button onclick="closeMemoModal()" class="btn-modern btn-ghost" style="flex: 1;">ABORT</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 const projectId = localStorage.getItem('currentProjectId');
 const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
+const canDirectEdit = ['admin', 'director'].includes(userRole);
 
 const statusLabels = {
     'not_started': 'READY_FOR_FIELD_ENTRY',
@@ -45,9 +103,10 @@ const statusColors = {
 
 async function loadKanban() {
     try {
-        const [projResp, kanbanResp] = await Promise.all([
+        const [projResp, kanbanResp, memosResp] = await Promise.all([
             fetch('/api/v1/projects/'),
-            fetch(`/api/v1/projects/${projectId}/kanban`)
+            fetch(`/api/v1/projects/${projectId}/kanban`),
+            (canDirectEdit ? fetch(`/api/v1/projects/${projectId}/memos`) : Promise.resolve({ ok: false }))
         ]);
         
         if (projResp.ok) {
@@ -59,95 +118,186 @@ async function loadKanban() {
             }
         }
 
-        if (!kanbanResp.ok) throw new Error();
-        const board = await kanbanResp.json();
-        const container = document.getElementById('kanbanBoard');
-        
-        container.innerHTML = Object.entries(board).map(([status, wps]) => {
-            const color = statusColors[status] || '#94a3b8';
-            const label = statusLabels[status] || status.toUpperCase();
+        if (kanbanResp.ok) {
+            const board = await kanbanResp.json();
+            const container = document.getElementById('kanbanBoard');
             
-            return `
-                <div class="kanban-col">
-                    <div class="kanban-col-header">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 8px; height: 8px; background: ${color}; border-radius: 2px;"></div>
-                            <span style="font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">${label}</span>
-                        </div>
-                        <span style="font-size: 0.65rem; font-weight: 900; color: ${color}; background: ${color}15; padding: 2px 8px; border-radius: 50px;">${wps.length}</span>
-                    </div>
-                    <div class="kanban-cards" data-status="${status}" id="col-${status}">
-                        ${wps.map(wp => `
-                            <div class="kanban-card" data-id="${wp.id}">
-                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
-                                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                                        <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: ${color};">${wp.type || 'TASK'}</span>
-                                        <span style="font-size: 0.5rem; color: var(--text-muted); opacity: 0.5;">ID: #WP-${wp.id}</span>
-                                    </div>
-                                    <span style="font-size: 0.55rem; font-weight: 800; color: var(--text-muted); opacity: 0.6;">PRIO: ${(wp.priority || 'normal').toUpperCase()}</span>
-                                </div>
-                                <h4 style="font-size: 1rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.3; text-transform: uppercase; color: var(--text-primary);">${wp.name}</h4>
-                                
-                                <div style="display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                                    <div>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                            <span style="font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">Progress</span>
-                                            <span style="font-size: 0.7rem; font-weight: 900; color: ${color};">${wp.progress_pct || 0}%</span>
-                                        </div>
-                                        <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden;">
-                                            <div style="height: 100%; width: ${wp.progress_pct || 0}%; background: ${color}; border-radius: 2px; box-shadow: 0 0 10px ${color}40;"></div>
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <input type="number" value="${wp.progress_pct || 0}" min="0" max="100" 
-                                            onchange="updateWPProgress(${wp.id}, this.value)"
-                                            style="width: 60px; background: var(--bg-deep); border: 1px solid var(--glass-border); color: white; font-size: 0.8rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; outline: none; text-align: center;">
-                                    </div>
-                                </div>
-
-                                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-                                    ${(status === 'completed' && ['admin', 'director', 'manager'].includes(userRole)) ? `
-                                        <button onclick="verifyWP(${wp.id})" class="btn-modern btn-ghost" style="padding: 0.4rem 1rem; font-size: 0.6rem; border-color: var(--brand-red); color: var(--brand-red);">VERIFY_FIELD_READY</button>
-                                    ` : ''}
-                                    <button class="btn-modern btn-ghost" style="padding: 0.4rem 1rem; font-size: 0.6rem; opacity: 0.5;">VIEW_DETAILS</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // Initialize drag and drop
-        document.querySelectorAll('.kanban-cards').forEach(col => {
-            new Sortable(col, {
-                group: 'kanban',
-                animation: 250,
-                ghostClass: 'sortable-ghost',
-                onEnd: async (evt) => {
-                    const wpId = evt.item.dataset.id;
-                    const newStatus = evt.to.dataset.status;
-                    try {
-                        const resp = await fetch(`/api/v1/project-updates/${wpId}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: newStatus }),
-                            credentials: 'same-origin'
-                        });
-                        if (resp.ok) {
-                            if (window.showToast) showToast(`Task status migrated: ${newStatus.toUpperCase()}`, 'success');
-                            loadKanban();
-                        }
-                    } catch(e) { console.error("Status update failed", e); }
-                }
+            // Populate Tactical HUD
+            Object.entries(board).forEach(([status, wps]) => {
+                const el = document.getElementById(`count-${status}`);
+                if (el) el.textContent = wps.length;
             });
-        });
+            
+            container.innerHTML = Object.entries(board).map(([status, wps]) => {
+                const color = statusColors[status] || '#94a3b8';
+                const label = statusLabels[status] || status.toUpperCase();
+                
+                return `
+                    <div class="kanban-col">
+                        <div class="kanban-col-header">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 8px; height: 8px; background: ${color}; border-radius: 2px;"></div>
+                                <span style="font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">${label}</span>
+                            </div>
+                            <span style="font-size: 0.65rem; font-weight: 900; color: ${color}; background: ${color}15; padding: 2px 8px; border-radius: 50px;">${wps.length}</span>
+                        </div>
+                        <div class="kanban-cards" data-status="${status}" id="col-${status}">
+                            ${wps.map(wp => `
+                                <div class="kanban-card ${status === 'blocked' ? 'pulse-red' : ''}" data-id="${wp.id}" style="${status === 'blocked' ? 'border: 1px solid var(--brand-red);' : ''}">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: ${color};">${wp.type || 'TASK'}</span>
+                                            <span style="font-size: 0.5rem; color: var(--text-muted); opacity: 0.5;">ID: #WP-${wp.id}</span>
+                                        </div>
+                                        <span style="font-size: 0.55rem; font-weight: 800; color: var(--text-muted); opacity: 0.6;">PRIO: ${(wp.priority || 'normal').toUpperCase()}</span>
+                                    </div>
+                                    <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.3; text-transform: uppercase; color: var(--text-primary);">${wp.name}</h4>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                                <span style="font-size: 0.55rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase;">Progress</span>
+                                                <span style="font-size: 0.6rem; font-weight: 900; color: ${color};">${wp.progress_pct || 0}%</span>
+                                            </div>
+                                            <div style="background: rgba(255,255,255,0.05); height: 3px; border-radius: 2px; overflow: hidden;">
+                                                <div style="height: 100%; width: ${wp.progress_pct || 0}%; background: ${color}; border-radius: 2px;"></div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="number" value="${wp.progress_pct || 0}" min="0" max="100" 
+                                                ${!canDirectEdit ? 'readonly' : ''}
+                                                onchange="updateWPProgress(${wp.id}, this.value)"
+                                                style="width: 50px; background: var(--bg-deep); border: 1px solid var(--glass-border); color: white; font-size: 0.75rem; font-weight: 700; padding: 2px 4px; border-radius: 4px; outline: none; text-align: center; ${!canDirectEdit ? 'opacity: 0.5;' : ''}">
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                                        ${!canDirectEdit ? `
+                                            <button onclick="openMemoModal(${wp.id}, '${wp.name}', ${wp.progress_pct})" class="btn-modern btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.55rem; border-color: var(--brand-orange); color: var(--brand-orange);">SUBMIT_MEMO</button>
+                                        ` : ''}
+                                        ${(status === 'completed' && canDirectEdit) ? `
+                                            <button onclick="verifyWP(${wp.id})" class="btn-modern btn-ghost" style="padding: 0.4rem 1rem; font-size: 0.55rem; border-color: var(--brand-red); color: var(--brand-red);">VERIFY</button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Initialize drag and drop (Only for Directors/Admins)
+            if (canDirectEdit) {
+                document.querySelectorAll('.kanban-cards').forEach(col => {
+                    new Sortable(col, {
+                        group: 'kanban',
+                        animation: 250,
+                        ghostClass: 'sortable-ghost',
+                        onEnd: async (evt) => {
+                            const wpId = evt.item.dataset.id;
+                            const newStatus = evt.to.dataset.status;
+                            try {
+                                const resp = await fetch(`/api/v1/project-updates/${wpId}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: newStatus }),
+                                    credentials: 'same-origin'
+                                });
+                                if (resp.ok) {
+                                    if (window.showToast) showToast(`Task status migrated: ${newStatus.toUpperCase()}`, 'success');
+                                    loadKanban();
+                                }
+                            } catch(e) { console.error("Status update failed", e); }
+                        }
+                    });
+                });
+            }
+        }
+
+        // Render Memos HUD for Director
+        if (canDirectEdit && memosResp.ok) {
+            const memos = await memosResp.json();
+            const pending = memos.filter(m => m.status === 'pending');
+            const hud = document.getElementById('memoApprovalHUD');
+            
+            if (pending.length > 0) {
+                hud.style.display = 'block';
+                const list = document.getElementById('memoList');
+                list.innerHTML = pending.map(m => `
+                    <div class="glass-card" style="padding: 1rem; background: rgba(255,152,0,0.05); border: 1px solid rgba(255,152,0,0.2);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.6rem; font-weight: 900; color: var(--brand-orange); text-transform: uppercase;">REQUEST_BY: #USER-${m.requested_by_id.substring(0,4)}</span>
+                            <span style="font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;">${new Date(m.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <h4 style="font-size: 0.85rem; font-weight: 800; margin-bottom: 0.5rem; text-transform: uppercase;">${m.subject}</h4>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">${m.content}</div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                            <div style="font-size: 0.65rem; font-weight: 900; color: #10B981;">REQ_VAL: ${m.requested_progress_pct}%</div>
+                            <button onclick="approveMemo(${m.id})" class="btn-modern btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.6rem; background: #10B981;">APPROVE_MEMO</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                hud.style.display = 'none';
+            }
+        }
+
     } catch(err) {
-        console.error("Kanban load failed", err);
+        console.error("Board orchestration failure", err);
     }
 }
 
+function openMemoModal(wpId, name, current) {
+    document.getElementById('memoWPId').value = wpId;
+    document.getElementById('memoModalTitle').textContent = `MEMO: ${name.toUpperCase()}`;
+    document.getElementById('memoProgress').value = current;
+    document.getElementById('memoModal').style.display = 'flex';
+}
+
+function closeMemoModal() {
+    document.getElementById('memoModal').style.display = 'none';
+}
+
+async function submitMemo() {
+    const wpId = document.getElementById('memoWPId').value;
+    const progress = document.getElementById('memoProgress').value;
+    const subject = document.getElementById('memoSubject').value;
+    const content = document.getElementById('memoContent').value;
+    
+    if (!subject || !content) return;
+    
+    try {
+        const resp = await fetch(`/api/v1/projects/${projectId}/memos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                work_package_id: parseInt(wpId),
+                requested_progress_pct: parseInt(progress),
+                subject,
+                content
+            })
+        });
+        
+        if (resp.ok) {
+            if (window.showToast) showToast('Memo transmitted to Director', 'success');
+            closeMemoModal();
+            loadKanban();
+        }
+    } catch(e) { console.error("Memo transmission failed", e); }
+}
+
+async function approveMemo(memoId) {
+    try {
+        const resp = await fetch(`/api/v1/memos/${memoId}/approve`, { method: 'POST' });
+        if (resp.ok) {
+            if (window.showToast) showToast('Intelligence memo approved & synced', 'success');
+            loadKanban();
+        }
+    } catch(e) { console.error("Memo approval failed", e); }
+}
+
 async function updateWPProgress(wpId, value) {
+    if (!canDirectEdit) return;
     try {
         const pct = parseInt(value);
         const resp = await fetch(`/api/v1/project-updates/${wpId}`, {

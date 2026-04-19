@@ -20,6 +20,11 @@ class StatusEnum(str, Enum):
     blocked = "blocked"
     critical = "critical"
 
+class MemoStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
 class MaterialRequestStatus(str, Enum):
     pending = "pending"
     approved = "approved"
@@ -162,4 +167,24 @@ class ProjectAssignment(BaseModel):
     user_id: str  # UUID
     assigned_role: str = "member"
     assigned_at: datetime = Field(default_factory=datetime.utcnow)
+
+class InternalMemo(BaseModel):
+    id: Optional[int] = None
+    project_id: int
+    work_package_id: int
+    requested_by_id: str  # User UUID
+    requested_progress_pct: Optional[int] = None
+    requested_status: Optional[str] = None
+    subject: str
+    content: str
+    status: MemoStatus = MemoStatus.pending
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    approved_by_id: Optional[str] = None # Director UUID
+
+class MemoCreate(BaseModel):
+    work_package_id: int
+    requested_progress_pct: Optional[int] = None
+    requested_status: Optional[str] = None
+    subject: str
+    content: str
 

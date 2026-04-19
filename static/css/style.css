@@ -362,14 +362,15 @@ h4 {
 /* --- Kanban Architecture --- */
 .kanban-board {
     display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
-    padding-bottom: 5rem;
-    min-height: auto;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 2rem;
+    min-height: calc(100vh - 280px);
+    align-items: flex-start;
 }
 
 .kanban-col {
-    width: 100%;
+    flex: 0 0 320px;
     background: rgba(15, 23, 42, 0.4);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);

@@ -519,8 +519,8 @@ async def project_kanban_page(request: Request, project_id: int):
     user = await auth.get_current_user(request)
     if not user: return RedirectResponse(url="/signin", status_code=303)
     
-    # Executive Clearance Gate
-    if str(user.role) not in ['admin', 'director', 'UserRole.admin', 'UserRole.director']:
+    # Executive & Tactical Clearance Gate
+    if str(user.role) not in ['admin', 'director', 'manager', 'UserRole.admin', 'UserRole.director', 'UserRole.manager']:
         return RedirectResponse(url="/dashboard", status_code=303)
         
     return templates.TemplateResponse(request=request, name="kanban.html", context={"user": user, "project_id": project_id})
@@ -1388,9 +1388,9 @@ async def get_project_bim_elements(project_id: int):
 @app.get("/api/v1/projects/{project_id}/kanban")
 async def get_kanban_data(project_id: int, user: models.User = Depends(auth.get_current_user)):
     """Returns project phases grouped by status for Kanban board."""
-    # Executive Clearance Gate
-    if user.role not in [models.UserRole.admin, models.UserRole.director]:
-        raise HTTPException(status_code=403, detail="Strategic clearance required for work board access.")
+    # Executive & Tactical Clearance Gate
+    if user.role not in [models.UserRole.admin, models.UserRole.director, models.UserRole.manager]:
+        raise HTTPException(status_code=403, detail="Clearance required for work board access.")
         
     result = await async_with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
     wps = result.data or []
@@ -1414,6 +1414,43 @@ async def get_kanban_data(project_id: int, user: models.User = Depends(auth.get_
             board["not_started"].append(wp)
             
     return board
+
+@app.post("/api/v1/projects/{project_id}/memos")
+async def create_memo(project_id: int, memo: models.MemoCreate, user: models.User = Depends(auth.get_current_user)):
+    data = {
+        "project_id": project_id,
+        "work_package_id": memo.work_package_id,
+        "requested_by_id": user.id,
+        "requested_progress_pct": memo.requested_progress_pct,
+        "requested_status": memo.requested_status,
+        "subject": memo.subject,
+        "content": memo.content,
+        "status": "pending"
+    }
+    result = await async_with_retry(lambda: supabase.table("internalmemo").insert(data).execute())
+    return result.data[0] if result.data else {}
+
+@app.get("/api/v1/projects/{project_id}/memos")
+async def get_memos(project_id: int, user: models.User = Depends(auth.get_current_user)):
+    # Fetch memos with requested_by name if possible (Note: may need custom join or separate fetch)
+    result = await async_with_retry(lambda: supabase.table("internalmemo").select("*").eq("project_id", project_id).order("created_at", desc=True).execute())
+    return result.data or []
+
+@app.post("/api/v1/memos/{memo_id}/approve")
+async def approve_memo(memo_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))):
+    res = await async_with_retry(lambda: supabase.table("internalmemo").select("*").eq("id", memo_id).single().execute())
+    if not res.data: raise HTTPException(status_code=404, detail="Memo not found")
+    memo = res.data
+    
+    wp_updates = {}
+    if memo.get("requested_progress_pct") is not None: wp_updates["progress_pct"] = memo["requested_progress_pct"]
+    if memo.get("requested_status"): wp_updates["status"] = memo["requested_status"]
+    
+    if wp_updates:
+        await async_with_retry(lambda: supabase.table("workpackage").update(wp_updates).eq("id", memo["work_package_id"]).execute())
+    
+    await async_with_retry(lambda: supabase.table("internalmemo").update({"status": "approved", "approved_by_id": user.id}).eq("id", memo_id).execute())
+    return {"status": "approved"}
 
 @app.get("/api/v1/analytics/dashboard")
 async def get_dashboard_analytics(
