@@ -123,23 +123,29 @@ async function loadDashboard(date = null) {
 
         // 1. Sync global counters
         document.getElementById('statProjects').textContent = projects.length;
-        document.getElementById('statWPs').textContent = projects.reduce((acc, p) => acc + (p.workpackages ? p.workpackages.length : 0), 0);
+        document.getElementById('statWPs').textContent = projects.reduce((acc, p) => acc + (p.workpackage ? p.workpackage.length : 0), 0);
         
         // 2. Process Detailed Data
         currentProjectData = projects.find(p => p.id == currentProjId);
-        historicalLogs = all_updates.filter(u => u.workpackage?.project_id == currentProjId && u.photo_url);
+        
+        // Intelligence Flattening: Decompose multi-photo updates into individual navigation frames
+        const rawLogs = all_updates.filter(u => u.workpackage?.project_id == currentProjId && u.photo_url);
+        historicalLogs = [];
+        rawLogs.forEach(u => {
+            u.photo_url.split(',').forEach(url => {
+                historicalLogs.push({ ...u, photo_url: url.trim() });
+            });
+        });
         currentLogIndex = 0; // Reset to latest
 
-        const globalAC = projects.reduce((acc, p) => acc + (all_updates.filter(u => u.workpackage?.project_id == p.id).reduce((sum, u) => sum + (u.actual_cost || 0), 0)), 0);
-        document.getElementById('statBudget').textContent = '₦' + globalAC.toLocaleString();
-        
-        const avgProgress = projects.reduce((acc, p) => acc + (p.workpackages?.reduce((sum, wp) => sum + (wp.progress_pct || 0), 0) / (p.workpackages?.length || 1)), 0) / (projects.length || 1);
-        document.getElementById('statCompletion').textContent = Math.round(avgProgress) + '%';
+        document.getElementById('statBudget').textContent = '₦' + (data.budget_utilization || 0).toLocaleString();
+        document.getElementById('statCompletion').textContent = Math.round(data.global_progress || 0) + '%';
 
         // 3. Render Project List
+        const healthContainer = document.getElementById('projectHealthList');
         healthContainer.innerHTML = projects.map(p => {
             const isSelected = p.id == currentProjId;
-            const progress = p.workpackages?.reduce((sum, wp) => sum + (wp.progress_pct || 0), 0) / (p.workpackages?.length || 1) || 0;
+            const progress = p.progress_pct || 0;
             const cpiColor = progress < 40 ? 'var(--brand-red)' : (progress < 80 ? 'var(--brand-orange)' : '#10B981');
             
             // Map schedule status to display badges
@@ -188,9 +194,11 @@ function switchVisualTab(tab) {
     document.getElementById('tab-arch').className = tab === 'arch' ? 'btn-modern btn-primary' : 'btn-modern btn-ghost';
     document.getElementById('tab-daily').className = tab === 'daily' ? 'btn-modern btn-primary' : 'btn-modern btn-ghost';
     
+    const modelsCount = (currentProjectData?.bim_model_url || '').split(',').filter(x => x).length;
     document.getElementById('calendar-hud').style.display = tab === 'daily' ? 'flex' : 'none';
-    document.getElementById('log-navigation').style.display = tab === 'daily' ? 'block' : 'none';
+    document.getElementById('log-navigation').style.display = (tab === 'daily' || modelsCount > 1) ? 'block' : 'none';
     
+    currentLogIndex = 0; // Reset index when switching tabs
     renderStage();
 }
 
@@ -204,10 +212,12 @@ function renderStage() {
     let showCounter = false;
 
     if (currentTab === 'arch') {
-        targetUrl = currentProjectData.bim_model_url || currentProjectData.presentation_url;
+        const models = (currentProjectData.bim_model_url || '').split(',').filter(x => x);
+        targetUrl = models[currentLogIndex % (models.length || 1)] || currentProjectData.presentation_url;
         title = currentProjectData.name;
-        label = 'ARCHITECTURAL_BLUEPRINT (CORE)';
+        label = models.length > 1 ? `ARCHITECTURAL_BLUEPRINT (SET ${currentLogIndex % models.length + 1} / ${models.length})` : 'ARCHITECTURAL_BLUEPRINT (CORE)';
         metaIndicator = 'INITIAL_SPEC_LOCKED';
+        showCounter = models.length > 1;
     } else {
         const log = historicalLogs[currentLogIndex];
         if (log) {
@@ -244,9 +254,14 @@ function renderSmartMedia(url, title, label, meta, showCounter) {
     document.getElementById('stage-meta-indicator').textContent = meta;
     
     const counterEl = document.getElementById('log-counter');
-    if (showCounter && historicalLogs.length > 0) {
+    if (showCounter && (currentTab === 'daily' ? historicalLogs.length > 0 : true)) {
         counterEl.style.display = 'block';
-        counterEl.textContent = `LOG ${currentLogIndex + 1} / ${historicalLogs.length}`;
+        if (currentTab === 'daily') {
+            counterEl.textContent = `LOG ${currentLogIndex + 1} / ${historicalLogs.length}`;
+        } else {
+            const modelsCount = (currentProjectData.bim_model_url || '').split(',').filter(x => x).length;
+            counterEl.textContent = `SPEC ${currentLogIndex % (modelsCount || 1) + 1} / ${modelsCount}`;
+        }
     } else {
         counterEl.style.display = 'none';
     }
@@ -280,8 +295,14 @@ function renderSmartMedia(url, title, label, meta, showCounter) {
 }
 
 function navigateLogs(dir) {
-    if (historicalLogs.length === 0) return;
-    currentLogIndex = (currentLogIndex + dir + historicalLogs.length) % historicalLogs.length;
+    if (currentTab === 'daily') {
+        if (historicalLogs.length === 0) return;
+        currentLogIndex = (currentLogIndex + dir + historicalLogs.length) % historicalLogs.length;
+    } else {
+        const modelsCount = (currentProjectData.bim_model_url || '').split(',').filter(x => x).length;
+        if (modelsCount <= 1) return;
+        currentLogIndex = (currentLogIndex + dir + modelsCount) % modelsCount;
+    }
     renderStage();
 }
 

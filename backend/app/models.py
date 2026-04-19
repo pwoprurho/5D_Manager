@@ -106,6 +106,7 @@ class SiteUpdate(BaseModel):
     weather_info: Optional[str] = None
     materials_used: Optional[str] = None
     cost_incurred: Decimal = Field(default=Decimal("0"), ge=0)
+    progress_captured: int = Field(default=0, ge=0, le=100) # Added to track historical progress snapshoat
 
 
 class User(BaseModel):

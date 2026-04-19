@@ -52,7 +52,7 @@
                 <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Photo Evidence / Site Telemetry</label>
                 <div style="display: flex; gap: 0.75rem; align-items: stretch;">
                     <div style="position: relative; flex: 1;">
-                        <input type="file" id="fileInput" name="photo" accept="image/*" class="modern-input" style="padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-deep); width: 100%;">
+                        <input type="file" id="fileInput" name="photos" multiple accept="image/*" class="modern-input" style="padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-deep); width: 100%;">
                         <span id="fileBadge" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.5rem; background: var(--brand-red); color: white; padding: 2px 6px; border-radius: 4px; display: none;">LOADED</span>
                     </div>
                     
@@ -60,7 +60,7 @@
                         <i class="fas fa-camera"></i>
                     </button>
                     <!-- Dedicated Camera Input -->
-                    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleCameraCapture(this)">
+                    <input type="file" id="cameraInput" name="photos" multiple accept="image/*" capture="environment" style="display: none;" onchange="handleCameraCapture(this)">
                 </div>
                 <!-- GPS Coordinates (auto-filled by Geolocation API) -->
                 <input type="hidden" id="gpsLatInput" name="gps_lat">
@@ -98,6 +98,31 @@
         <!-- Feed populated via JS -->
     </div>
 </div>
+
+<!-- Historical Correction Modal -->
+<div id="editLogModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; backdrop-filter: blur(10px); align-items: center; justify-content: center;">
+    <div class="glass-card" style="width: 100%; max-width: 500px; padding: 2.5rem; border-top: 4px solid var(--brand-red);">
+        <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 2rem;">REVISE_TELEMETRY_RECORD</h3>
+        <form id="editForm">
+            <input type="hidden" id="editLogId">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; display: block; margin-bottom: 0.75rem;">Observations</label>
+                <textarea id="editNotes" class="modern-input" style="height: 100px; background: var(--bg-deep); border-radius: 8px; font-weight: 500;"></textarea>
+            </div>
+            <div style="margin-bottom: 2rem;">
+                <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; display: block; margin-bottom: 0.75rem;">Progress Correction</label>
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <input type="range" id="editProgress" min="0" max="100" style="flex: 1; accent-color: var(--brand-red);">
+                    <span id="editProgressVal" style="font-size: 1.25rem; font-weight: 900; color: var(--brand-red); min-width: 50px;">50%</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="closeEditModal()" class="btn-modern btn-ghost" style="flex: 1;">ABORT</button>
+                <button type="submit" class="btn-modern btn-primary" style="flex: 2;">AUTHORIZE_CORRECTION</button>
+            </div>
+        </form>
+    </div>
+</div>
 <style>
 /* Page specific print tweaks if any needed */
 @media print {
@@ -109,7 +134,7 @@
 {% block scripts %}
 <script>
 // Global Telemetry Buffer
-let activeCapture = null;
+let activeCaptures = [];
 
 const slider = document.getElementById('completionSlider');
 const valDisplay = document.getElementById('completionVal');
@@ -124,12 +149,12 @@ if (slider) {
 
 // Telemetry Logic Node + GIS Integration
 function handleCameraCapture(input) {
-    if (input.files && input.files[0]) {
-        activeCapture = input.files[0];
+    if (input.files && input.files.length > 0) {
+        activeCaptures = Array.from(input.files);
         const badge = document.getElementById('fileBadge');
         if(badge) {
             badge.style.display = 'block';
-            badge.textContent = 'CAMERA';
+            badge.textContent = `${activeCaptures.length}_FILES`;
             badge.style.background = 'var(--brand-orange)';
         }
         // Auto-acquire GPS coordinates via Geolocation API
@@ -190,12 +215,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('fileInput');
     if(fileInput) {
         fileInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                activeCapture = this.files[0];
+            if (this.files && this.files.length > 0) {
+                activeCaptures = Array.from(this.files);
                 const badge = document.getElementById('fileBadge');
                 if(badge) {
                     badge.style.display = 'block';
-                    badge.textContent = 'FILE';
+                    badge.textContent = `${activeCaptures.length}_FILES`;
                     badge.style.background = 'var(--brand-red)';
                 }
             }
@@ -240,6 +265,11 @@ async function loadUpdates() {
                     <div style="text-align: right; font-size: 0.65rem; color: var(--text-muted); font-weight: 800;">
                         <div>${new Date(u.timestamp).toLocaleDateString()}</div>
                         <div style="color: var(--brand-red); margin-top: 4px;">${new Date(u.timestamp).toLocaleTimeString()}</div>
+                        {% if user.role in ['admin', 'director', 'manager'] %}
+                        <div style="margin-top: 1rem;">
+                            <button onclick="openEditModal(${u.id}, '${(u.notes || '').replace(/'/g, "\\'")}', ${u.progress_captured || 0}, ${u.cost_incurred})" class="btn-modern btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.55rem; border-color: rgba(255,255,255,0.1);">EDIT_LOG</button>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: ${u.photo_url ? '1fr 240px' : '1fr'}; gap: 2.5rem; align-items: start;">
@@ -261,11 +291,20 @@ async function loadUpdates() {
                                 <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;"><i class="fas fa-map-marker-alt" style="color: #10b981; margin-right: 4px;"></i>Field Position</div>
                                 <a href="https://www.google.com/maps?q=${u.gps_lat},${u.gps_long}" target="_blank" style="font-weight: 700; color: #10b981; font-size: 0.65rem; text-decoration: none; font-family: monospace;">${Number(u.gps_lat).toFixed(5)}, ${Number(u.gps_long).toFixed(5)}</a>
                             </div>` : ''}
+                            ${u.progress_captured !== undefined ? `
+                            <div>
+                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Progress Captured</div>
+                                <div style="font-weight: 700; color: #10B981; font-size: 0.75rem;">${u.progress_captured}%</div>
+                            </div>` : ''}
                         </div>
                     </div>
                     ${u.photo_url ? `
-                    <div onclick="window.open('${u.photo_url}')" style="cursor: pointer; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-border); aspect-ratio: 16/9; box-shadow: var(--glow-red);">
-                        <img src="${u.photo_url}" style="width: 100%; height: 100%; object-fit: cover;" />
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem;">
+                        ${u.photo_url.split(',').map(url => `
+                        <div onclick="window.open('${url}')" style="cursor: pointer; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-border); aspect-ratio: 1/1; box-shadow: var(--glow-red);">
+                            <img src="${url}" style="width: 100%; height: 100%; object-fit: cover;" />
+                        </div>
+                        `).join('')}
                     </div>` : ''}
                 </div>
             </div>`;
@@ -301,8 +340,12 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
         return;
     }
     
-    if (activeCapture) {
-        fd.set('photo', activeCapture);
+    // Clear potentially redundant singular photo if any
+    fd.delete('photos'); 
+    if (activeCaptures.length > 0) {
+        activeCaptures.forEach(f => fd.append('photos', f));
+    } else if (document.getElementById('fileInput').files.length > 0) {
+         Array.from(document.getElementById('fileInput').files).forEach(f => fd.append('photos', f));
     }
 
     // Append GPS coordinates if captured
@@ -335,7 +378,7 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
         if (xhr.status >= 200 && xhr.status < 300) {
             const resp = JSON.parse(xhr.responseText);
             e.target.reset(); 
-            activeCapture = null; 
+            activeCaptures = []; 
             document.getElementById('fileBadge').style.display = 'none';
             if(slider) {
                 slider.value = 50; 
@@ -385,11 +428,56 @@ async function loadDropdowns() {
         const mSelect = document.getElementById('matSelect');
         if (mSelect) {
             mSelect.innerHTML = '<option value="">NONE INVOLVED</option>' + 
-                materials.map(m => `<option value="${m.id}">${m.name.toUpperCase()} (BENEATH_STOCK: ${m.current_stock})</option>`).join('');
+                materials.map(m => `<option value="${m.id}">${m.name.toUpperCase()} (BENEATH_STOCK: ${m.current_stock})</option>').join('');
         }
     } catch(e) { console.error("Dropdown load failure", e); }
 }
 
+// --- Historical Correction Logic ---
+const editModal = document.getElementById('editLogModal');
+const editForm = document.getElementById('editForm');
+const editProgress = document.getElementById('editProgress');
+const editProgressVal = document.getElementById('editProgressVal');
 
+editProgress.oninput = () => { editProgressVal.textContent = editProgress.value + '%'; };
+
+function openEditModal(id, notes, progress, cost) {
+    document.getElementById('editLogId').value = id;
+    document.getElementById('editNotes').value = notes;
+    editProgress.value = progress;
+    editProgressVal.textContent = progress + '%';
+    editModal.style.display = 'flex';
+}
+
+function closeEditModal() {
+    editModal.style.display = 'none';
+}
+
+editForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editLogId').value;
+    const notes = document.getElementById('editNotes').value;
+    const progress = parseInt(editProgress.value);
+    
+    try {
+        const resp = await fetch(`/api/v1/site-updates/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes, progress_captured: progress }),
+            credentials: 'same-origin'
+        });
+        
+        if (resp.ok) {
+            showNotification("LOG_CORRECTED: Historical telemetry updated.");
+            closeEditModal();
+            loadUpdates();
+        } else {
+            const err = await resp.json();
+            showNotification(`CORRECTION_REJECTED: ${err.detail || 'Access Denied'}`, "error");
+        }
+    } catch(err) {
+        showNotification("SYNC_ERROR: Failed to transmit correction.", "error");
+    }
+};
 </script>
 {% endblock %}

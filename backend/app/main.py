@@ -8,7 +8,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timezone
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from cachetools import TTLCache
 from functools import wraps
@@ -19,10 +19,10 @@ from . import models, database, auth
 from .database import supabase, with_retry, async_with_retry
 from .services.cost_engine import CostEngine
 from .services.report_generator import ReportGenerator
+import asyncio
 import os
 import re
 import io
-import asyncio
 import logging
 import mimetypes
 try:
@@ -542,6 +542,11 @@ class WPUpdate(BaseModel):
     estimated_hours: Optional[Decimal] = None
     spent_hours: Optional[Decimal] = None
 
+class SiteUpdatePatch(BaseModel):
+    notes: Optional[str] = None
+    progress_captured: Optional[int] = Field(None, ge=0, le=100)
+    cost_incurred: Optional[float] = None
+
 @app.post("/api/v1/auth/signin")
 @limiter.limit("3/20hours")
 async def signin(
@@ -834,7 +839,7 @@ def get_project_node(project_id: int, user: models.User = Depends(auth.get_curre
 async def create_project(
     name: str = Form(...),
     description: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None),
+    files: List[UploadFile] = File(None),
     assignee_id: Optional[str] = Form(None),
     materials_data: Optional[str] = Form(None), # JSON: [{"id": 1, "cost": 10.5}, ...]
     user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
@@ -853,85 +858,68 @@ async def create_project(
             logger.error(f"Registry Validation Failure: {e}")
             raise HTTPException(status_code=500, detail="Tactical Personnel Verification Failed.")
 
-    model_url = None
-    if file:
-        try:
-            from .services.supabase_client import upload_file
-            
-            # Mission Critical: Sanitize filename to prevent cloud storage 400 errors
-            clean_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', file.filename)
-            
-            file_bytes = await file.read()
-            
-            # Mission Critical: PDF Visual Reconstruction (Strips Text, Preserves Imagery)
-            if HAS_PYPDF and file.filename.lower().endswith('.pdf') and len(file_bytes) > 50 * 1024 * 1024:
-                try:
-                    logger.info(f"Oversized Doc Detected Core: {len(file_bytes)/1024/1024:.1f}MB. Initiating Visual-Only Reconstruction...")
-                    reader = PdfReader(io.BytesIO(file_bytes))
-                    
-                    if HAS_PILLOW:
-                        logger.info("Engaging Image Extraction Pipeline...")
-                        pdf_io = io.BytesIO()
-                        extracted_images = []
-                        for i, page in enumerate(reader.pages):
-                            for image_obj in page.images:
-                                try:
-                                    img = Image.open(io.BytesIO(image_obj.data))
-                                    if img.mode != 'RGB': img = img.convert('RGB')
-                                    extracted_images.append(img)
-                                except: continue
+    model_urls = []
+    if files:
+        for file in files:
+            try:
+                from .services.supabase_client import upload_file
+                
+                # Mission Critical: Sanitize filename to prevent cloud storage 400 errors
+                clean_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', file.filename)
+                
+                file_bytes = await file.read()
+                
+                # File Optimization Sequence
+                if file.content_type == 'application/pdf':
+                    try:
+                        import io
+                        from pypdf import PdfWriter, PdfReader
                         
-                        if extracted_images:
-                            extracted_images[0].save(pdf_io, format='PDF', save_all=True, append_images=extracted_images[1:], quality=70)
-                            file_bytes = pdf_io.getvalue()
-                            logger.info(f"Visual Reconstruction Complete: {len(file_bytes)/1024/1024:.1f}MB (Text-Free)")
+                        pdf_io = io.BytesIO()
+                        reader = PdfReader(io.BytesIO(file_bytes))
+                        
+                        # Aggressive visual reconstruction for PDF optimization
+                        if HAS_PILLOW:
+                            extracted_images = []
+                            for i, page in enumerate(reader.pages):
+                                for image_obj in page.images:
+                                    try:
+                                        img = Image.open(io.BytesIO(image_obj.data))
+                                        if img.mode != 'RGB': img = img.convert('RGB')
+                                        extracted_images.append(img)
+                                    except: continue
+                            
+                            if extracted_images:
+                                extracted_images[0].save(pdf_io, format='PDF', save_all=True, append_images=extracted_images[1:], quality=70)
+                                file_bytes = pdf_io.getvalue()
+                                logger.info(f"Visual Reconstruction Complete: {len(file_bytes)/1024/1024:.1f}MB (Text-Free)")
+                            else:
+                                writer = PdfWriter()
+                                for page in reader.pages:
+                                    page.compress_content_streams()
+                                    writer.add_page(page)
+                                writer.remove_unreferenced_objects()
+                                out = io.BytesIO()
+                                writer.write(out)
+                                file_bytes = out.getvalue()
                         else:
-                            # Fallback to Aggressive Stream Optimization
                             writer = PdfWriter()
                             for page in reader.pages:
                                 page.compress_content_streams()
                                 writer.add_page(page)
-                            writer.remove_unreferenced_objects()
                             out = io.BytesIO()
                             writer.write(out)
                             file_bytes = out.getvalue()
-                    else:
-                        # Fallback to standard object removal
-                        writer = PdfWriter()
-                        for page in reader.pages:
-                            page.compress_content_streams()
-                            writer.add_page(page)
-                        out = io.BytesIO()
-                        writer.write(out)
-                        file_bytes = out.getvalue()
+                    except Exception as pdf_err:
+                        logger.warning(f"PDF Optimization Bypass for {file.filename}: {pdf_err}")
 
-                except Exception as pdf_err:
-                    logger.warning(f"Optimization Bypass: {pdf_err}")
-
-            if len(file_bytes) > MAX_UPLOAD_BYTES:
-                raise HTTPException(status_code=413, detail=f"File exceeds operational limit of {MAX_UPLOAD_BYTES/(1024*1024):.0f}MB")
-            
-            # Attempt secure documentation ingest
-            logger.info(f"Initiating Cloud Transmission for Documentation: {file.filename} ({len(file_bytes)/1024/1024:.1f}MB)...")
-            model_url = upload_file(file_bytes, clean_filename, "project-resources")
-            logger.info(f"Cloud Transmission Successful: {model_url}")
-        except Exception as upload_err:
-            logger.error(f"Documentation Ingest Failure: {upload_err}")
-            err_msg = str(upload_err)
-            
-            # Precise diagnostic feedback
-            if "maximum allowed size" in err_msg.lower() or "413" in err_msg:
-                raise HTTPException(
-                    status_code=413, 
-                    detail="Cloud Storage Rejection: File exceeds the 50MB Supabase threshold. "
-                           "ACTION: Please increase the 'file_size_limit' in your Supabase Dashboard (Storage -> site-photos -> Edit Bucket)."
-                )
-            if "bad request" in err_msg.lower() or "400" in err_msg:
-                raise HTTPException(status_code=400, detail="Cloud Storage Rejection: Invalid file format or illegal characters in metadata.")
-            if "timeout" in err_msg.lower():
-                raise HTTPException(status_code=504, detail="Ingest Timeout: The architectural record is too large for the current network tunnel. Please try a stable connection.")
-                
-            raise HTTPException(status_code=500, detail=f"Storage Sync Error: {err_msg}")
+                url = upload_file(file_bytes, clean_filename, "infrastructure/blueprints")
+                model_urls.append(url)
+            except Exception as e:
+                err_msg = str(e)
+                logger.error(f"Storage Sync Error for {file.filename}: {err_msg}")
+    
+    model_url = ",".join(model_urls) if model_urls else None
 
     # Prepare project metadata
     project_data = {
@@ -1429,9 +1417,14 @@ async def get_dashboard_analytics(
     for p in projects:
         # Calculate Economics
         p_wps = p.get("workpackage", [])
+        p_total_progress = 0
         for wp in p_wps:
             total_budget += float(wp.get("budget_amount") or 0)
             total_actual += float(wp.get("actual_cost") or 0)
+            p_total_progress += int(wp.get("progress_pct") or 0)
+        
+        # Aggregate stats for the project object
+        p["progress_pct"] = p_total_progress / len(p_wps) if p_wps else 0
             
         # Calculate Schedule Status (Daily Target Logic)
         p_status = "on_track"
@@ -1457,10 +1450,14 @@ async def get_dashboard_analytics(
         
         p["schedule_status"] = p_status
 
+    # 4. Global Indicators
+    global_progress = (sum(p["progress_pct"] for p in projects) / len(projects)) if projects else 0
+
     return {
         "projects": projects,
         "all_updates": all_updates,
-        "budget_utilization": total_actual
+        "budget_utilization": total_actual,
+        "global_progress": global_progress
     }
 
 
@@ -1746,47 +1743,57 @@ async def get_project_bim_elements(project_id: int, user: models.User = Depends(
 async def upload_site_photo(
     request: Request,
     wp_id: int,
-    photo: UploadFile = File(...),
+    photos: List[UploadFile] = File(...),
     notes: str = Form(""),
     gps_lat: Optional[float] = Form(None),
     gps_long: Optional[float] = Form(None),
     material_id: Optional[int] = Form(None),
     quantity_used: Optional[float] = Form(None),
+    progress: int = Form(50),
     user: models.User = Depends(auth.check_role([
         models.UserRole.engineer, models.UserRole.manager, models.UserRole.director, models.UserRole.admin
     ]))
 ):
-    """Upload a site photo and create a site update record."""
+    """Upload site photos and create a site update record."""
     # Validate WP exists and get context
     wp_res = supabase.table("workpackage").select("project_id, actual_cost").eq("id", wp_id).single().execute()
     if not wp_res.data:
         raise HTTPException(status_code=404, detail="Work package not found")
     project_id = wp_res.data["project_id"]
     
-    try:
-        from .services.supabase_client import upload_photo
-        import re
-        
-        # Mission Critical: Sanitize and Optimize
-        clean_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', photo.filename)
-        file_bytes = await photo.read()
+    photo_urls = []
+    from .services.supabase_client import upload_photo
+    import re
+    
+    for photo in photos:
+        try:
+            # Mission Critical: Sanitize and Optimize
+            clean_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', photo.filename)
+            file_bytes = await photo.read()
 
-        # Telemetry Optimization Gate
-        if HAS_PILLOW and len(file_bytes) > 2 * 1024 * 1024:
-            try:
-                img = Image.open(io.BytesIO(file_bytes))
-                if img.mode != 'RGB': img = img.convert('RGB')
-                img.thumbnail((1920, 1080)) # 1080p Operational Quality
-                out = io.BytesIO()
-                img.save(out, format='JPEG', quality=75, optimize=True)
-                file_bytes = out.getvalue()
-                logger.info(f"Field Telemetry Optimized: {len(file_bytes)/1024:.0f}KB")
-            except Exception as comp_err:
-                logger.warning(f"Optimization Bypass: {comp_err}")
+            # Telemetry Optimization Gate
+            if HAS_PILLOW and len(file_bytes) > 1 * 1024 * 1024:
+                try:
+                    img = Image.open(io.BytesIO(file_bytes))
+                    if img.mode != 'RGB': img = img.convert('RGB')
+                    img.thumbnail((1920, 1080)) # 1080p Operational Quality
+                    out = io.BytesIO()
+                    img.save(out, format='JPEG', quality=75, optimize=True)
+                    file_bytes = out.getvalue()
+                    logger.info(f"Field Telemetry Optimized: {len(file_bytes)/1024:.0f}KB")
+                except Exception as comp_err:
+                    logger.warning(f"Optimization Bypass for {photo.filename}: {comp_err}")
 
-        photo_url = upload_photo(file_bytes, clean_filename, project_id, wp_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Photo upload failed: {str(e)}")
+            url = upload_photo(file_bytes, clean_filename, project_id, wp_id)
+            photo_urls.append(url)
+        except Exception as e:
+            logger.error(f"Multi-file sync failure for {photo.filename}: {e}")
+            
+    if not photo_urls:
+        raise HTTPException(status_code=500, detail="No photos could be synchronized to telemetry junction.")
+    
+    # Store as comma-separated strictly for this v-tier
+    photo_url = ",".join(photo_urls)
     
     # 3. Handle Material Usage and Costing
     mat_summary = ""
@@ -1809,11 +1816,20 @@ async def upload_site_photo(
                 new_project_stock = float(inv['quantity']) - quantity_used
                 supabase.table("project_inventory").update({"quantity": new_project_stock}).eq("id", inv['id']).execute()
                 
-                # Update WP Actual Cost (AC)locally
+                # Update WP Actual Cost (AC) and Progress locally
                 current_ac = float(wp_res.data.get("actual_cost") or 0)
-                supabase.table("workpackage").update({"actual_cost": current_ac + cost_calc}).eq("id", wp_id).execute()
+                supabase.table("workpackage").update({
+                    "actual_cost": current_ac + cost_calc,
+                    "progress_pct": progress
+                }).eq("id", wp_id).execute()
         except Exception as e:
             logger.warning(f"Project Material processing warning: {e}")
+    else:
+        # User Req: Even if no materials used, update the progress from the form
+        try:
+            supabase.table("workpackage").update({"progress_pct": progress}).eq("id", wp_id).execute()
+        except Exception as e:
+            logger.warning(f"Standard progress update failure: {e}")
 
     update_data = {
         "work_package_id": wp_id,
@@ -1824,6 +1840,7 @@ async def upload_site_photo(
         "gps_long": gps_long,
         "materials_used": mat_summary,
         "cost_incurred": cost_calc,
+        "progress_captured": progress,  # Capture progress snapshot
         "timestamp": datetime.utcnow().isoformat()
     }
     
@@ -1833,6 +1850,25 @@ async def upload_site_photo(
     
     api_cache.clear()
     return {"message": "Photo uploaded successfully", "photo_url": photo_url, "update_id": result.data[0]["id"]}
+
+
+@app.patch("/api/v1/site-updates/{update_id}")
+async def update_site_log(
+    update_id: int,
+    patch: SiteUpdatePatch,
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
+):
+    """Historical correction of a site log's metrics or notes."""
+    data = patch.dict(exclude_unset=True)
+    if not data:
+        raise HTTPException(status_code=400, detail="No updates provided")
+        
+    result = await async_with_retry(lambda: supabase.table("siteupdate").update(data).eq("id", update_id).execute())
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Log entry not found")
+        
+    api_cache.clear()
+    return {"message": "Site log updated successfully", "data": result.data[0]}
 
 
 # ============================================================
