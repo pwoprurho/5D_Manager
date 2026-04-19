@@ -61,8 +61,8 @@ async function loadKanban() {
 
         if (!kanbanResp.ok) throw new Error();
         const board = await kanbanResp.json();
-        
         const container = document.getElementById('kanbanBoard');
+        
         container.innerHTML = Object.entries(board).map(([status, wps]) => {
             const color = statusColors[status] || '#94a3b8';
             const label = statusLabels[status] || status.toUpperCase();
@@ -80,14 +80,37 @@ async function loadKanban() {
                         ${wps.map(wp => `
                             <div class="kanban-card" data-id="${wp.id}">
                                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
-                                    <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: ${color};">${wp.type || 'TASK'}</span>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: ${color};">${wp.type || 'TASK'}</span>
+                                        <span style="font-size: 0.5rem; color: var(--text-muted); opacity: 0.5;">ID: #WP-${wp.id}</span>
+                                    </div>
                                     <span style="font-size: 0.55rem; font-weight: 800; color: var(--text-muted); opacity: 0.6;">PRIO: ${(wp.priority || 'normal').toUpperCase()}</span>
                                 </div>
-                                <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.3; text-transform: uppercase;">${wp.name}</h4>
-                                <div style="background: rgba(255,255,255,0.05); height: 3px; border-radius: 2px; overflow: hidden; margin-bottom: 0.75rem;">
-                                    <div style="height: 100%; width: ${wp.progress_pct || 0}%; background: ${color}; border-radius: 2px;"></div>
+                                <h4 style="font-size: 1rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.3; text-transform: uppercase; color: var(--text-primary);">${wp.name}</h4>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">Progress</span>
+                                            <span style="font-size: 0.7rem; font-weight: 900; color: ${color};">${wp.progress_pct || 0}%</span>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden;">
+                                            <div style="height: 100%; width: ${wp.progress_pct || 0}%; background: ${color}; border-radius: 2px; box-shadow: 0 0 10px ${color}40;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="number" value="${wp.progress_pct || 0}" min="0" max="100" 
+                                            onchange="updateWPProgress(${wp.id}, this.value)"
+                                            style="width: 60px; background: var(--bg-deep); border: 1px solid var(--glass-border); color: white; font-size: 0.8rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; outline: none; text-align: center;">
+                                    </div>
                                 </div>
-                                <div style="font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">${wp.progress_pct || 0}% COMPLETE</div>
+
+                                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                                    ${(status === 'completed' && ['admin', 'director', 'manager'].includes(userRole)) ? `
+                                        <button onclick="verifyWP(${wp.id})" class="btn-modern btn-ghost" style="padding: 0.4rem 1rem; font-size: 0.6rem; border-color: var(--brand-red); color: var(--brand-red);">VERIFY_FIELD_READY</button>
+                                    ` : ''}
+                                    <button class="btn-modern btn-ghost" style="padding: 0.4rem 1rem; font-size: 0.6rem; opacity: 0.5;">VIEW_DETAILS</button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -105,18 +128,52 @@ async function loadKanban() {
                     const wpId = evt.item.dataset.id;
                     const newStatus = evt.to.dataset.status;
                     try {
-                        await fetch(`/api/v1/project-updates/${wpId}`, {
+                        const resp = await fetch(`/api/v1/project-updates/${wpId}`, {
                             method: 'PATCH',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: newStatus })
+                            body: JSON.stringify({ status: newStatus }),
+                            credentials: 'same-origin'
                         });
-                    } catch(e) { console.error("Status update failed"); }
+                        if (resp.ok) {
+                            if (window.showToast) showToast(`Task status migrated: ${newStatus.toUpperCase()}`, 'success');
+                            loadKanban();
+                        }
+                    } catch(e) { console.error("Status update failed", e); }
                 }
             });
         });
     } catch(err) {
         console.error("Kanban load failed", err);
     }
+}
+
+async function updateWPProgress(wpId, value) {
+    try {
+        const pct = parseInt(value);
+        const resp = await fetch(`/api/v1/project-updates/${wpId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ progress_pct: pct }),
+            credentials: 'same-origin'
+        });
+        if (resp.ok) {
+            if (window.showToast) showToast('Tactical progress synchronized', 'success');
+            loadKanban();
+        }
+    } catch(e) { console.error("Telemetry sync failed", e); }
+}
+
+async function verifyWP(wpId) {
+    try {
+        const resp = await fetch(`/api/v1/project-updates/${wpId}/verify`, {
+            method: 'POST',
+            credentials: 'same-origin'
+        });
+        if (resp.ok) {
+            if (window.showToast) showToast('Task verified in registry', 'success');
+            loadKanban();
+        }
+    } catch(e) { console.error("Verification failed", e); }
 }
 
 loadKanban();

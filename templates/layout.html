@@ -19,7 +19,9 @@
                     
                     <div id="projectContextNav" class="contextual-nav" style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); display: none;">
                         <li class="reveal-text" style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 1.25rem; letter-spacing: 0.25em;">Active_Site</li>
+                        {% if user.role|string in ['admin', 'director', 'UserRole.admin', 'UserRole.director'] %}
                         <li class="reveal-text"><a id="navKanban" href="#" class="nav-link"><span>Work Board</span></a></li>
+                        {% endif %}
                         <li class="reveal-text"><a id="navGantt" href="#" class="nav-link"><span>Schedule</span></a></li>
                         <li class="reveal-text"><a id="navProjectUpdate" href="#" class="nav-link"><span>Site Manager</span></a></li>
                     </div>
@@ -174,7 +176,8 @@
 
                 if(currentProjId) {
                     document.getElementById('projectContextNav').style.display = 'block';
-                    document.getElementById('navKanban').href = `/projects/${currentProjId}/kanban`;
+                    const kanbanLink = document.getElementById('navKanban');
+                    if (kanbanLink) kanbanLink.href = `/projects/${currentProjId}/kanban`;
                     document.getElementById('navGantt').href = `/projects/${currentProjId}/gantt`;
                     document.getElementById('navProjectUpdate').href = `/projects/${currentProjId}/project-updates`;
                 }

@@ -518,6 +518,11 @@ async def download_page(request: Request):
 async def project_kanban_page(request: Request, project_id: int):
     user = await auth.get_current_user(request)
     if not user: return RedirectResponse(url="/signin", status_code=303)
+    
+    # Executive Clearance Gate
+    if str(user.role) not in ['admin', 'director', 'UserRole.admin', 'UserRole.director']:
+        return RedirectResponse(url="/dashboard", status_code=303)
+        
     return templates.TemplateResponse(request=request, name="kanban.html", context={"user": user, "project_id": project_id})
 
 @app.get("/projects/{project_id}/gantt", response_class=HTMLResponse)
@@ -1381,9 +1386,13 @@ async def get_project_bim_elements(project_id: int):
 
 
 @app.get("/api/v1/projects/{project_id}/kanban")
-def get_kanban_data(project_id: int):
+async def get_kanban_data(project_id: int, user: models.User = Depends(auth.get_current_user)):
     """Returns project phases grouped by status for Kanban board."""
-    result = supabase.table("workpackage").select("*").eq("project_id", project_id).execute()
+    # Executive Clearance Gate
+    if user.role not in [models.UserRole.admin, models.UserRole.director]:
+        raise HTTPException(status_code=403, detail="Strategic clearance required for work board access.")
+        
+    result = await async_with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
     wps = result.data or []
     
     # Initialize high-visibility kanban structure
