@@ -129,6 +129,21 @@ def serialize_for_supabase(data: dict) -> dict:
             output[k] = v
     return output
 
+async def check_project_access(user: models.User, project_id: int):
+    """Tactical Clearance Gate: Ensures user is authorized for the given project node."""
+    if user.role in [models.UserRole.admin, models.UserRole.director]:
+        return True
+    
+    res = await async_with_retry(lambda: supabase.table("projectassignment")
+        .select("id")
+        .eq("project_id", project_id)
+        .eq("user_id", user.id)
+        .execute())
+    
+    if not res.data:
+        raise HTTPException(status_code=403, detail="Unauthorized: Site access not registered in tactical registry.")
+    return True
+
 def cache_response(ttl=300):
     def decorator(func):
         @wraps(func)
@@ -827,9 +842,15 @@ def delete_design(design_id: int, user: models.User = Depends(auth.check_role([m
 # ============================================================
 
 @app.get("/api/v1/projects/{project_id}", response_model=models.Project)
-def get_project_node(project_id: int, user: models.User = Depends(auth.get_current_user)):
-    """Retrieve high-fidelity telemetry for a specific project node."""
-    res = with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).single().execute())
+async def get_project_node(project_id: int, user: models.User = Depends(auth.get_current_user)):
+    """Retrieve high-fidelity telemetry for a specific project node with authorization check."""
+    # 1. Authorization Gate
+    if user.role not in [models.UserRole.admin, models.UserRole.director]:
+        assignment_res = await async_with_retry(lambda: supabase.table("projectassignment").select("id").eq("project_id", project_id).eq("user_id", user.id).execute())
+        if not assignment_res.data:
+            raise HTTPException(status_code=403, detail="Unauthorized: You represent no authorized interest in this site node.")
+            
+    res = await async_with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).single().execute())
     if not res.data:
         raise HTTPException(status_code=404, detail="Project node not found")
     return models.Project(**res.data)
@@ -1056,7 +1077,6 @@ async def upload_project_resource(
 
 
 @app.get("/api/v1/projects/", response_model=list[models.Project])
-@cache_response(ttl=300)
 async def read_projects(
     user: models.User = Depends(auth.get_current_user)
 ):
@@ -1186,10 +1206,12 @@ def get_user_assignments(
 
 
 @app.get("/api/v1/projects/{project_id}/stats")
-@cache_response(ttl=300)
-def get_project_stats(project_id: int):
+async def get_project_stats(project_id: int, user: models.User = Depends(auth.get_current_user)):
+    # 1. Authorization Access Gate
+    await check_project_access(user, project_id)
+    
     # Fetch project
-    project_res = with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).single().execute())
+    project_res = await async_with_retry(lambda: supabase.table("project").select("*").eq("id", project_id).single().execute())
     if not project_res.data:
         raise HTTPException(status_code=404, detail="Project not found")
     project_data = project_res.data
@@ -1232,9 +1254,19 @@ def get_project_stats(project_id: int):
 # ============================================================
 
 @app.get("/api/v1/project-updates/", response_model=List[models.WorkPackage])
-def list_all_project_updates(user: models.User = Depends(auth.get_current_user)):
-    """List all work packages/tasks across all projects."""
-    result = with_retry(lambda: supabase.table("workpackage").select("*").execute())
+async def list_all_project_updates(user: models.User = Depends(auth.get_current_user)):
+    """List all work packages/tasks across authorized projects."""
+    if user.role in [models.UserRole.admin, models.UserRole.director]:
+        result = await async_with_retry(lambda: supabase.table("workpackage").select("*").execute())
+        return [models.WorkPackage(**wp) for wp in result.data]
+    
+    # Isolation: Get assigned pids
+    assignment_res = await async_with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
+    pids = [a["project_id"] for a in assignment_res.data]
+    
+    if not pids: return []
+    
+    result = await async_with_retry(lambda: supabase.table("workpackage").select("*").in_("project_id", pids).execute())
     return [models.WorkPackage(**wp) for wp in result.data]
 
 @app.post("/api/v1/project-updates/")
@@ -1386,16 +1418,16 @@ async def get_dashboard_analytics(
     # 1. Resolve Projects (filtered by user assignment)
     if user.role in [models.UserRole.admin, models.UserRole.director]:
         projects_query = supabase.table("project").select("*, workpackage(*)").order("created_at", desc=True)
-        projects_res = with_retry(lambda: projects_query.execute())
+        projects_res = await async_with_retry(lambda: projects_query.execute())
         projects = projects_res.data or []
     else:
         # Get assigned project IDs
-        assigned_res = with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
+        assigned_res = await async_with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
         assigned = assigned_res.data or []
         pids = [a["project_id"] for a in assigned]
         if not pids: return {"projects": [], "all_updates": [], "budget_utilization": 0}
         projects_query = supabase.table("project").select("*, workpackage(*)").in_("id", pids).order("created_at", desc=True)
-        projects_res = with_retry(lambda: projects_query.execute())
+        projects_res = await async_with_retry(lambda: projects_query.execute())
         projects = projects_res.data or []
 
     # 2. Resolve Site Updates (Feed)
@@ -1406,6 +1438,10 @@ async def get_dashboard_analytics(
         start_ts = f"{date}T00:00:00Z"
         end_ts = f"{date}T23:59:59Z"
         updates_query = updates_query.gte("timestamp", start_ts).lte("timestamp", end_ts)
+        
+    # Project Isolation Gate for Feed
+    if user.role not in [models.UserRole.admin, models.UserRole.director]:
+        updates_query = updates_query.in_("workpackage.project_id", pids)
         
     all_updates_res = await async_with_retry(lambda: updates_query.order("timestamp", desc=True).limit(50).execute())
     all_updates = all_updates_res.data or []
@@ -1536,9 +1572,9 @@ async def generate_project_report(project_id: int):
 
 
 @app.get("/api/v1/projects/{project_id}/gantt")
-@cache_response(ttl=300)
-async def get_gantt_data(project_id: int):
+async def get_gantt_data(project_id: int, user: models.User = Depends(auth.get_current_user)):
     """Returns work packages formatted for Gantt libraries with daily target status."""
+    await check_project_access(user, project_id)
     result = await async_with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
     wps = result.data
     
@@ -1669,7 +1705,7 @@ async def approve_phase(update_id: int, user: models.User = Depends(auth.check_r
 # ============================================================
 
 @app.get("/api/v1/site-updates/")
-def read_site_updates(
+async def read_site_updates(
     project_id: Optional[int] = None,
     log_date: Optional[str] = None, # YYYY-MM-DD
     user: models.User = Depends(auth.get_current_user)
@@ -1679,8 +1715,35 @@ def read_site_updates(
         
     query = supabase.table("siteupdate").select("*, workpackage!inner(*)")
     
-    if project_id:
-        query = query.eq("workpackage.project_id", project_id)
+    if user.role not in [models.UserRole.admin, models.UserRole.director]:
+        # 1. Resolve authorized project context
+        assignment_res = await async_with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
+        pids = [a["project_id"] for a in (assignment_res.data or [])]
+        
+        if project_id:
+            if project_id not in pids:
+                raise HTTPException(status_code=403, detail="Clearance required for this project hub.")
+            target_pids = [project_id]
+        else:
+            if not pids: return []
+            target_pids = pids
+            
+        # 2. Resolve target work packages for these projects
+        wp_res = await async_with_retry(lambda: supabase.table("workpackage").select("id").in_("project_id", target_pids).execute())
+        wp_ids = [w["id"] for w in (wp_res.data or [])]
+        
+        if not wp_ids: return []
+        query = supabase.table("siteupdate").select("*, workpackage(*)") # Keep workpackage for UI mapping
+        query = query.in_("work_package_id", wp_ids)
+    else:
+        # Admins/Directors handle global or filtered query
+        query = supabase.table("siteupdate").select("*, workpackage(*)")
+        if project_id:
+            # Still need to filter siteupdates by workpackages belonging to the project
+            wp_res = await async_with_retry(lambda: supabase.table("workpackage").select("id").eq("project_id", project_id).execute())
+            wp_ids = [w["id"] for w in (wp_res.data or [])]
+            if not wp_ids: return []
+            query = query.in_("work_package_id", wp_ids)
     
     if log_date:
         # Filter for the specific day
@@ -1688,14 +1751,14 @@ def read_site_updates(
         end_ts = f"{log_date}T23:59:59Z"
         query = query.gte("timestamp", start_ts).lte("timestamp", end_ts)
         
-    result = with_retry(lambda: query.order("timestamp", desc=True).execute())
+    result = await async_with_retry(lambda: query.order("timestamp", desc=True).execute())
     return result.data
 
 
 @app.get("/api/v1/projects/{project_id}/elements")
-@cache_response(ttl=3600)
 async def get_project_bim_elements(project_id: int, user: models.User = Depends(auth.get_current_user)):
     """Fetch and parse the linked BIM model for a project to return element metadata."""
+    await check_project_access(user, project_id)
     # 1. Get project model/design
     proj_res = supabase.table("project").select("bim_model_url, design_id").eq("id", project_id).single().execute()
     if not proj_res.data:
@@ -1866,7 +1929,19 @@ async def update_site_log(
     result = await async_with_retry(lambda: supabase.table("siteupdate").update(data).eq("id", update_id).execute())
     if not result.data:
         raise HTTPException(status_code=404, detail="Log entry not found")
-        
+    
+    # Global Synchronization: If progress was corrected, propagate to the Work Package
+    if "progress_captured" in data:
+        updated_log = result.data[0]
+        try:
+            await async_with_retry(lambda: supabase.table("workpackage")
+                .update({"progress_pct": data["progress_captured"]})
+                .eq("id", updated_log["work_package_id"])
+                .execute())
+            logger.info(f"Global progress synced for WP {updated_log['work_package_id']} to {data['progress_captured']}%")
+        except Exception as sync_err:
+            logger.warning(f"Failed to sync global progress: {sync_err}")
+            
     api_cache.clear()
     return {"message": "Site log updated successfully", "data": result.data[0]}
 
@@ -1893,15 +1968,15 @@ def seed_materials():
     except Exception as e:
         print(f"Warning: Could not seed materials (Supabase might be unreachable): {e}")
 @app.get("/api/v1/store/materials", response_model=List[models.Material])
-@cache_response(ttl=300)
-def get_materials():
-    result = with_retry(lambda: supabase.table("material").select("*").execute())
+async def get_materials(user: models.User = Depends(auth.get_current_user)):
+    result = await async_with_retry(lambda: supabase.table("material").select("*").execute())
     return result.data
 
 @app.get("/api/v1/store/projects/{project_id}/inventory", response_model=List[dict])
-def get_project_inventory(project_id: int, user: models.User = Depends(auth.get_current_user)):
+async def get_project_inventory(project_id: int, user: models.User = Depends(auth.get_current_user)):
     """Fetch localized site store inventory for a specific project."""
-    result = with_retry(lambda: supabase.table("project_inventory")
+    await check_project_access(user, project_id)
+    result = await async_with_retry(lambda: supabase.table("project_inventory")
                         .select("*, material:material_id(*)")
                         .eq("project_id", project_id)
                         .execute())

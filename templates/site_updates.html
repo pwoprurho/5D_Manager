@@ -1,6 +1,9 @@
 {% extends "layout.html" %}
 
-{% block page_title %}Daily Logs{% endblock %}
+{% block page_title %}Real-Time Site Telemetry{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
 {% block content %}
 <div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem; background: var(--bg-card);">
@@ -90,10 +93,18 @@
 </div>
 
 <div class="glass-card reveal-text reveal-delay-2" style="padding: 3rem; background: var(--bg-card); border-top: 1px solid var(--glass-border);">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-        <div style="width: 10px; height: 10px; background: var(--brand-red); border-radius: 2px;"></div>
-        <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-primary);">INFRASTRUCTURE_TIMELINE</h3>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 10px; height: 10px; background: var(--brand-red); border-radius: 2px;"></div>
+            <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-primary);">INFRASTRUCTURE_TIMELINE (S-CURVE)</h3>
+        </div>
+        <div style="font-size: 0.6rem; font-weight: 800; color: var(--text-muted); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em;">Tactical Progress Analysis</div>
     </div>
+    
+    <div style="width: 100%; height: 300px; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 1rem; margin-bottom: 3rem;">
+        <canvas id="sCurveChart"></canvas>
+    </div>
+
     <div id="feedList" style="display: flex; flex-direction: column; gap: 1.5rem;">
         <!-- Feed populated via JS -->
     </div>
@@ -230,24 +241,34 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDropdowns();
 });
 
-async function loadUpdates() {
+async function loadUpdates(projectId = null) {
     try {
+        const updatesQuery = projectId ? `?project_id=${projectId}` : '';
         const [updatesResp, projectsResp, wpResp] = await Promise.all([
-            fetch('/api/v1/site-updates/', { credentials: 'same-origin' }), 
+            fetch('/api/v1/site-updates/' + updatesQuery, { credentials: 'same-origin' }), 
             fetch('/api/v1/projects/', { credentials: 'same-origin' }), 
             fetch('/api/v1/project-updates/', { credentials: 'same-origin' })
         ]);
-        const updates = await updatesResp.json();
+        let updates = [];
+        try { updates = await updatesResp.json(); } catch(e) { console.error("Updates parse error", e); }
+        if (!Array.isArray(updates)) {
+            console.warn("Telemetry feed returned non-array response. Likely authorization restriction or empty set.", updates);
+            updates = [];
+        }
+
         const projects = projectsResp.ok ? await projectsResp.json() : [];
         const workPackages = wpResp.ok ? await wpResp.json() : [];
-        const wpMap = {}; workPackages.forEach(wp => { wpMap[wp.id] = wp; });
-        const projectMap = {}; projects.forEach(p => { projectMap[p.id] = p; });
+        const wpMap = {}; (Array.isArray(workPackages) ? workPackages : []).forEach(wp => { wpMap[wp.id] = wp; });
+        const projectMap = {}; (Array.isArray(projects) ? projects : []).forEach(p => { projectMap[p.id] = p; });
         
         const container = document.getElementById('feedList');
         if (updates.length === 0) { 
             container.innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">NO_TELEMETRY_FOUND</div>'; 
+            renderSCurveChart([]);
             return; 
         }
+        
+        renderSCurveChart(updates);
         
         container.innerHTML = updates.map((u, idx) => {
             const wp = wpMap[u.work_package_id];
@@ -267,14 +288,14 @@ async function loadUpdates() {
                         <div style="color: var(--brand-red); margin-top: 4px;">${new Date(u.timestamp).toLocaleTimeString()}</div>
                         {% if user.role in ['admin', 'director', 'manager'] %}
                         <div style="margin-top: 1rem;">
-                            <button onclick="openEditModal(${u.id}, '${(u.notes || '').replace(/'/g, "\\'")}', ${u.progress_captured || 0}, ${u.cost_incurred})" class="btn-modern btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.55rem; border-color: rgba(255,255,255,0.1);">EDIT_LOG</button>
+                            <button onclick='openEditModal(${u.id}, ${JSON.stringify(u.notes || "").replace(/'/g, "&#39;").replace(/`/g, "\\`").replace(/\${/g, "\\${")}, ${u.progress_captured || 0}, ${u.cost_incurred})' class="btn-modern btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.55rem; border-color: rgba(255,255,255,0.1);">EDIT_LOG</button>
                         </div>
                         {% endif %}
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: ${u.photo_url ? '1fr 240px' : '1fr'}; gap: 2.5rem; align-items: start;">
                     <div>
-                        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; font-weight: 500; margin-top: 0;">${u.notes || 'Routine maintenance sequence completed. No anomalies detected.'}</p>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; font-weight: 500; margin-top: 0;">${(u.notes || 'Routine maintenance sequence completed. No anomalies detected.').replace(/`/g, "\\`").replace(/\${/g, "\\${")}</p>
                         <div style="display: flex; gap: 2.5rem; margin-top: 1.5rem;">
                             ${u.materials_used ? `
                             <div>
@@ -416,6 +437,10 @@ async function loadDropdowns() {
             
         pSelect.addEventListener('change', async () => {
             const projectId = pSelect.value;
+            
+            // Reactive Tactical Sync: Update Feed & Timeline
+            loadUpdates(projectId);
+            
             const wpResp = await fetch(`/api/v1/projects/${projectId}/project-updates`, { credentials: 'same-origin' });
             const phases = await wpResp.json();
             const wpSelect = document.getElementById('wpFilter');
@@ -479,5 +504,56 @@ editForm.onsubmit = async (e) => {
         showNotification("SYNC_ERROR: Failed to transmit correction.", "error");
     }
 };
+
+let scurveChartInstance = null;
+function renderSCurveChart(updates) {
+    const ctx = document.getElementById('sCurveChart');
+    if (!ctx) return;
+    
+    // Sort all updates by timestamp for the chart
+    const filtered = (updates || []).filter(u => u.progress_captured !== undefined);
+    if (!filtered || filtered.length === 0) {
+        if (scurveChartInstance) scurveChartInstance.destroy();
+        scurveChartInstance = null;
+        ctx.style.opacity = '0.3';
+        return;
+    }
+    ctx.style.opacity = '1';
+    
+    const sorted = [...filtered].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    const labels = sorted.map(u => new Date(u.timestamp).toLocaleDateString());
+    const data = sorted.map(u => u.progress_captured);
+
+    if (scurveChartInstance) scurveChartInstance.destroy();
+
+    scurveChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Site Progress (%)',
+                data: data,
+                borderColor: '#E31E24',
+                backgroundColor: 'rgba(227, 30, 36, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 9 } } }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
 </script>
 {% endblock %}

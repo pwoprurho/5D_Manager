@@ -63,6 +63,10 @@ def with_retry(fn, retries=2, delay=0.5):
                 "connection refused",
                 "timed out",
                 "temporary failure in name resolution",
+                "forcibly closed",
+                "winerror 10054",
+                "premature end of stream",
+                "handshake failed"
             ])
             if is_transient:
                 last_exc = e
@@ -88,6 +92,7 @@ async def async_with_retry(fn, retries=2, delay=0.5):
                 "server disconnected", "remoteerror", "remoteprotocolerror", "getaddrinfo failed",
                 "handshake operation timed out", "_ssl.c", "connection reset", "connection refused",
                 "timed out", "temporary failure in name resolution",
+                "forcibly closed", "winerror 10054", "premature end of stream", "handshake failed"
             ])
             if is_transient:
                 last_exc = e
