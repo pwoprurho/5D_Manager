@@ -4,12 +4,17 @@
 
 {% block content %}
 <div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 3rem; margin-bottom: 2.5rem; background: var(--bg-card);">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem;">
-        <div style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);"></div>
-        <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0;">LOG_DAILY_PROGRESS</h3>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);"></div>
+            <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0;">LOG_DAILY_PROGRESS</h3>
+        </div>
+        <button onclick="window.print()" class="btn-modern btn-ghost no-print" style="padding: 0.6rem 1.25rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900; background: rgba(255,255,255,0.05);">
+            <i class="fas fa-print" style="margin-right: 6px;"></i>PRINT_LOG
+        </button>
     </div>
     
-    <form id="uploadForm" enctype="multipart/form-data" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
+    <form id="uploadForm" class="no-print" enctype="multipart/form-data" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
         <div style="grid-column: span 1;">
             <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Project Context</label>
             <select id="projectFilter" required class="modern-input" style="font-weight: 700; background: var(--bg-deep);"><option value="">Select Project...</option></select>
@@ -51,11 +56,21 @@
                         <span id="fileBadge" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.5rem; background: var(--brand-red); color: white; padding: 2px 6px; border-radius: 4px; display: none;">LOADED</span>
                     </div>
                     
-                    <button type="button" onclick="document.getElementById('cameraInput').click()" class="btn-modern btn-ghost" style="padding: 0; width: 50px; background: rgba(255,152,0,0.1); border-color: rgba(255,152,0,0.3); color: var(--brand-orange); display: flex; align-items: center; justify-content: center;" title="Quick Camera">
+                    <button type="button" onclick="document.getElementById('cameraInput').click()" class="btn-modern btn-ghost" style="padding: 0; width: 50px; background: rgba(255,152,0,0.1); border-color: rgba(255,152,0,0.3); color: var(--brand-orange); display: flex; align-items: center; justify-content: center;" title="Quick Camera + GPS">
                         <i class="fas fa-camera"></i>
                     </button>
                     <!-- Dedicated Camera Input -->
                     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleCameraCapture(this)">
+                </div>
+                <!-- GPS Coordinates (auto-filled by Geolocation API) -->
+                <input type="hidden" id="gpsLatInput" name="gps_lat">
+                <input type="hidden" id="gpsLongInput" name="gps_long">
+                <div id="gpsStatus" style="display: none; margin-top: 0.75rem; padding: 0.6rem 1rem; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 6px;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-map-marker-alt" style="color: #10b981; font-size: 0.7rem;"></i>
+                        <span style="font-size: 0.6rem; font-weight: 900; color: #10b981; text-transform: uppercase; letter-spacing: 0.1em;">GPS_LOCKED</span>
+                    </div>
+                    <div id="gpsCoords" style="font-size: 0.55rem; color: var(--text-muted); font-weight: 700; margin-top: 0.25rem; font-family: monospace;"></div>
                 </div>
 
                 <!-- Mission Critical Progress Monitor -->
@@ -83,6 +98,12 @@
         <!-- Feed populated via JS -->
     </div>
 </div>
+<style>
+/* Page specific print tweaks if any needed */
+@media print {
+    #feedList { margin-top: 0 !important; }
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -101,7 +122,7 @@ if (slider) {
     };
 }
 
-// Telemetry Logic Node
+// Telemetry Logic Node + GIS Integration
 function handleCameraCapture(input) {
     if (input.files && input.files[0]) {
         activeCapture = input.files[0];
@@ -111,7 +132,57 @@ function handleCameraCapture(input) {
             badge.textContent = 'CAMERA';
             badge.style.background = 'var(--brand-orange)';
         }
+        // Auto-acquire GPS coordinates via Geolocation API
+        acquireGPS();
     }
+}
+
+function acquireGPS() {
+    const statusEl = document.getElementById('gpsStatus');
+    const coordsEl = document.getElementById('gpsCoords');
+    const latInput = document.getElementById('gpsLatInput');
+    const longInput = document.getElementById('gpsLongInput');
+
+    if (!navigator.geolocation) {
+        console.warn('Geolocation not supported');
+        return;
+    }
+
+    // Show acquiring state
+    statusEl.style.display = 'block';
+    statusEl.querySelector('span').textContent = 'ACQUIRING_SIGNAL...';
+    statusEl.querySelector('span').style.color = '#fbbf24';
+    statusEl.querySelector('i').style.color = '#fbbf24';
+    coordsEl.textContent = 'Triangulating field position...';
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            latInput.value = lat;
+            longInput.value = lng;
+
+            statusEl.querySelector('span').textContent = 'GPS_LOCKED';
+            statusEl.querySelector('span').style.color = '#10b981';
+            statusEl.querySelector('i').style.color = '#10b981';
+            coordsEl.textContent = `LAT: ${lat.toFixed(6)} | LNG: ${lng.toFixed(6)} | ACC: ±${accuracy.toFixed(0)}m`;
+
+            if (window.showToast) showToast('GPS coordinates captured', 'info');
+        },
+        (error) => {
+            statusEl.querySelector('span').textContent = 'GPS_UNAVAILABLE';
+            statusEl.querySelector('span').style.color = '#e31837';
+            statusEl.querySelector('i').style.color = '#e31837';
+            let msg = 'Position acquisition failed';
+            if (error.code === 1) msg = 'Location permission denied';
+            else if (error.code === 2) msg = 'Position unavailable';
+            else if (error.code === 3) msg = 'Acquisition timed out';
+            coordsEl.textContent = msg;
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
 }
 
 // Bind File Input to Buffer
@@ -185,6 +256,11 @@ async function loadUpdates() {
                                 <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Financial Impact</div>
                                 <div style="font-weight: 700; color: var(--brand-red); font-size: 0.75rem;">NGN ${Number(u.cost_incurred).toLocaleString()}</div>
                             </div>` : ''}
+                            ${u.gps_lat && u.gps_long ? `
+                            <div>
+                                <div style="font-size: 0.55rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;"><i class="fas fa-map-marker-alt" style="color: #10b981; margin-right: 4px;"></i>Field Position</div>
+                                <a href="https://www.google.com/maps?q=${u.gps_lat},${u.gps_long}" target="_blank" style="font-weight: 700; color: #10b981; font-size: 0.65rem; text-decoration: none; font-family: monospace;">${Number(u.gps_lat).toFixed(5)}, ${Number(u.gps_long).toFixed(5)}</a>
+                            </div>` : ''}
                         </div>
                     </div>
                     ${u.photo_url ? `
@@ -228,6 +304,12 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
     if (activeCapture) {
         fd.set('photo', activeCapture);
     }
+
+    // Append GPS coordinates if captured
+    const gpsLat = document.getElementById('gpsLatInput').value;
+    const gpsLong = document.getElementById('gpsLongInput').value;
+    if (gpsLat) fd.set('gps_lat', gpsLat);
+    if (gpsLong) fd.set('gps_long', gpsLong);
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/v1/site-updates/${wpId}/upload-photo`, true);

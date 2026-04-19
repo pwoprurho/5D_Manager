@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -15,12 +16,13 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from . import models, database, auth
-from .database import supabase, with_retry
+from .database import supabase, with_retry, async_with_retry
 from .services.cost_engine import CostEngine
 from .services.report_generator import ReportGenerator
 import os
 import re
 import io
+import asyncio
 import logging
 import mimetypes
 try:
@@ -91,6 +93,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# GZip Middleware — compression for efficient telemetry uplinks
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Max upload size: 100MB (Optimized for portfolio documentation and site telemetry)
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 
@@ -127,15 +132,24 @@ def serialize_for_supabase(data: dict) -> dict:
 def cache_response(ttl=300):
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Create a cache key from function name and arguments
+        async def async_wrapper(*args, **kwargs):
+            key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
+            if key in api_cache:
+                return api_cache[key]
+            result = await func(*args, **kwargs)
+            api_cache[key] = result
+            return result
+
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
             key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
             if key in api_cache:
                 return api_cache[key]
             result = func(*args, **kwargs)
             api_cache[key] = result
             return result
-        return wrapper
+
+        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
     return decorator
 
 @app.on_event("startup")
@@ -371,6 +385,12 @@ async def reset_password_submit(request: Request):
 async def update_password_page(request: Request):
     """The landing page for Supabase email recovery links."""
     return templates.TemplateResponse(request=request, name="update_password.html", context={"request": request})
+
+
+class UpdatePasswordRequest(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+    new_password: str
 
 @app.post("/update-password")
 async def update_password_submit(req: UpdatePasswordRequest):
@@ -1048,7 +1068,8 @@ async def upload_project_resource(
 
 
 @app.get("/api/v1/projects/", response_model=list[models.Project])
-def read_projects(
+@cache_response(ttl=300)
+async def read_projects(
     user: models.User = Depends(auth.get_current_user)
 ):
     """Return projects filtered by user assignment. Directors/admins see all."""
@@ -1057,17 +1078,17 @@ def read_projects(
     
     # Directors and admins see all projects
     if user.role in [models.UserRole.director, models.UserRole.admin]:
-        result = with_retry(lambda: supabase.table("project").select("*").execute())
+        result = await async_with_retry(lambda: supabase.table("project").select("*").execute())
         return result.data
     
     # Engineers and managers only see assigned projects
-    assignment_res = with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
+    assignment_res = await async_with_retry(lambda: supabase.table("projectassignment").select("project_id").eq("user_id", user.id).execute())
     project_ids = [a["project_id"] for a in assignment_res.data]
     
     if not project_ids:
         return []
     
-    result = with_retry(lambda: supabase.table("project").select("*").in_("id", project_ids).execute())
+    result = await async_with_retry(lambda: supabase.table("project").select("*").in_("id", project_ids).execute())
     return result.data
 
 
@@ -1398,7 +1419,7 @@ async def get_dashboard_analytics(
         end_ts = f"{date}T23:59:59Z"
         updates_query = updates_query.gte("timestamp", start_ts).lte("timestamp", end_ts)
         
-    all_updates_res = with_retry(lambda: updates_query.order("timestamp", desc=True).limit(50).execute())
+    all_updates_res = await async_with_retry(lambda: updates_query.order("timestamp", desc=True).limit(50).execute())
     all_updates = all_updates_res.data or []
 
     # 3. Calculate Global Economics and Project Health
@@ -1518,9 +1539,10 @@ async def generate_project_report(project_id: int):
 
 
 @app.get("/api/v1/projects/{project_id}/gantt")
-def get_gantt_data(project_id: int):
+@cache_response(ttl=300)
+async def get_gantt_data(project_id: int):
     """Returns work packages formatted for Gantt libraries with daily target status."""
-    result = with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
+    result = await async_with_retry(lambda: supabase.table("workpackage").select("*").eq("project_id", project_id).execute())
     wps = result.data
     
     gantt_tasks = []
@@ -1552,7 +1574,8 @@ def get_gantt_data(project_id: int):
             "end": end.strftime("%Y-%m-%d"),
             "progress": wp_obj.progress_pct,
             "dependencies": str(wp_obj.parent_id) if wp_obj.parent_id else "",
-            "custom_class": status_class
+            "custom_class": status_class,
+            "_stage_id": wp_obj.stage_id
         })
     
     return gantt_tasks
@@ -1578,7 +1601,7 @@ async def submit_phase_update(
     status_val = models.StatusEnum.completed if progress >= 100 else models.StatusEnum.in_progress
     
     # 1. Fetch WP for context (project_id)
-    wp_current = with_retry(lambda: supabase.table("workpackage").select("project_id, actual_cost").eq("id", update_id).single().execute())
+    wp_current = await async_with_retry(lambda: supabase.table("workpackage").select("project_id, actual_cost").eq("id", update_id).single().execute())
     if not wp_current.data:
         raise HTTPException(status_code=404, detail="Work package not found")
     project_id = wp_current.data["project_id"]
@@ -1603,7 +1626,7 @@ async def submit_phase_update(
             # We continue even if photo fails, but ideally we'd log this
 
     # 3. Update work package
-    wp_res = with_retry(lambda: supabase.table("workpackage").update({
+    wp_res = await async_with_retry(lambda: supabase.table("workpackage").update({
         "progress_pct": progress,
         "status": status_val,
         "actual_cost": new_cost
@@ -1619,7 +1642,7 @@ async def submit_phase_update(
         "materials_used": materials_used,
         "cost_incurred": cost_incurred
     }
-    with_retry(lambda: supabase.table("siteupdate").insert(update_data).execute())
+    await async_with_retry(lambda: supabase.table("siteupdate").insert(update_data).execute())
     
     api_cache.clear()
     return {"message": "Update submitted successfully", "status": status_val, "photo_url": photo_url}
@@ -1627,7 +1650,7 @@ async def submit_phase_update(
 
 @app.post("/api/v1/project-updates/{update_id}/verify")
 async def verify_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))):
-    result = supabase.table("workpackage").update({"status": "inspected", "verified_by_id": user.id}).eq("id", update_id).execute()
+    result = await async_with_retry(lambda: supabase.table("workpackage").update({"status": "inspected", "verified_by_id": user.id}).eq("id", update_id).execute())
     
     if not result.data:
         raise HTTPException(status_code=404, detail="Work package not found")
@@ -1636,7 +1659,7 @@ async def verify_phase(update_id: int, user: models.User = Depends(auth.check_ro
 
 @app.post("/api/v1/project-updates/{update_id}/approve")
 async def approve_phase(update_id: int, user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))):
-    result = supabase.table("workpackage").update({"status": "approved", "approved_by_id": user.id}).eq("id", update_id).execute()
+    result = await async_with_retry(lambda: supabase.table("workpackage").update({"status": "approved", "approved_by_id": user.id}).eq("id", update_id).execute())
     
     if not result.data:
         raise HTTPException(status_code=404, detail="Work package not found")

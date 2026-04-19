@@ -444,3 +444,48 @@ h4 {
     font-size: 0.65rem;
     cursor: pointer;
 }
+
+/* --- Global Print Orchestration --- */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    .sidebar, 
+    .top-bar, 
+    .no-print,
+    .mobile-toggle,
+    header,
+    aside {
+        display: none !important;
+    }
+
+    .main-container {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .content-body {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .glass-card {
+        background: white !important;
+        border: 1px solid #eee !important;
+        box-shadow: none !important;
+        color: black !important;
+    }
+
+    .reveal-text {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

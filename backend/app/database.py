@@ -36,6 +36,9 @@ def reset_supabase() -> Client:
     return get_supabase()
 
 
+from fastapi.concurrency import run_in_threadpool
+import asyncio
+
 def with_retry(fn, retries=2, delay=0.5):
     """Execute a Supabase operation with automatic retry on connection drops.
     
@@ -69,6 +72,31 @@ def with_retry(fn, retries=2, delay=0.5):
                     time.sleep(delay * (attempt + 1))  # Progressive backoff
                 continue
             raise  # Non-connection error, don't retry
+    raise last_exc
+
+
+async def async_with_retry(fn, retries=2, delay=0.5):
+    """Asynchronous version of with_retry using thread pooling for blocking calls."""
+    last_exc = None
+    for attempt in range(retries + 1):
+        try:
+            # Shift the blocking DB call to a threadpool to keep the event loop free
+            return await run_in_threadpool(fn)
+        except Exception as e:
+            err_str = str(e).lower()
+            is_transient = any(phrase in err_str for phrase in [
+                "server disconnected", "remoteerror", "remoteprotocolerror", "getaddrinfo failed",
+                "handshake operation timed out", "_ssl.c", "connection reset", "connection refused",
+                "timed out", "temporary failure in name resolution",
+            ])
+            if is_transient:
+                last_exc = e
+                logger.warning(f"Async connection error (attempt {attempt+1}/{retries+1}): {e}")
+                await run_in_threadpool(reset_supabase)
+                if attempt < retries:
+                    await asyncio.sleep(delay * (attempt + 1))
+                continue
+            raise
     raise last_exc
 
 

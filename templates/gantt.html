@@ -2,81 +2,165 @@
 
 {% block page_title %}Project Timeline{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css">
-{% endblock %}
-
 {% block content %}
 <div class="glass-card reveal-text" style="padding: 2rem; margin-bottom: 2rem; border-left: 5px solid var(--brand-red);">
-    <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
         <div>
             <h2 id="ganttProjectTitle" style="font-size: 1.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; margin: 0;">Loading Timeline...</h2>
             <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem;">Infrastructure Execution Chronology</p>
         </div>
-        <div style="display: flex; gap: 0.75rem;">
-            <button onclick="window.print()" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900; background: rgba(255,255,255,0.05);">PRINT_SCHEDULE</button>
-            <div style="width: 1px; background: var(--glass-border); margin: 0 0.5rem;"></div>
-            <button onclick="ganttChart && ganttChart.change_view_mode('Day')" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">DAY</button>
-            <button onclick="ganttChart && ganttChart.change_view_mode('Week')" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">WEEK</button>
-            <button onclick="ganttChart && ganttChart.change_view_mode('Month')" class="btn-modern btn-primary" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">MONTH</button>
+        <div class="no-print" style="display: flex; gap: 0.5rem; align-items: center;">
+            <button onclick="window.print()" class="btn-modern btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900; background: rgba(255,255,255,0.05);"><i class="fas fa-print" style="margin-right: 6px;"></i>PRINT</button>
+            <div style="width: 1px; height: 20px; background: var(--glass-border); margin: 0 0.25rem;"></div>
+            <button onclick="setViewMode('day')" id="btn-day" class="gantt-view-btn" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">DAY</button>
+            <button onclick="setViewMode('week')" id="btn-week" class="gantt-view-btn" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">WEEK</button>
+            <button onclick="setViewMode('month')" id="btn-month" class="gantt-view-btn active" style="padding: 0.5rem 1rem; font-size: 0.6rem; border-radius: 50px; font-weight: 900;">MONTH</button>
+        </div>
+        <!-- Timeframe Selection -->
+        <div class="no-print" style="display: flex; gap: 1.5rem; align-items: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); width: 100%;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <label style="font-size: 0.55rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">WINDOW_START</label>
+                <input type="date" id="filterStartDate" onchange="renderGantt()" class="modern-input" style="padding: 0.35rem 0.6rem; font-size: 0.65rem; width: 140px; background: rgba(0,0,0,0.2); font-weight: 700;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <label style="font-size: 0.55rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">WINDOW_END</label>
+                <input type="date" id="filterEndDate" onchange="renderGantt()" class="modern-input" style="padding: 0.35rem 0.6rem; font-size: 0.65rem; width: 140px; background: rgba(0,0,0,0.2); font-weight: 700;">
+            </div>
+            <button onclick="resetTimeframe()" class="btn-modern btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.55rem; border-radius: 4px; opacity: 0.7;">AUTO_SYNC</button>
         </div>
     </div>
 </div>
 
-<div class="glass-card reveal-text reveal-delay-1" style="padding: 2rem; overflow-x: auto; border-color: rgba(255,255,255,0.05);">
-    <div id="ganttContainer">
-        <div style="padding: 5rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);">
-            <div style="width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--brand-red); border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto 2rem;"></div>
-            <p style="color: var(--text-muted); font-weight: 900; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.7;">Loading Timeline Data...</p>
+<div class="glass-card reveal-text reveal-delay-1" style="padding: 0; overflow: hidden; border-color: rgba(255,255,255,0.05);">
+    <!-- Gantt Container -->
+    <div id="ganttWrapper" style="display: flex; min-height: 300px;">
+        <!-- Left: Task Labels -->
+        <div id="ganttLabels" style="min-width: 260px; max-width: 260px; border-right: 2px solid var(--glass-border); flex-shrink: 0; z-index: 10; background: var(--bg-card);">
+            <div class="gantt-label-header" style="height: 56px; display: flex; align-items: center; padding: 0 1.25rem; border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.02);">
+                <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted);">WORK PACKAGE</span>
+            </div>
+            <div id="ganttLabelRows"></div>
+        </div>
+        <!-- Right: Timeline Chart -->
+        <div id="ganttTimeline" style="flex: 1; overflow-x: auto; position: relative;">
+            <div id="ganttTimelineInner" style="position: relative; min-width: 100%;">
+                <!-- Header row -->
+                <div id="ganttTimeHeader" style="height: 56px; display: flex; align-items: stretch; border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); position: sticky; top: 0; z-index: 5;"></div>
+                <!-- Bars area -->
+                <div id="ganttBarsArea" style="position: relative;"></div>
+            </div>
         </div>
     </div>
+
+    <!-- Legend -->
     <div class="gantt-legend">
         <div class="legend-item"><div class="legend-color" style="background: #e31837;"></div>OVERDUE</div>
-        <div class="legend-item"><div class="legend-color" style="background: #fbbf24;"></div>BEHIND (MISSED DAILY TARGET)</div>
+        <div class="legend-item"><div class="legend-color" style="background: #fbbf24;"></div>BEHIND TARGET</div>
         <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div>ON TRACK</div>
         <div class="legend-item"><div class="legend-color" style="background: #0ea5e9;"></div>COMPLETED</div>
+        <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div>PHASE</div>
     </div>
 </div>
 
 <style>
 @keyframes spin { to { transform: rotate(360deg); } }
-/* Gantt theme overrides */
-.gantt .grid-header { fill: var(--bg-navy); stroke: var(--glass-border); }
-.gantt .grid-row { fill: transparent; }
-.gantt .grid-row:nth-child(even) { fill: rgba(255,255,255,0.01); }
-.gantt .row-line { stroke: var(--glass-border); }
-.gantt .tick { stroke: var(--glass-border); }
-.gantt .today-highlight { fill: rgba(227, 30, 36, 0.08); }
-.gantt .bar { rx: 4; ry: 4; }
-.gantt .bar.status-completed { fill: #0ea5e9; }
-.gantt .bar.status-overdue { fill: #e31837; }
-.gantt .bar.status-behind { fill: #fbbf24; }
-.gantt .bar.status-on-track { fill: #10b981; }
 
-.gantt .bar-progress { fill: rgba(255,255,255,0.2); }
-.gantt .bar-label { fill: white; font-weight: 700; font-size: 0.7rem; }
-.gantt .handle { fill: rgba(255,255,255,0.5); }
-.gantt .header-text, .gantt .lower-text, .gantt .upper-text { fill: var(--text-muted); font-weight: 600; font-size: 0.7rem; }
-
-.gantt-legend {
-    display: flex; gap: 1.5rem; margin-top: 1.5rem; padding: 1rem; 
-    background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--glass-border);
+/* View mode buttons */
+.gantt-view-btn {
+    background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; transition: 0.2s;
 }
-.legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
+.gantt-view-btn:hover { border-color: var(--brand-red); color: var(--text-primary); }
+.gantt-view-btn.active { background: rgba(227,30,36,0.15); border-color: var(--brand-red); color: var(--brand-red); }
+
+/* Legend */
+.gantt-legend {
+    display: flex; gap: 1.5rem; padding: 1rem 1.25rem;
+    background: rgba(255,255,255,0.02); border-top: 1px solid var(--glass-border);
+}
+.legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
 .legend-color { width: 10px; height: 10px; border-radius: 2px; }
 
-@media print {
-    body { background: white !important; color: black !important; padding: 0 !important; }
-    .sidebar, .top-nav, .btn-modern { display: none !important; }
-    .glass-card { background: white !important; border: 1px solid #eee !important; box-shadow: none !important; margin: 0 !important; padding: 1rem !important; }
-    #ganttContainer { overflow: visible !important; }
-    .gantt .bar { fill: #333 !important; }
-    .gantt .bar-progress { fill: #999 !important; }
-    .gantt .bar-label { fill: black !important; }
-    .gantt .grid-header { fill: #f9f9f9 !important; stroke: #eee !important; }
-    * { animation: none !important; transform: none !important; }
+/* Gantt rows */
+.gantt-label-row {
+    height: 40px; display: flex; align-items: center; padding: 0 1.25rem; gap: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.15s;
+}
+.gantt-label-row:hover { background: rgba(255,255,255,0.03); }
+.gantt-label-row.is-phase { background: rgba(139,92,246,0.05); }
+
+.gantt-bar-row {
+    height: 40px; position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.gantt-bar-row:nth-child(even) { background: rgba(255,255,255,0.008); }
+
+/* The actual bar */
+.gantt-bar {
+    position: absolute; top: 10px; height: 20px;
+    border-radius: 3px; cursor: pointer; transition: filter 0.15s, box-shadow 0.15s;
+    display: flex; align-items: center; overflow: hidden;
+    min-width: 4px;
+}
+.gantt-bar:hover { filter: brightness(1.25); box-shadow: 0 2px 12px rgba(0,0,0,0.4); }
+
+.gantt-bar-progress {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    background: rgba(255,255,255,0.2); border-radius: 3px 0 0 3px;
+}
+.gantt-bar-label {
+    position: relative; z-index: 2; padding: 0 8px;
+    font-size: 0.55rem; font-weight: 800; color: white; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
+/* Phase bars — taller, different style */
+.gantt-bar.is-phase {
+    top: 6px; height: 28px; border-radius: 2px;
+    background: #8b5cf6 !important;
+}
+.gantt-bar.is-phase .gantt-bar-label { font-size: 0.6rem; font-weight: 900; }
+
+/* Today line */
+.gantt-today-line {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: var(--brand-red); z-index: 4;
+    box-shadow: 0 0 6px rgba(227,30,36,0.5);
+}
+.gantt-today-marker {
+    position: absolute; top: -8px; left: -8px; width: 18px; height: 18px;
+    background: var(--brand-red); border-radius: 50%; border: 2px solid var(--bg-card);
+    z-index: 5;
+}
+
+/* Time header cells */
+.gantt-time-cell {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 100%; border-right: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.55rem; font-weight: 800; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.1em; flex-shrink: 0;
+}
+/* Grid lines in bar area */
+.gantt-grid-line {
+    position: absolute; top: 0; bottom: 0; width: 1px;
+    background: rgba(255,255,255,0.03);
+}
+
+/* Chart-specific print adjustments */
+@media print {
+    .gantt-label-row, .gantt-bar-row { border-color: #eee !important; color: black !important; }
+    .gantt-label-row span { color: black !important; }
+    .gantt-bar { opacity: 1 !important; border: 1px solid rgba(0,0,0,0.1) !important; }
+    .gantt-bar-label { color: white !important; font-weight: 900 !important; }
+    .gantt-time-cell { color: #666 !important; border-color: #eee !important; }
+    .gantt-grid-line { background: #f0f0f0 !important; }
+    .gantt-today-line { background: #e31837 !important; border-left: 1px solid #e31837 !important; }
+    #ganttLabels { background: white !important; border-color: #ddd !important; }
+    .gantt-legend { border-color: #ddd !important; background: white !important; }
+    .legend-item { color: black !important; }
+}
+
+/* Modal */
 .modal-overlay {
     position: fixed; inset: 0; background: rgba(1, 4, 9, 0.85); backdrop-filter: blur(8px);
     display: none; align-items: center; justify-content: center; z-index: 2000;
@@ -107,59 +191,255 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
 <script>
 const projectId = "{{ project_id }}";
-let ganttChart = null;
+let currentViewMode = 'month';
+let ganttData = [];
+let ganttStages = [];
 
+const STATUS_COLORS = {
+    'status-overdue': '#e31837',
+    'status-behind': '#fbbf24',
+    'status-on-track': '#10b981',
+    'status-completed': '#0ea5e9'
+};
+
+// ========== DATE UTILITIES ==========
+function parseDate(str) { return new Date(str + 'T00:00:00'); }
+function daysBetween(a, b) { return Math.round((b - a) / (1000 * 60 * 60 * 24)); }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function formatMonth(d) { return d.toLocaleString('en', { month: 'short', year: '2-digit' }); }
+function formatWeek(d) { return d.toLocaleDateString('en', { month: 'short', day: 'numeric' }); }
+function formatDay(d) { return d.toLocaleDateString('en', { weekday: 'short', day: 'numeric' }); }
+
+// ========== GENERATE TIME COLUMNS ==========
+function getTimeColumns(minDate, maxDate, mode) {
+    const cols = [];
+    let cursor = new Date(minDate);
+
+    if (mode === 'month') {
+        cursor.setDate(1);
+        while (cursor <= maxDate) {
+            const start = new Date(cursor);
+            const end = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+            cols.push({ start, end, label: formatMonth(start) });
+            cursor.setMonth(cursor.getMonth() + 1);
+        }
+    } else if (mode === 'week') {
+        const dow = cursor.getDay();
+        cursor.setDate(cursor.getDate() - (dow === 0 ? 6 : dow - 1)); // Monday
+        while (cursor <= maxDate) {
+            const start = new Date(cursor);
+            const end = addDays(start, 6);
+            cols.push({ start, end, label: formatWeek(start) });
+            cursor.setDate(cursor.getDate() + 7);
+        }
+    } else { // day
+        while (cursor <= maxDate) {
+            const start = new Date(cursor);
+            cols.push({ start, end: new Date(start), label: formatDay(start) });
+            cursor.setDate(cursor.getDate() + 1);
+        }
+    }
+    return cols;
+}
+
+// ========== RENDER GANTT ==========
+function renderGantt() {
+    if (ganttData.length === 0 && ganttStages.length === 0) {
+        document.getElementById('ganttLabelRows').innerHTML = '<div style="padding: 4rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.7rem;">No timeline data available</div>';
+        document.getElementById('ganttTimeHeader').innerHTML = '';
+        document.getElementById('ganttBarsArea').innerHTML = '';
+        return;
+    }
+
+    // Build unified row list: phases first, then tasks grouped under their phase
+    const rows = [];
+    const stageMap = {};
+    ganttStages.forEach(s => { stageMap[s.id] = s; });
+
+    // Group tasks by stage
+    const tasksByStage = {};
+    const unstagedTasks = [];
+    ganttData.forEach(t => {
+        const sid = t._stage_id;
+        if (sid && stageMap[sid]) {
+            if (!tasksByStage[sid]) tasksByStage[sid] = [];
+            tasksByStage[sid].push(t);
+        } else {
+            unstagedTasks.push(t);
+        }
+    });
+
+    // Add staged groups
+    ganttStages.forEach(s => {
+        const tasks = tasksByStage[s.id] || [];
+        // Compute phase date range from its tasks
+        let phaseStart = null, phaseEnd = null;
+        tasks.forEach(t => {
+            const ts = parseDate(t.start), te = parseDate(t.end);
+            if (!phaseStart || ts < phaseStart) phaseStart = ts;
+            if (!phaseEnd || te > phaseEnd) phaseEnd = te;
+        });
+        if (phaseStart && phaseEnd) {
+            rows.push({ type: 'phase', name: s.name, start: phaseStart, end: phaseEnd, status: s.status, id: 'phase-' + s.id });
+        }
+        tasks.forEach(t => { rows.push({ type: 'task', ...t, start: parseDate(t.start), end: parseDate(t.end) }); });
+    });
+    // Unstaged
+    unstagedTasks.forEach(t => { rows.push({ type: 'task', ...t, start: parseDate(t.start), end: parseDate(t.end) }); });
+
+    // Global date range
+    let globalMin = null, globalMax = null;
+    rows.forEach(r => {
+        if (!globalMin || r.start < globalMin) globalMin = new Date(r.start);
+        if (!globalMax || r.end > globalMax) globalMax = new Date(r.end);
+    });
+
+    // Padding if auto
+    if (globalMin) globalMin = addDays(globalMin, -7);
+    if (globalMax) globalMax = addDays(globalMax, 14);
+
+    // Manual Overrides
+    const manualStart = document.getElementById('filterStartDate').value;
+    const manualEnd = document.getElementById('filterEndDate').value;
+    
+    if (manualStart) globalMin = parseDate(manualStart);
+    if (manualEnd) globalMax = parseDate(manualEnd);
+
+    if (!globalMin || !globalMax) {
+        // Fallback for empty project
+        globalMin = addDays(new Date(), -7);
+        globalMax = addDays(new Date(), 30);
+    }
+
+    const columns = getTimeColumns(globalMin, globalMax, currentViewMode);
+    const totalDays = daysBetween(globalMin, globalMax) + 1;
+
+    let colWidth;
+    if (currentViewMode === 'day') colWidth = 40;
+    else if (currentViewMode === 'week') colWidth = 100;
+    else colWidth = 140;
+
+    const totalWidth = columns.length * colWidth;
+
+    // ---- Render Time Header ----
+    const headerEl = document.getElementById('ganttTimeHeader');
+    headerEl.innerHTML = columns.map(c =>
+        `<div class="gantt-time-cell" style="width: ${colWidth}px;">${c.label}</div>`
+    ).join('');
+
+    // ---- Render Labels ----
+    const labelsEl = document.getElementById('ganttLabelRows');
+    labelsEl.innerHTML = rows.map(r => {
+        const isPhase = r.type === 'phase';
+        const icon = isPhase
+            ? '<i class="fas fa-layer-group" style="color: #8b5cf6; font-size: 0.6rem;"></i>'
+            : '<i class="fas fa-cube" style="color: var(--text-muted); font-size: 0.5rem; opacity: 0.5;"></i>';
+        const indent = isPhase ? '' : 'padding-left: 2rem;';
+        const weight = isPhase ? '900' : '700';
+        const size = isPhase ? '0.7rem' : '0.65rem';
+        const onclick = !isPhase ? `onclick="openTaskHistoryModal('${r.id}', '${r.name.replace(/'/g, "\\'")}')"` : '';
+        return `<div class="gantt-label-row ${isPhase ? 'is-phase' : ''}" style="${indent}" ${onclick}>
+            ${icon}
+            <span style="font-size: ${size}; font-weight: ${weight}; text-transform: uppercase; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.name}</span>
+        </div>`;
+    }).join('');
+
+    // ---- Render Bars Area ----
+    const barsEl = document.getElementById('ganttBarsArea');
+    const timelineInner = document.getElementById('ganttTimelineInner');
+    timelineInner.style.width = totalWidth + 'px';
+
+    // Grid lines
+    let gridHtml = columns.map((c, i) =>
+        `<div class="gantt-grid-line" style="left: ${i * colWidth}px;"></div>`
+    ).join('');
+
+    // Today line
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (today >= globalMin && today <= globalMax) {
+        const todayOffset = (daysBetween(globalMin, today) / totalDays) * totalWidth;
+        gridHtml += `<div class="gantt-today-line" style="left: ${todayOffset}px;"><div class="gantt-today-marker"></div></div>`;
+    }
+
+    // Bars
+    let barsHtml = '';
+    rows.forEach((r, idx) => {
+        const startOffset = (daysBetween(globalMin, r.start) / totalDays) * totalWidth;
+        const barWidth = Math.max(((daysBetween(r.start, r.end) + 1) / totalDays) * totalWidth, 4);
+        
+        // Skip rendering if entirely outside manual window
+        if (startOffset + barWidth < 0 || startOffset > totalWidth) return;
+
+        const isPhase = r.type === 'phase';
+        const color = isPhase ? '#8b5cf6' : (STATUS_COLORS[r.custom_class] || '#94a3b8');
+        const progressPct = r.progress || 0;
+        const onclick = !isPhase ? `onclick="openTaskHistoryModal('${r.id}', '${r.name.replace(/'/g, "\\'")}')"` : '';
+
+        barsHtml += `<div class="gantt-bar-row">
+            <div class="gantt-bar ${isPhase ? 'is-phase' : ''}" ${onclick}
+                 style="left: ${startOffset}px; width: ${barWidth}px; background: ${color};"
+                 title="${r.name} — ${progressPct}%">
+                <div class="gantt-bar-progress" style="width: ${progressPct}%;"></div>
+                <span class="gantt-bar-label">${barWidth > 60 ? r.name : ''}</span>
+            </div>
+        </div>`;
+    });
+
+    barsEl.innerHTML = gridHtml + barsHtml;
+}
+
+// ========== VIEW MODE TOGGLE ==========
+function setViewMode(mode) {
+    currentViewMode = mode;
+    document.querySelectorAll('.gantt-view-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + mode).classList.add('active');
+    renderGantt();
+}
+
+// ========== LOAD DATA ==========
 async function loadGantt() {
     try {
         // Load project name
         const projResp = await fetch('/api/v1/projects/');
-        if (!projResp.ok) throw new Error("Names load failure");
-        
-        const projects = await projResp.json();
-        const proj = projects.find(p => p.id == projectId);
-        if (proj) document.getElementById('ganttProjectTitle').textContent = proj.name.toUpperCase();
+        if (projResp.ok) {
+            const projects = await projResp.json();
+            const proj = projects.find(p => p.id == projectId);
+            if (proj) document.getElementById('ganttProjectTitle').textContent = proj.name.toUpperCase();
+        }
 
+        // Load stages
+        try {
+            const stageResp = await fetch(`/api/v1/projects/${projectId}/stages`);
+            if (stageResp.ok) ganttStages = await stageResp.json();
+        } catch(e) { /* no stages, that's fine */ }
+
+        // Load gantt tasks
         const resp = await fetch(`/api/v1/projects/${projectId}/gantt`);
         if (!resp.ok) throw new Error("Gantt data load failure");
-        const tasks = await resp.json();
-        
-        if (tasks.length === 0) {
-            document.getElementById('ganttContainer').innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">No timeline data available for this context</div>';
-            return;
-        }
-        
-        document.getElementById('ganttContainer').innerHTML = '<svg id="ganttSvg"></svg>';
-        
-        ganttChart = new Gantt("#ganttSvg", tasks, {
-            view_mode: 'Month',
-            language: 'en',
-            bar_height: 30,
-            bar_corner_radius: 4,
-            padding: 20,
-            on_click: function (task) {
-                openTaskHistoryModal(task.id, task.name);
-            }
-        });
+        ganttData = await resp.json();
+
+        renderGantt();
     } catch(err) {
         console.error("Gantt load failed", err);
-        document.getElementById('ganttContainer').innerHTML = '<div style="padding: 5rem; text-align: center; color: var(--brand-red); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;">TIMELINE_SYNC_ERROR</div>';
+        document.getElementById('ganttLabelRows').innerHTML = '<div style="padding: 4rem; text-align: center; color: var(--brand-red); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.7rem;">TIMELINE_SYNC_ERROR</div>';
     }
 }
 
+// ========== TASK HISTORY MODAL ==========
 window.openTaskHistoryModal = async function(taskId, taskName) {
     document.getElementById('modalTaskName').textContent = taskName;
     document.getElementById('historyModal').style.display = 'flex';
     const list = document.getElementById('historyList');
     list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem; border: 1px dashed var(--glass-border); font-size: 0.65rem;">FETCHING TELEMETRY...</div>';
-    
+
     try {
         const r = await fetch(`/api/v1/site-updates/`);
         const allUpdates = await r.json();
         const tUpdates = allUpdates.filter(u => String(u.work_package_id) === String(taskId)).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
+
         if (tUpdates.length === 0) {
             list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem; border: 1px dashed var(--glass-border); font-size: 0.65rem;">NO LOGS RECORDED</div>';
             return;
@@ -175,7 +455,6 @@ window.openTaskHistoryModal = async function(taskId, taskName) {
                 ${u.photo_url ? `<img src="${u.photo_url}" style="width: 100%; border-radius: 4px; border: 1px solid var(--glass-border);"/>` : ''}
             </div>
         `).join('');
-
     } catch(e) {
         list.innerHTML = '<div style="color: var(--brand-red);">SYNC_ERROR</div>';
     }
@@ -184,6 +463,17 @@ window.openTaskHistoryModal = async function(taskId, taskName) {
 window.closeHistoryModal = function() {
     document.getElementById('historyModal').style.display = 'none';
 }
+
+window.resetTimeframe = function() {
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    renderGantt();
+}
+
+// Sync label scroll with timeline scroll
+document.getElementById('ganttTimeline').addEventListener('scroll', function() {
+    // Vertical scroll sync if we add vertical overflow later
+});
 
 loadGantt();
 </script>
