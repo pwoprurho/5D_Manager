@@ -215,12 +215,33 @@
             }
         }
 
+        // Security Heartbeat: Checks account status every 60 seconds
+        async function runSecurityHeartbeat() {
+            try {
+                const response = await fetch('/api/v1/auth/heartbeat');
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/signin?error=SESSION_EXPIRED';
+                    return;
+                }
+                const data = await response.json();
+                if (data.is_active === false) {
+                    window.location.href = '/signin?error=ACCOUNT_REVOKED';
+                }
+            } catch (err) {
+                console.warn('Security Heartbeat: Connection unstable');
+            }
+        }
+
         // Initialize theme on load
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
             setTimeout(() => updateThemeIcon(savedTheme), 100);
             loadSwitcherProjects();
+            
+            // Start Security Heartbeat
+            runSecurityHeartbeat();
+            setInterval(runSecurityHeartbeat, 60000);
         })();
     </script>
 {% endblock %}

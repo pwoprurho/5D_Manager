@@ -188,3 +188,17 @@ class MemoCreate(BaseModel):
     subject: str
     content: str
 
+class AuditAction(str, Enum):
+    promotion = "promotion"
+    deactivation = "deactivation"
+    activation = "activation"
+    profile_update = "profile_update"
+    enrollment = "enrollment"
+
+class AuditLog(BaseModel):
+    id: Optional[int] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    actor_id: str  # User who performed the action
+    target_id: str # User affected by the action
+    action: AuditAction
+    details: Optional[dict] = None

@@ -16,7 +16,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from . import models, database, auth
-from .database import supabase, with_retry, async_with_retry
+from .database import supabase, with_retry, async_with_retry, get_admin_client
 from .services.cost_engine import CostEngine
 from .services.report_generator import ReportGenerator
 import asyncio
@@ -128,6 +128,19 @@ def serialize_for_supabase(data: dict) -> dict:
         else:
             output[k] = v
     return output
+
+def log_audit(actor_id: str, target_id: str, action: models.AuditAction, details: dict = None):
+    """Immutable forensic logging for administrative actions."""
+    try:
+        supabase.table("audit_log").insert({
+            "actor_id": actor_id,
+            "target_id": target_id,
+            "action": action.value,
+            "details": details or {}
+        }).execute()
+    except Exception as e:
+        # Fallback to server logs if DB write fails
+        print(f"[FORENSIC_LOG_FAILURE] Actor:{actor_id} Action:{action} Error:{e}")
 
 async def check_project_access(user: models.User, project_id: int):
     """Tactical Clearance Gate: Ensures user is authorized for the given project node."""
@@ -268,7 +281,9 @@ async def signin_form(request: Request):
         email = found_email
 
     try:
-        auth_response = supabase.auth.sign_in_with_password({
+        # Use a fresh client to avoid poisoning the global singleton
+        auth_client = get_admin_client()
+        auth_response = auth_client.auth.sign_in_with_password({
             "email": email,
             "password": password
         })
@@ -339,8 +354,11 @@ async def signup_submit(request: Request):
         })
 
     try:
+        # Use a fresh admin client to ensure no stale user sessions interfere
+        admin_client = get_admin_client()
+        
         # 1. Supabase Auth Enrollment (Administrative Ingest to bypass Domain Restrictions)
-        auth_res = supabase.auth.admin.create_user({
+        auth_res = admin_client.auth.admin.create_user({
             "email": email,
             "password": password,
             "email_confirm": True,
@@ -356,7 +374,7 @@ async def signup_submit(request: Request):
             })
 
         # 2. Sync to Public Registry
-        with_retry(lambda: supabase.table("user").upsert({
+        with_retry(lambda: admin_client.table("user").upsert({
             "id": auth_res.user.id,
             "email": email,
             "username": username,
@@ -416,11 +434,12 @@ class UpdatePasswordRequest(BaseModel):
 async def update_password_submit(req: UpdatePasswordRequest):
     """Securely execute password update using recovery session."""
     try:
-        # Establish temporary session from recovery token
-        supabase.auth.set_session(req.access_token, req.refresh_token or "")
+        # Establish temporary session from recovery token using a fresh client
+        temp_client = get_admin_client()
+        temp_client.auth.set_session(req.access_token, req.refresh_token or "")
         
         # Execute tactical password update
-        supabase.auth.update_user({"password": req.new_password})
+        temp_client.auth.update_user({"password": req.new_password})
         
         return {"status": "success", "message": "Passphrase updated successfully"}
     except Exception as e:
@@ -442,8 +461,10 @@ async def settings_post(
         if token and token.startswith("Bearer "):
             token = token.split(" ")[1]
             
-        supabase.auth.set_session(token, "") 
-        supabase.auth.update_user({"password": new_password})
+        # Use a local client to avoid poisoning the global singleton
+        temp_client = get_admin_client()
+        temp_client.auth.set_session(token, "") 
+        temp_client.auth.update_user({"password": new_password})
         
         return templates.TemplateResponse(request=request, name="settings.html", context={
             "user": user, 
@@ -596,10 +617,19 @@ def update_user_profile(
         
     if auth_updates:
         try:
-            supabase.auth.admin.update_user_by_id(user_id, auth_updates)
+            admin_client = get_admin_client()
+            admin_client.auth.admin.update_user_by_id(user_id, auth_updates)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Auth synchronization failed: {str(e)}")
             
+    # 3. Log Forensic Audit
+    log_audit(
+        actor_id=current_user.id,
+        target_id=user_id,
+        action=models.AuditAction.profile_update,
+        details={"updated_fields": list(updates.keys()) + (["password"] if req.password else [])}
+    )
+
     from .auth import auth_cache
     auth_cache.clear()
     
@@ -635,12 +665,21 @@ def update_user_role(
     
     # 2. Update Supabase Auth metadata
     try:
-        supabase.auth.admin.update_user_by_id(user_id, {
+        admin_client = get_admin_client()
+        admin_client.auth.admin.update_user_by_id(user_id, {
             "user_metadata": {"role": req.role.value}
         })
     except Exception as e:
         print(f"Failed to update auth metadata: {e}")
     
+    # 3. Log Forensic Audit
+    log_audit(
+        actor_id=current_user.id,
+        target_id=user_id,
+        action=models.AuditAction.promotion,
+        details={"new_role": req.role.value, "old_role": target_role}
+    )
+
     from .auth import auth_cache
     auth_cache.clear()
     
@@ -681,7 +720,9 @@ async def signin(
                 raise HTTPException(status_code=400, detail="Invalid credentials")
             email = user_res.data["email"]
             
-        auth_response = supabase.auth.sign_in_with_password({
+        # Use a fresh client to avoid poisoning the global singleton
+        auth_client = get_admin_client()
+        auth_response = auth_client.auth.sign_in_with_password({
             "email": email,
             "password": form_data.password
         })
@@ -746,6 +787,16 @@ async def refresh_session(request: Request, response: Response):
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e))
 
+@app.get("/api/v1/auth/heartbeat")
+async def auth_heartbeat(current_user: models.User = Depends(auth.get_current_user)):
+    """Security heartbeat to verify account status and session validity."""
+    return {
+        "status": "valid",
+        "is_active": current_user.is_active,
+        "role": current_user.role,
+        "server_time": datetime.utcnow()
+    }
+
 @app.post("/api/v1/auth/register")
 async def register_user(
     reg: RegisterRequest,
@@ -758,8 +809,9 @@ async def register_user(
         if existing.data:
             raise HTTPException(status_code=400, detail="Username or email already in use.")
             
-        # 2. Create via Admin API (same pattern as seed_users.py)
-        auth_response = supabase.auth.admin.create_user({
+        # 2. Create via Admin API (using fresh client)
+        admin_client = get_admin_client()
+        auth_response = admin_client.auth.admin.create_user({
             "email": reg.email,
             "password": reg.password,
             "email_confirm": True,
@@ -769,7 +821,7 @@ async def register_user(
         if not auth_response or not auth_response.user:
             raise HTTPException(status_code=400, detail="Registration failed")
             
-        # 3. Sync to public.user table (upsert like seed_users.py)
+        # 3. Sync to public.user table (using fresh client)
         user_data = {
             "id": auth_response.user.id,
             "username": reg.username,
@@ -777,7 +829,7 @@ async def register_user(
             "role": reg.role.value,
             "is_active": True
         }
-        supabase.table("user").upsert(user_data).execute()
+        admin_client.table("user").upsert(user_data).execute()
             
         return {"message": f"User '{reg.username}' registered successfully", "id": auth_response.user.id}
         
@@ -817,15 +869,24 @@ def toggle_user_active(
     new_status = not user_res.data["is_active"]
     supabase.table("user").update({"is_active": new_status}).eq("id", user_id).execute()
     
+    # --- AUDIT LOGGING ---
+    log_audit(
+        actor_id=current_user.id,
+        target_id=user_id,
+        action=models.AuditAction.activation if new_status else models.AuditAction.deactivation,
+        details={"status_change": "OFFLINE -> ACTIVE" if new_status else "ACTIVE -> DECOMMISSIONED"}
+    )
+
     # --- GLOBAL LOGOUT / BAN LOGIC ---
     try:
+        admin_client = get_admin_client()
         if not new_status:
             # Revoke access immediately in Supabase Auth (Ban)
             # This invalidates existing tokens and prevents new ones
-            supabase.auth.admin.update_user_by_id(user_id, {"ban_duration": "8760h"}) 
+            admin_client.auth.admin.update_user_by_id(user_id, {"ban_duration": "8760h"}) 
         else:
             # Lift ban
-            supabase.auth.admin.update_user_by_id(user_id, {"ban_duration": "none"})
+            admin_client.auth.admin.update_user_by_id(user_id, {"ban_duration": "none"})
             
         # Clear local auth cache to force a fresh DB check for all active sessions
         from .auth import auth_cache

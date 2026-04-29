@@ -36,6 +36,19 @@ def reset_supabase() -> Client:
     return get_supabase()
 
 
+def get_admin_client() -> Client:
+    """Return a fresh Supabase client that is guaranteed to have NO user session.
+    Use this for sensitive/admin operations to avoid poisoned global singleton state.
+    """
+    url = settings.SUPABASE_URL
+    key = settings.SUPABASE_SERVICE_KEY
+    
+    if not url or not key:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set")
+    
+    return create_client(url, key)
+
+
 from fastapi.concurrency import run_in_threadpool
 import asyncio
 

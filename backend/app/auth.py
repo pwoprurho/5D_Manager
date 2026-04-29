@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status, Request, Response
 from typing import Optional, List
 import logging
-from .database import supabase, with_retry
+from .database import supabase, with_retry, get_admin_client
 from . import models
 
 logger = logging.getLogger("vinicius.auth")
@@ -30,7 +30,9 @@ async def get_current_user(request: Request, response: Response = None) -> Optio
     # Auto-refresh check if token is missing
     if not token and refresh:
         try:
-            auth_response = supabase.auth.refresh_session(refresh)
+            # Use a fresh client to avoid poisoning the global singleton
+            auth_client = get_admin_client()
+            auth_response = auth_client.auth.refresh_session(refresh)
             if auth_response and auth_response.session:
                 token = auth_response.session.access_token
                 expires_in = getattr(auth_response.session, 'expires_in', 3600)
