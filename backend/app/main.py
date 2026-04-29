@@ -184,7 +184,7 @@ def on_startup():
 
 @app.exception_handler(403)
 async def custom_403_handler(request: Request, exc: StarletteHTTPException):
-    content = """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>403 - Access Restrict</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"><style>:root {--primary-red: #e31837;--deep-black: #0f172a;--glass: rgba(255, 255, 255, 0.05);}body {font-family: 'Outfit', sans-serif;background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);color: white;display: flex;align-items: center;justify-content: center;height: 100vh;margin: 0;overflow: hidden;}.error-container {text-align: center;background: var(--glass);backdrop-filter: blur(20px);border: 1px solid rgba(255, 255, 255, 0.1);padding: 4rem;border-radius: 40px;box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);max-width: 500px;width: 90%;position: relative;}.error-code {font-size: 8rem;font-weight: 800;margin: 0;line-height: 1;background: linear-gradient(to bottom, #fff, #64748b);-webkit-background-clip: text;background-clip: text;-webkit-text-fill-color: transparent;opacity: 0.1;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: -1;}.error-icon {font-size: 4rem;color: #fbbf24;margin-bottom: 2rem;animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;animation-iteration-count: 2;}@keyframes shake {10%,90%{transform: translate3d(-1px, 0, 0);}20%,80%{transform: translate3d(2px, 0, 0);}30%,50%,70%{transform: translate3d(-4px, 0, 0);}40%,60%{transform: translate3d(4px, 0, 0);}}h1 {font-size: 2rem;font-weight: 700;margin-bottom: 1rem;}p {color: #94a3b8;line-height: 1.6;margin-bottom: 2.5rem;}.btn-group {display: flex;gap: 1rem;justify-content: center;}.btn {display: inline-flex;align-items: center;gap: 0.75rem;padding: 1rem 1.5rem;border-radius: 12px;text-decoration: none;font-weight: 600;transition: all 0.3s;}.btn-red {background: var(--primary-red);color: white;box-shadow: 0 10px 15px -3px rgba(227, 24, 55, 0.3);}.btn-red:hover {background: #be123c;transform: translateY(-2px);}.btn-outline {border: 2px solid #334155;color: white;}.btn-outline:hover {background: rgba(255, 255, 255, 0.05);border-color: white;transform: translateY(-2px);}</style></head><body><div class="error-container"><div class="error-code">403</div><div class="error-icon"><i class="fas fa-shield-halved"></i></div><h1>Module Restricted</h1><p>This section of the application is still under construction and would be available after the election.</p><div class="btn-group"><a href="/" class="btn btn-outline"><i class="fas fa-house"></i> Home</a><a href="/signin" class="btn btn-red"><i class="fas fa-user-shield"></i> Re-Authenticate</a></div></div></body></html>"""
+    content = """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>403 - Access Restrict</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"><style>:root {--primary-red: #e31837;--deep-black: #0f172a;--glass: rgba(255, 255, 255, 0.05);}body {font-family: 'Outfit', sans-serif;background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);color: white;display: flex;align-items: center;justify-content: center;height: 100vh;margin: 0;overflow: hidden;}.error-container {text-align: center;background: var(--glass);backdrop-filter: blur(20px);border: 1px solid rgba(255, 255, 255, 0.1);padding: 4rem;border-radius: 40px;box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);max-width: 500px;width: 90%;position: relative;}.error-code {font-size: 8rem;font-weight: 800;margin: 0;line-height: 1;background: linear-gradient(to bottom, #fff, #64748b);-webkit-background-clip: text;background-clip: text;-webkit-text-fill-color: transparent;opacity: 0.1;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: -1;}.error-icon {font-size: 4rem;color: #fbbf24;margin-bottom: 2rem;animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;animation-iteration-count: 2;}@keyframes shake {10%,90%{transform: translate3d(-1px, 0, 0);}20%,80%{transform: translate3d(2px, 0, 0);}30%,50%,70%{transform: translate3d(-4px, 0, 0);}40%,60%{transform: translate3d(4px, 0, 0);}}h1 {font-size: 2rem;font-weight: 700;margin-bottom: 1rem;}p {color: #94a3b8;line-height: 1.6;margin-bottom: 2.5rem;}.btn-group {display: flex;gap: 1rem;justify-content: center;}.btn {display: inline-flex;align-items: center;gap: 0.75rem;padding: 1rem 1.5rem;border-radius: 12px;text-decoration: none;font-weight: 600;transition: all 0.3s;}.btn-red {background: var(--primary-red);color: white;box-shadow: 0 10px 15px -3px rgba(227, 24, 55, 0.3);}.btn-red:hover {background: #be123c;transform: translateY(-2px);}.btn-outline {border: 2px solid #334155;color: white;}.btn-outline:hover {background: rgba(255, 255, 255, 0.05);border-color: white;transform: translateY(-2px);}</style></head><body><div class="error-container"><div class="error-code">403</div><div class="error-icon"><i class="fas fa-shield-halved"></i></div><h1>Module Restricted</h1><p>This section of the application is restricted to authorized personnel. Please contact your System Director for clearance.</p><div class="btn-group"><a href="/" class="btn btn-outline"><i class="fas fa-house"></i> Home</a><a href="/signin" class="btn btn-red"><i class="fas fa-user-shield"></i> Re-Authenticate</a></div></div></body></html>"""
     return HTMLResponse(content=content, status_code=403)
 
 @app.exception_handler(404)
@@ -238,31 +238,27 @@ async def signin_form(request: Request):
             "error": "Please provide username/email and password"
         })
 
-    # Resolve username to email via Supabase Auth (zero-trust: no public.user dependency)
+    # Resolve username to email via public.user registry
     email = username.strip()
     if "@" not in email:
-        # Look up email from Supabase Auth admin API or public.user as fallback
         found_email = None
-        
         try:
-            user_res = with_retry(lambda: supabase.table("user").select("email").eq("username", email).maybe_single().execute())
+            # Case-insensitive lookup for both exact match and 'username@domain' format
+            user_res = with_retry(lambda: supabase.table("user")
+                .select("email, is_active")
+                .or_(f"username.eq.{email},username.ilike.{email}@%")
+                .maybe_single()
+                .execute())
+            
             if user_res and user_res.data:
+                if not user_res.data.get("is_active", True):
+                    return templates.TemplateResponse(request=request, name="signin.html", context={
+                        "request": request,
+                        "error": "ACCOUNT_REVOKED: This operational node has been decommissioned."
+                    })
                 found_email = user_res.data.get("email")
-        except Exception:
-            pass
-        
-        # Fallback: search Supabase Auth users by metadata
-        if not found_email:
-            try:
-                resp = supabase.auth.admin.list_users()
-                auth_users = resp.users if hasattr(resp, 'users') else (resp if isinstance(resp, list) else [])
-                for au in auth_users:
-                    meta = au.user_metadata or {}
-                    if meta.get("username", "").lower() == email.lower():
-                        found_email = au.email
-                        break
-            except Exception:
-                pass
+        except Exception as e:
+            print(f"Username resolution error: {e}")
         
         if not found_email:
             return templates.TemplateResponse(request=request, name="signin.html", context={
@@ -280,6 +276,15 @@ async def signin_form(request: Request):
             return templates.TemplateResponse(request=request, name="signin.html", context={
                 "request": request,
                 "error": "Invalid credentials"
+            })
+
+        # --- FINAL SECURITY GATE: Activity Check ---
+        user_id = auth_response.user.id
+        activity_res = with_retry(lambda: supabase.table("user").select("is_active").eq("id", user_id).single().execute())
+        if activity_res.data and not activity_res.data.get("is_active", True):
+            return templates.TemplateResponse(request=request, name="signin.html", context={
+                "request": request,
+                "error": "ACCOUNT_REVOKED: This operational node has been decommissioned."
             })
 
         access_token = auth_response.session.access_token
@@ -493,8 +498,8 @@ async def store_page(request: Request):
 @app.get("/admin/users", response_class=HTMLResponse)
 async def admin_users_page(request: Request):
     user = await auth.get_current_user(request)
-    if not user or user.role not in [models.UserRole.admin, models.UserRole.director]:
-        return RedirectResponse(url="/dashboard", status_code=303)
+    if not user:
+        return RedirectResponse(url="/signin", status_code=303)
     return templates.TemplateResponse(request=request, name="admin_users.html", context={"user": user})
 
 # Contextual Project Pages
@@ -542,10 +547,104 @@ class RegisterRequest(BaseModel):
     password: str
     role: models.UserRole
 
-class UpdatePasswordRequest(BaseModel):
-    access_token: str
-    refresh_token: Optional[str] = None
-    new_password: str
+class RoleUpdateRequest(BaseModel):
+    role: models.UserRole
+
+class FullUserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+@app.patch("/api/v1/users/{user_id}/profile")
+def update_user_profile(
+    user_id: str,
+    req: FullUserUpdate,
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Update user credentials. Available to leaders and self-service for Engineers."""
+    # 0. Fetch target user to check hierarchy
+    target_res = supabase.table("user").select("role").eq("id", user_id).single().execute()
+    if not target_res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    target_role = target_res.data["role"]
+    
+    # Safety Gate: Prevent lower-tier from editing Admin
+    if target_role == "admin" and current_user.role != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized: Admin nodes are protected from lower-tier modification.")
+
+    # Safety Gate: Engineers can only edit themselves
+    if current_user.role == models.UserRole.engineer and user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Field Engineers can only update their own node.")
+        
+    updates = {}
+    auth_updates = {}
+    
+    if req.username:
+        updates["username"] = req.username
+        if "user_metadata" not in auth_updates: auth_updates["user_metadata"] = {}
+        auth_updates["user_metadata"]["username"] = req.username
+        
+    if req.email:
+        updates["email"] = req.email
+        auth_updates["email"] = req.email
+        
+    if req.password:
+        auth_updates["password"] = req.password
+        
+    if updates:
+        supabase.table("user").update(updates).eq("id", user_id).execute()
+        
+    if auth_updates:
+        try:
+            supabase.auth.admin.update_user_by_id(user_id, auth_updates)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Auth synchronization failed: {str(e)}")
+            
+    from .auth import auth_cache
+    auth_cache.clear()
+    
+    return {"message": "Personnel credentials updated successfully"}
+
+
+@app.patch("/api/v1/users/{user_id}/role")
+def update_user_role(
+    user_id: str,
+    req: RoleUpdateRequest,
+    current_user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
+):
+    """Update authority level. Admin/Director only with hierarchical protection."""
+    # 0. Fetch target user to check hierarchy
+    target_res = supabase.table("user").select("role").eq("id", user_id).single().execute()
+    if not target_res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    target_role = target_res.data["role"]
+    
+    # 1. Protect Admin nodes from lower-tier modification
+    if target_role == "admin" and current_user.role != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized: Admin nodes are protected from lower-tier modification.")
+        
+    # 2. Prevent non-admins from creating new admins
+    if req.role == models.UserRole.admin and current_user.role != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized: Only an existing Admin can designate new Admin nodes.")
+
+    if user_id == current_user.id and req.role != current_user.role:
+        raise HTTPException(status_code=400, detail="Cannot change your own role to a lower level")
+    
+    # 1. Update public registry
+    supabase.table("user").update({"role": req.role.value}).eq("id", user_id).execute()
+    
+    # 2. Update Supabase Auth metadata
+    try:
+        supabase.auth.admin.update_user_by_id(user_id, {
+            "user_metadata": {"role": req.role.value}
+        })
+    except Exception as e:
+        print(f"Failed to update auth metadata: {e}")
+    
+    from .auth import auth_cache
+    auth_cache.clear()
+    
+    return {"message": f"User role updated to {req.role.value}", "role": req.role.value}
 
 class WPUpdate(BaseModel):
     name: Optional[str] = None
@@ -590,6 +689,13 @@ async def signin(
         if not auth_response or not auth_response.session:
             raise HTTPException(status_code=400, detail="Invalid credentials")
             
+        user_id = auth_response.user.id
+        
+        # --- NEW: ACTIVITY CHECK ---
+        activity_res = supabase.table("user").select("is_active").eq("id", user_id).single().execute()
+        if activity_res.data and not activity_res.data.get("is_active", True):
+            raise HTTPException(status_code=403, detail="ACCOUNT_REVOKED: This operational node has been decommissioned.")
+            
         access_token = auth_response.session.access_token
         refresh_token = auth_response.session.refresh_token
         expires_in = getattr(auth_response.session, 'expires_in', 3600)
@@ -626,6 +732,14 @@ async def refresh_session(request: Request, response: Response):
         new_refresh_token = auth_response.session.refresh_token
         expires_in = getattr(auth_response.session, 'expires_in', 3600)
         
+        user_id = auth_response.user.id
+        # --- NEW: ACTIVITY CHECK ON REFRESH ---
+        activity_res = supabase.table("user").select("is_active").eq("id", user_id).single().execute()
+        if activity_res.data and not activity_res.data.get("is_active", True):
+            response.delete_cookie("access_token", path="/")
+            response.delete_cookie("refresh_token", path="/")
+            raise HTTPException(status_code=403, detail="SESSION_REVOKED")
+            
         response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=expires_in, path="/", samesite="strict", secure=True)
         response.set_cookie(key="refresh_token", value=new_refresh_token, httponly=True, max_age=86400*7, path="/", samesite="strict", secure=True)
         return {"message": "Token refreshed"}
@@ -685,21 +799,42 @@ def list_users(
 @app.patch("/api/v1/users/{user_id}/toggle-active")
 def toggle_user_active(
     user_id: str,
-    admin: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
+    current_user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
-    """Toggle a user's active status. Admin only. Cannot disable yourself."""
-    if user_id == admin.id:
+    """Toggle a user's active status. Admin/Director/Manager only with Admin protection."""
+    if user_id == current_user.id:
         raise HTTPException(status_code=400, detail="Cannot disable your own account")
     
-    # Get current status
-    user_res = supabase.table("user").select("is_active").eq("id", user_id).single().execute()
+    # Get current status and role
+    user_res = supabase.table("user").select("is_active, role").eq("id", user_id).single().execute()
     if not user_res.data:
         raise HTTPException(status_code=404, detail="User not found")
         
+    # Safety Gate: Prevent non-admins from deactivating Admins
+    if user_res.data["role"] == "admin" and current_user.role != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized: Admin nodes cannot be deactivated by lower-tier personnel.")
+
     new_status = not user_res.data["is_active"]
     supabase.table("user").update({"is_active": new_status}).eq("id", user_id).execute()
     
-    return {"message": f"User status updated", "is_active": new_status}
+    # --- GLOBAL LOGOUT / BAN LOGIC ---
+    try:
+        if not new_status:
+            # Revoke access immediately in Supabase Auth (Ban)
+            # This invalidates existing tokens and prevents new ones
+            supabase.auth.admin.update_user_by_id(user_id, {"ban_duration": "8760h"}) 
+        else:
+            # Lift ban
+            supabase.auth.admin.update_user_by_id(user_id, {"ban_duration": "none"})
+            
+        # Clear local auth cache to force a fresh DB check for all active sessions
+        from .auth import auth_cache
+        auth_cache.clear()
+        
+    except Exception as e:
+        print(f"[REVOCATION_LOG] Auth metadata sync warning: {e}")
+    
+    return {"message": f"User status updated. Global Logout triggered.", "is_active": new_status}
 
 
 

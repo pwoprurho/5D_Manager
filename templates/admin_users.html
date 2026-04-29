@@ -1,297 +1,375 @@
 {% extends "layout.html" %}
 
-{% block page_title %}Operational Personnel{% endblock %}
+{% block page_title %}Promote Personnel{% endblock %}
 
 {% block content %}
-<div
-    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-    <!-- User Registration -->
-    <div class="glass-card reveal-text" style="border-left: 5px solid var(--brand-red); padding: 1.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-            <div
-                style="width: 14px; height: 14px; background: var(--brand-red); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-red);">
-            </div>
-            <h3
-                style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0;">
-                Register Personnel</h3>
+<!-- Promotion Hub Header -->
+<div class="glass-card reveal-text" style="padding: 2.5rem; margin-bottom: 2.5rem; border-left: 5px solid var(--brand-red); background: linear-gradient(to right, rgba(227,30,36,0.05), transparent);">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h2 style="font-size: 2rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; margin: 0;">Personnel Authority Hub</h2>
+            <p style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.75rem; opacity: 0.8;">Elevate operational clearance and manage system access levels.</p>
         </div>
-        <form id="registerForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div>
-                <label
-                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Account
-                    ID</label>
-                <input type="text" name="username" placeholder="SIGN_IN_ID..." required class="modern-input"
-                    style="font-weight: 700; text-transform: uppercase;">
+        <div style="text-align: right;">
+            <div style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.5rem;">Total_Active_Assets</div>
+            <div id="totalAssetsCount" style="font-size: 2rem; font-weight: 900; color: white;">--</div>
+        </div>
+    </div>
+</div>
+
+{% if user.role in ['admin', 'director'] %}
+<!-- Authority Management Matrix -->
+<div class="glass-card reveal-text reveal-delay-1" style="padding: 2rem; margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 12px; height: 12px; background: var(--brand-red); border-radius: 2px;"></div>
+            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0;">Operational Personnel Registry</h3>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+             <span style="font-size: 0.6rem; font-weight: 900; color: #FF9800; background: rgba(255,152,0,0.1); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,152,0,0.2);">ENGINEER</span>
+             <span style="font-size: 0.6rem; font-weight: 900; color: #3B82F6; background: rgba(59,130,246,0.1); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(59,130,246,0.2);">MANAGER</span>
+             <span style="font-size: 0.6rem; font-weight: 900; color: #10B981; background: rgba(16,185,129,0.1); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.2);">DIRECTOR</span>
+        </div>
+    </div>
+
+    <div id="usersList" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+        <p style="color: var(--text-muted); text-align: center; padding: 4rem; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">Synchronizing Tactical Registry...</p>
+    </div>
+</div>
+
+<!-- Quick Registration Trigger -->
+<div class="reveal-text reveal-delay-2" style="text-align: center;">
+    <button onclick="document.getElementById('registerModal').style.display='flex'" class="btn-modern btn-ghost" style="padding: 1rem 3rem; font-size: 0.7rem; font-weight: 900; letter-spacing: 0.1em; border-color: rgba(255,255,255,0.1);">+ ENROLL NEW PERSONNEL</button>
+</div>
+{% else %}
+<!-- Self-Service Personal Node View -->
+<div class="reveal-text" style="min-height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem;">
+    <div style="text-align: center;">
+        <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.08); font-size: 2.5rem; margin: 0 auto 1.5rem; box-shadow: 0 0 30px rgba(255,255,255,0.05);">
+            🛠️
+        </div>
+        <h2 style="font-size: 1.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; color: white; margin: 0;">Personal Operational Node</h2>
+        <p style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 1rem; opacity: 0.7;">Identity Registry & Tactical Credential Management</p>
+    </div>
+    
+    <div class="glass-card" style="padding: 3rem; width: 100%; max-width: 440px; text-align: center; border-top: 4px solid var(--brand-red); background: rgba(0,0,0,0.4);">
+        <div style="margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.75rem; opacity: 0.6;">System_Identification</div>
+            <div style="font-size: 1.4rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.05em;">{{ user.username }}</div>
+            <div style="font-size: 0.7rem; color: var(--brand-red); font-weight: 900; margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">ROLE: {{ user.role }}</div>
+        </div>
+        
+        <button onclick="openEditModal('{{ user.id }}')" class="btn-modern btn-primary" style="width: 100%; padding: 1.25rem; font-weight: 900; letter-spacing: 0.1em; background: var(--brand-red); box-shadow: var(--glow-red);">
+            INITIALIZE_CREDENTIAL_EDITOR
+        </button>
+    </div>
+    
+    <p style="color: var(--text-muted); font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4;">Authorized access restricted to personal node only.</p>
+</div>
+{% endif %}
+
+<!-- Registration Modal -->
+<div id="registerModal" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 10000; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="glass-card" style="width: 100%; max-width: 500px; padding: 3rem; border-top: 4px solid var(--brand-red);">
+        <h3 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; margin-bottom: 2rem; letter-spacing: 0.05em;">Initial Node Enrollment</h3>
+        <form id="registerForm">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.1em;">Username</label>
+                <input type="text" name="username" placeholder="OPERATIONAL_ID" required class="modern-input" style="text-transform: uppercase;">
             </div>
-            <div>
-                <label
-                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Email</label>
-                <input type="email" name="email" placeholder="EMAIL@PROTOCOL.COM" required class="modern-input"
-                    style="font-weight: 700;">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.1em;">Email_Address</label>
+                <input type="email" name="email" placeholder="ENCRYPTED_COMMS" required class="modern-input">
             </div>
-            <div>
-                <label
-                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Credential</label>
-                <input type="password" name="password" required minlength="8" class="modern-input"
-                    style="font-weight: 700;">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.1em;">Security_Credential</label>
+                <input type="password" name="password" placeholder="MIN_8_CHARS" required class="modern-input">
             </div>
-            <div>
-                <label
-                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Authority
-                    Level</label>
-                <select name="role" required class="modern-input" style="font-weight: 700;">
+            <div style="margin-bottom: 2.5rem;">
+                <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.1em;">Initial_Clearance</label>
+                <select name="role" required class="modern-input">
                     <option value="engineer">SITE_ENGINEER</option>
                     <option value="manager">OPERATIONS_MANAGER</option>
                     <option value="director">SYSTEM_DIRECTOR</option>
                 </select>
             </div>
-            <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 1rem;">
-                <button type="submit" class="btn-modern btn-primary"
-                    style="padding: 0.75rem 2rem; font-size: 0.8rem; font-weight: 900;">+ REGISTER PERSONNEL</button>
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn-modern btn-primary" style="flex: 2;">AUTHORIZE_ENROLLMENT</button>
+                <button type="button" onclick="document.getElementById('registerModal').style.display='none'" class="btn-modern btn-ghost" style="flex: 1;">ABORT</button>
             </div>
         </form>
     </div>
-
-    <!-- Deployment Matrix -->
-    <div class="glass-card reveal-text reveal-delay-1"
-        style="border-right: 5px solid var(--accent-blue); padding: 1.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-            <div
-                style="width: 14px; height: 14px; background: var(--accent-blue); border-radius: 4px; transform: rotate(45deg); box-shadow: var(--glow-blue);">
-            </div>
-            <h3
-                style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; margin: 0; color: var(--accent-blue);">
-                Deployment Matrix</h3>
-        </div>
-        <p
-            style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; line-height: 1.6; font-weight: 600; opacity: 0.8;">
-            Assign strategic assets to project nodes.</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div>
-                <label
-                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target
-                    Project</label>
-                <select id="assignProject" class="modern-input" style="font-weight: 700;">
-                    <option value="">SELECT...</option>
-                </select>
-            </div>
-            <div>
-                <label
-                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Target
-                    Personnel</label>
-                <select id="assignUser" class="modern-input" style="font-weight: 700;">
-                    <option value="">SELECT...</option>
-                </select>
-            </div>
-            <div style="grid-column: span 2;">
-                <label
-                    style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 1rem; opacity: 0.8;">Role</label>
-                <select id="assignRole" class="modern-input" style="font-weight: 700;">
-                    <option value="member">CORE_TEAM_MEMBER</option>
-                    <option value="project_manager">LEAD_MANAGER</option>
-                </select>
-            </div>
-            <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 1rem;">
-                <button onclick="assignUserToProject()" class="btn-modern btn-primary"
-                    style="padding: 0.75rem 2rem; font-size: 0.8rem; background: var(--accent-blue); border-color: var(--accent-blue); font-weight: 900;">🔗
-                    DEPLOY</button>
-            </div>
-        </div>
-    </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-    <!-- User Registry -->
-    <div class="glass-card reveal-text reveal-delay-2" style="padding: 1.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-            <div style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px; opacity: 0.5;">
+<!-- Edit Personnel Modal -->
+<div id="editUserModal" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 10000; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="glass-card" style="width: 100%; max-width: 500px; padding: 3rem; border-top: 4px solid var(--brand-red);">
+        <h3 style="font-size: 1.25rem; font-weight: 900; text-transform: uppercase; margin-bottom: 2rem; letter-spacing: 0.05em;">Update Personnel Credentials</h3>
+        <form id="editUserForm">
+            <input type="hidden" name="user_id" id="edit_user_id">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.1em;">Username</label>
+                <input type="text" name="username" id="edit_username" placeholder="OPERATIONAL_ID" class="modern-input" style="text-transform: uppercase;">
             </div>
-            <h3 style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0;">
-                Global Personnel Registry</h3>
-        </div>
-        <div id="usersList" style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <p
-                style="color: var(--text-muted); text-align: center; padding: 2rem; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">
-                Synchronizing...</p>
-        </div>
-    </div>
-
-    <!-- Deployment Feed -->
-    <div class="glass-card reveal-text reveal-delay-2" style="padding: 1.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-            <div style="width: 10px; height: 10px; background: var(--accent-blue); border-radius: 2px; opacity: 0.5;">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.1em;">Email_Address</label>
+                <input type="email" name="email" id="edit_email" placeholder="ENCRYPTED_COMMS" class="modern-input">
             </div>
-            <h3
-                style="font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin: 0; color: var(--accent-blue);">
-                Deployment Summary</h3>
-        </div>
-        <div id="assignmentsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <p
-                style="color: var(--text-muted); text-align: center; padding: 2rem; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.4;">
-                Select Target...</p>
-        </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.6rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.1em;">New_Security_Credential (Optional)</label>
+                <input type="password" name="password" id="edit_password" placeholder="LEAVE_BLANK_TO_KEEP_CURRENT" class="modern-input">
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn-modern btn-primary" style="flex: 2;">SYNC_CREDENTIALS</button>
+                <button type="button" onclick="document.getElementById('editUserModal').style.display='none'" class="btn-modern btn-ghost" style="flex: 1;">ABORT</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <style>
-    .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 48px;
-        height: 26px;
+    .role-select {
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.05);
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 900;
+        padding: 6px 12px;
+        border-radius: 4px;
+        outline: none;
         cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
-
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
+    .role-select:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.2);
     }
-
-    .toggle-slider {
-        position: absolute;
-        inset: 0;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+    .user-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        background: rgba(255,255,255,0.02);
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.05);
+        transition: all 0.3s;
+    }
+    .user-row:hover {
+        background: rgba(255,255,255,0.04);
+        transform: translateX(5px);
+        border-color: rgba(255,255,255,0.1);
+    }
+    .status-badge {
+        font-size: 0.55rem;
+        font-weight: 900;
+        padding: 2px 8px;
         border-radius: 50px;
-        transition: 0.4s;
+        letter-spacing: 0.1em;
     }
-
-    .toggle-slider:before {
-        content: '';
-        position: absolute;
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background: white;
-        border-radius: 50%;
-        transition: 0.4s;
-    }
-
-    .toggle-switch input:checked+.toggle-slider {
-        background: #10b981;
-        border-color: #10b981;
-    }
-
-    .toggle-switch input:checked+.toggle-slider:before {
-        transform: translateX(22px);
-    }
+    .status-active { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+    .status-disabled { background: rgba(239,68,68,0.1); color: #EF4444; border: 1px solid rgba(239,68,68,0.2); }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
     const roleColors = { admin: '#E31E24', director: '#10B981', manager: '#3B82F6', engineer: '#FF9800' };
-    let allUsers = [], allProjects = [];
+    let allUsers = [];
 
     async function loadUsers() {
+        if (!document.getElementById('usersList')) return;
         try {
             const resp = await fetch('/api/v1/users/');
             allUsers = await resp.json();
-            // Hide Admin from systems display
-            allUsers = allUsers.filter(u => u.role !== 'admin');
+            
+            // Stats
+            document.getElementById('totalAssetsCount').textContent = allUsers.length;
 
             const container = document.getElementById('usersList');
-            if (allUsers.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; opacity:0.5;">No personnel found.</p>'; return; }
+            if (allUsers.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; opacity:0.5;">No operational personnel in registry.</p>';
+                return;
+            }
 
-            const userSelect = document.getElementById('assignUser');
-            userSelect.innerHTML = '<option value="">SELECT...</option>';
-            allUsers.filter(u => u.role === 'engineer' || u.role === 'manager').forEach(u => {
-                userSelect.innerHTML += `<option value="${u.id}">${u.username.toUpperCase()} (${u.role.toUpperCase()})</option>`;
-            });
-
-            const assignPromises = allUsers.map(async u => {
-                let c = 0; try { const r = await fetch(`/api/v1/users/${u.id}/assignments`); if (r.ok) c = (await r.json()).length; } catch (e) { } return { ...u, assignmentCount: c };
-            });
-            const usersData = await Promise.all(assignPromises);
-
-            container.innerHTML = usersData.map((u, idx) => {
+            container.innerHTML = allUsers.map((u, idx) => {
+                const isSelf = u.id === "{{ user.id }}";
                 const rc = roleColors[u.role] || '#64748b';
-                return `<div class="glass-card reveal-text reveal-delay-${(idx % 4) + 1}" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-left:4px solid ${rc}; padding:1rem 1.25rem; background:rgba(255,255,255,0.02);">
-                <div style="display:flex; align-items:center; gap:1rem;">
-                    <div style="background:rgba(255,255,255,0.03); width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; border:1px solid rgba(255,255,255,0.08);">👤</div>
-                    <div>
-                        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.15rem;"><strong style="font-size:0.9rem; color:white; font-weight:900; text-transform:uppercase;">${u.username}</strong>
-                        <span style="background:${rc}15; color:${rc}; padding:2px 6px; border-radius:3px; font-size:0.55rem; font-weight:900; text-transform:uppercase; border:1px solid ${rc}30;">${u.role}</span></div>
-                        <div style="color:var(--text-muted); font-size:0.65rem; font-weight:800; opacity:0.7;">${u.email}</div>
-                    </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:1.5rem;">
-                    <div style="text-align:right;"><div style="color:white; font-size:1.1rem; font-weight:900;">${u.assignmentCount}</div><div style="color:var(--text-muted); font-size:0.55rem; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Assignments</div></div>
-                        <div style="display:flex; align-items:center; gap:0.75rem;">
-                            <span style="color:${u.is_active ? '#10b981' : '#ef4444'}; font-size:0.6rem; font-weight:900; text-transform:uppercase;">${u.is_active ? 'ACTIVE' : 'DISABLED'}</span>
-                            <label class="toggle-switch" onclick="toggleUser('${u.id}', event)"><input type="checkbox" ${u.is_active ? 'checked' : ''} disabled><span class="toggle-slider"></span></label>
+                
+                return `
+                <div class="user-row reveal-text" style="border-left: 4px solid ${rc};">
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.03); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.08); font-size: 1.2rem;">
+                            ${u.role === 'admin' ? '🛡️' : (u.role === 'director' ? '⚡' : '🛠️')}
                         </div>
-                </div>
-            </div>`;
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                                <strong style="font-size: 1rem; color: white; font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em;">${u.username}</strong>
+                                <span class="status-badge ${u.is_active ? 'status-active' : 'status-disabled'}">${u.is_active ? 'ACTIVE' : 'OFFLINE'}</span>
+                                ${isSelf ? '<span style="font-size: 0.5rem; background: var(--brand-red); color: white; padding: 1px 6px; border-radius: 3px; font-weight: 900;">YOU</span>' : ''}
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; opacity: 0.6; text-transform: lowercase;">${u.email}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 2rem;">
+                        <div style="text-align: right;">
+                            <label style="display: block; font-size: 0.5rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.1em; opacity: 0.6;">Current_Authority</label>
+                            <select onchange="promoteUser('${u.id}', this.value)" class="role-select" 
+                                ${ (isSelf || (["manager", "engineer"].includes("{{ user.role }}"))) ? 'disabled' : ''} 
+                                style="color: ${rc}; border-color: ${rc}40;">
+                                <option value="engineer" ${u.role === 'engineer' ? 'selected' : ''}>ENGINEER</option>
+                                <option value="manager" ${u.role === 'manager' ? 'selected' : ''}>MANAGER</option>
+                                <option value="director" ${u.role === 'director' ? 'selected' : ''}>DIRECTOR</option>
+                                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>ADMIN</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <button onclick="openEditModal('${u.id}')" class="btn-modern" style="padding: 0.4rem 0.8rem; font-size: 0.55rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); color: white; background: rgba(255,255,255,0.05);">
+                                EDIT_PROFILE
+                            </button>
+                            <button onclick="toggleUserStatus('${u.id}')" class="btn-modern" 
+                                style="padding: 0.4rem 0.8rem; font-size: 0.55rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); color: ${u.is_active ? '#EF4444' : '#10B981'}; background: transparent;" 
+                                ${ (isSelf || "{{ user.role }}" === "engineer") ? 'disabled' : ''}>
+                                ${u.is_active ? 'REVOKE_ACCESS' : 'RESTORE_ACCESS'}
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
             }).join('');
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error(err);
+            container.innerHTML = '<p style="color:var(--brand-red); text-align:center; padding:4rem;">SYSTEM_ERROR: Failed to fetch tactical personnel data.</p>';
+        }
     }
 
-    async function loadProjectTeam(projectId) {
-        const container = document.getElementById('assignmentsList');
-        if (!projectId) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:4rem; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; opacity:0.4;">Select Target...</p>'; return; }
+    async function promoteUser(userId, newRole) {
+        if (!confirm(`Are you sure you want to update authority level to ${newRole.toUpperCase()}?`)) {
+            loadUsers(); // Reset
+            return;
+        }
+
         try {
-            const resp = await fetch(`/api/v1/projects/${projectId}/team`); if (!resp.ok) throw new Error();
-            const team = await resp.json();
-            if (team.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:2rem; font-size:0.8rem; font-weight:900; text-transform:uppercase; opacity:0.5;">No personnel deployed</p>'; return; }
-            container.innerHTML = team.map(m => {
-                const rc = roleColors[m.role] || '#64748b';
-                return `<div class="glass-card" style="padding:1rem; border-left:3px solid ${rc}; background:rgba(255,255,255,0.01);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                    <span style="font-size:0.85rem; color:white; font-weight:800; text-transform:uppercase;">${m.username}</span>
-                    <button onclick="unassignUser(${projectId}, '${m.user_id}')" style="background:none; border:none; color:var(--brand-red); cursor:pointer; font-size:1.1rem; opacity:0.4;">×</button>
-                </div>
-                <div style="color:${m.assigned_role === 'project_manager' ? 'var(--accent-blue)' : 'var(--text-muted)'}; font-size:0.6rem; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">
-                    ${m.assigned_role === 'project_manager' ? '⚡ LEAD_MANAGER' : 'SITE_ENGINEER'}
-                </div>
-            </div>`;
-            }).join('');
-        } catch (err) { container.innerHTML = '<p style="color:var(--brand-red); text-align:center; padding:2rem;">Error loading team</p>'; }
+            const resp = await fetch(`/api/v1/users/${userId}/role`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole })
+            });
+
+            if (resp.ok) {
+                showNotification(`Personnel promoted to ${newRole.toUpperCase()}`, 'success');
+                loadUsers();
+            } else {
+                const err = await resp.json();
+                showNotification(err.detail || 'Promotion protocol failed.', 'error');
+                loadUsers();
+            }
+        } catch (err) {
+            showNotification('COMMUNICATION_FAILURE: Terminal lost contact with core.', 'error');
+            loadUsers();
+        }
     }
 
-    async function assignUserToProject() {
-        const pid = document.getElementById('assignProject').value, uid = document.getElementById('assignUser').value, role = document.getElementById('assignRole').value;
-        if (!pid || !uid) { alert('Select both project and user.'); return; }
+    async function toggleUserStatus(userId) {
+        if (!confirm('Modify personnel operational status?')) return;
         try {
-            const resp = await fetch(`/api/v1/projects/${pid}/assign`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: uid, assigned_role: role }) });
-            if (resp.ok) { alert('Asset deployed.'); loadProjectTeam(pid); loadUsers(); } else { const e = await resp.json(); alert(e.detail || 'Failed'); }
-        } catch (err) { alert('PROTOCOL_FAILURE: Terminal connection lost.'); }
+            const resp = await fetch(`/api/v1/users/${userId}/toggle-active`, { method: 'PATCH' });
+            const data = await resp.json();
+            if (resp.ok) {
+                showNotification(data.message || 'Access status updated', 'success');
+                loadUsers();
+            } else {
+                showNotification(data.detail || 'Status update failed.', 'error');
+            }
+        } catch (err) {
+            showNotification('PROTOCOL_ERROR: Status synchronization failed.', 'error');
+        }
     }
-
-    async function unassignUser(pid, uid) {
-        if (!confirm('Remove this user?')) return;
-        const resp = await fetch(`/api/v1/projects/${pid}/unassign/${uid}`, { method: 'DELETE' });
-        if (resp.ok) { loadProjectTeam(pid); loadUsers(); }
-    }
-
-    document.getElementById('assignProject').addEventListener('change', (e) => loadProjectTeam(e.target.value));
 
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault(); const fd = new FormData(e.target);
-        const resp = await fetch('/api/v1/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: fd.get('username'), email: fd.get('email'), password: fd.get('password'), role: fd.get('role') }) });
-        if (resp.ok) { alert('User registered!'); e.target.reset(); loadUsers(); } else { const err = await resp.json(); alert(err.detail || 'Failed'); }
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        try {
+            const resp = await fetch('/api/v1/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: fd.get('username'),
+                    email: fd.get('email'),
+                    password: fd.get('password'),
+                    role: fd.get('role')
+                })
+            });
+
+            if (resp.ok) {
+                showNotification('New personnel node enrolled', 'success');
+                e.target.reset();
+                document.getElementById('registerModal').style.display = 'none';
+                loadUsers();
+            } else {
+                const err = await resp.json();
+                showNotification(err.detail || 'Enrollment failed.', 'error');
+            }
+        } catch (err) {
+            showNotification('CRITICAL_SYNC_FAILURE: Enrollment aborted.', 'error');
+        }
+    });
+    
+    function openEditModal(userId) {
+        let user;
+        if (userId === "{{ user.id }}") {
+            // Local fallback for self-service if list is not loaded
+            user = allUsers.find(u => u.id === userId) || {
+                id: "{{ user.id }}",
+                username: "{{ user.username }}",
+                email: "{{ user.email }}"
+            };
+        } else {
+            user = allUsers.find(u => u.id === userId);
+        }
+        
+        if (!user) return;
+        
+        document.getElementById('edit_user_id').value = user.id;
+        document.getElementById('edit_username').value = user.username;
+        document.getElementById('edit_email').value = user.email;
+        document.getElementById('edit_password').value = '';
+        
+        document.getElementById('editUserModal').style.display = 'flex';
+    }
+    
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const userId = fd.get('user_id');
+        
+        const payload = {};
+        if (fd.get('username')) payload.username = fd.get('username');
+        if (fd.get('email')) payload.email = fd.get('email');
+        if (fd.get('password')) payload.password = fd.get('password');
+        
+        try {
+            const resp = await fetch(`/api/v1/users/${userId}/profile`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await resp.json();
+            if (resp.ok) {
+                showNotification(data.message || 'Credentials synchronized.', 'success');
+                document.getElementById('editUserModal').style.display = 'none';
+                loadUsers();
+            } else {
+                showNotification(data.detail || 'Sync failed.', 'error');
+            }
+        } catch (err) {
+            showNotification('CRITICAL_SYNC_FAILURE: Terminal link broken.', 'error');
+        }
     });
 
-    async function toggleUser(userId, event) {
-        event.preventDefault(); event.stopPropagation();
-        if (!confirm('Toggle user status?')) return;
-        const resp = await fetch(`/api/v1/users/${userId}/toggle-active`, { method: 'PATCH' });
-        if (resp.ok) { loadUsers(); } else { const err = await resp.json(); alert(err.detail || 'Failed'); }
-    }
-
-
-
-    async function loadProjects() {
-        try {
-            const resp = await fetch('/api/v1/projects/'); allProjects = await resp.json();
-            const pSelect = document.getElementById('assignProject');
-            pSelect.innerHTML = '<option value="">SELECT...</option>';
-            allProjects.forEach(p => { pSelect.innerHTML += `<option value="${p.id}">${p.name.toUpperCase()}</option>`; });
-        } catch (err) { }
-    }
-
-    loadUsers(); loadProjects();
+    loadUsers();
 </script>
 {% endblock %}
