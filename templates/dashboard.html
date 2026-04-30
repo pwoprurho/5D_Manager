@@ -3,6 +3,7 @@
 {% block page_title %}Operational Intelligence Dashboard{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -68,6 +69,18 @@
         <!-- PPT / Presentation Layer -->
         <div id="ppt-viewer-container" style="width: 100%; height: 100%; display: none; background: #000;">
             <iframe id="ppt-iframe" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+
+        <!-- 3D BIM Model Viewer -->
+        <div id="3d-viewer-container" style="width: 100%; height: 100%; display: none; background: var(--bg-deep);">
+            <model-viewer id="bim-viewer" src="" 
+                camera-controls auto-rotate shadow-intensity="1" 
+                environment-image="neutral" exposure="1" 
+                style="width: 100%; height: 100%; background: transparent;">
+                <div slot="progress-bar" class="modern-progress-bar">
+                    <div class="update-bar"></div>
+                </div>
+            </model-viewer>
         </div>
 
         <!-- Site Log / Telemetry Photo -->
@@ -295,6 +308,7 @@ function renderSmartMedia(url, title, label, meta, showCounter) {
     const containers = {
         pdf: document.getElementById('pdf-viewer-container'),
         ppt: document.getElementById('ppt-viewer-container'),
+        threeD: document.getElementById('3d-viewer-container'),
         img: document.getElementById('stage-img'),
         vid: document.getElementById('stage-video'),
         empty: document.getElementById('stage-empty')
@@ -335,6 +349,11 @@ function renderSmartMedia(url, title, label, meta, showCounter) {
     } else if (ext === 'pdf') {
         document.getElementById('pdf-iframe').src = url;
         containers.pdf.style.display = 'block';
+    } else if (ext === 'glb' || ext === 'gltf') {
+        const viewer = document.getElementById('bim-viewer');
+        viewer.src = url;
+        containers.threeD.style.display = 'block';
+        if (currentTab === 'arch') document.getElementById('stage-label').textContent = 'CORE_SPEC: 3D_BIM_MODEL (INTERACTIVE)';
     } else if (['ppt', 'pptx'].includes(ext)) {
         const encoded = encodeURIComponent(url);
         document.getElementById('ppt-iframe').src = `https://view.officeapps.live.com/op/embed.aspx?src=${encoded}`;
@@ -344,6 +363,10 @@ function renderSmartMedia(url, title, label, meta, showCounter) {
         containers.vid.style.display = 'block';
         containers.vid.play().catch(() => {});
     } else {
+        // Fallback for IFC or unknown types
+        if (ext === 'ifc') {
+            document.getElementById('stage-label').textContent = 'CORE_SPEC: IFC_DATA (DOWNLOAD_REQUIRED)';
+        }
         containers.img.src = url;
         containers.img.style.display = 'block';
     }

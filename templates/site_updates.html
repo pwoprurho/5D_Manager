@@ -430,32 +430,60 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
 async function loadDropdowns() {
     try {
         const pResp = await fetch('/api/v1/projects/', { credentials: 'same-origin' });
+        if (!pResp.ok) throw new Error("PROJECT_FETCH_FAILED");
         const projects = await pResp.json();
+        
         const pSelect = document.getElementById('projectFilter');
         pSelect.innerHTML = '<option value="">Select Project...</option>' + 
             projects.map(p => `<option value="${p.id}">${p.name.toUpperCase()}</option>`).join('');
             
         pSelect.addEventListener('change', async () => {
             const projectId = pSelect.value;
+            if (!projectId) {
+                document.getElementById('wpFilter').innerHTML = '<option value="">SELECT TASK...</option>';
+                document.getElementById('matSelect').innerHTML = '<option value="">NONE INVOLVED</option>';
+                return;
+            }
             
             // Reactive Tactical Sync: Update Feed & Timeline
             loadUpdates(projectId);
             
-            const wpResp = await fetch(`/api/v1/projects/${projectId}/project-updates`, { credentials: 'same-origin' });
-            const phases = await wpResp.json();
-            const wpSelect = document.getElementById('wpFilter');
-            wpSelect.innerHTML = '<option value="">SELECT TARGET TASK...</option>' + 
-                 phases.map(p => `<option value="${p.id}">${p.name.toUpperCase()}</option>`).join('');
+            // Load Work Packages (Tasks)
+            try {
+                const wpResp = await fetch(`/api/v1/projects/${projectId}/project-updates`, { credentials: 'same-origin' });
+                const phases = await wpResp.json();
+                const wpSelect = document.getElementById('wpFilter');
+                if (Array.isArray(phases)) {
+                    wpSelect.innerHTML = '<option value="">SELECT TARGET TASK...</option>' + 
+                         phases.map(p => `<option value="${p.id}">${p.name.toUpperCase()}</option>`).join('');
+                } else {
+                    wpSelect.innerHTML = '<option value="">NO_TASKS_AVAILABLE</option>';
+                }
+            } catch(e) { console.error("WP load failure", e); }
+
+            // Load Project-Specific Materials
+            try {
+                const mResp = await fetch(`/api/v1/store/projects/${projectId}/inventory`, { credentials: 'same-origin' });
+                const inventory = await mResp.json();
+                const mSelect = document.getElementById('matSelect');
+                if (mSelect) {
+                    if (Array.isArray(inventory) && inventory.length > 0) {
+                        mSelect.innerHTML = '<option value="">NONE INVOLVED</option>' + 
+                            inventory.map(inv => {
+                                const m = inv.material;
+                                return `<option value="${m.id}">${m.name.toUpperCase()} (AVAILABLE: ${inv.quantity} ${m.unit})</option>`;
+                            }).join('');
+                    } else {
+                        mSelect.innerHTML = '<option value="">NO_STOCK_ON_SITE</option>';
+                    }
+                }
+            } catch(e) { console.error("Inventory load failure", e); }
         });
 
-        const mResp = await fetch('/api/v1/store/materials', { credentials: 'same-origin' });
-        const materials = await mResp.json();
-        const mSelect = document.getElementById('matSelect');
-        if (mSelect) {
-            mSelect.innerHTML = '<option value="">NONE INVOLVED</option>' + 
-                materials.map(m => `<option value="${m.id}">${m.name.toUpperCase()} (BENEATH_STOCK: ${m.current_stock})</option>').join('');
-        }
-    } catch(e) { console.error("Dropdown load failure", e); }
+    } catch(e) { 
+        console.error("Dropdown load failure", e); 
+        showNotification("TERMINAL_BOOT_ERROR: Failed to sync site indices.", "error");
+    }
 }
 
 // --- Historical Correction Logic ---

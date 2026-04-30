@@ -65,15 +65,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Content Security Policy - Mitigate XSS and Data Injection
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.supabase.co; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.supabase.co https://ajax.googleapis.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
             "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
-            "img-src 'self' data: https://*.supabase.co https://*.supabase.in; "
-            "frame-ancestors 'none'; "
+            "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in; "
+            "media-src 'self' blob: https://*.supabase.co; "
+            "frame-src 'self' https://*.supabase.co https://view.officeapps.live.com; "
+            "frame-ancestors 'self'; "
+            "connect-src 'self' https://*.supabase.co; "
             "upgrade-insecure-requests"
         )
         # Clickjacking Protection
-        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
         # MIME Sniffing Protection
         response.headers["X-Content-Type-Options"] = "nosniff"
         # XSS Protection for older browsers
