@@ -135,7 +135,7 @@ body {
     display: flex;
     flex-direction: column;
     width: calc(100% - var(--sidebar-width));
-    transition: margin-left 0.4s ease;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     min-height: 100vh;
 }
 
@@ -415,34 +415,50 @@ h4 {
     box-shadow: var(--shadow-lg);
 }
 
-/* --- Mobile Logic --- */
-.mobile-toggle {
-    display: none;
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
+/* --- Responsive Breakpoints --- */
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: 0px;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .main-container {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .mobile-toggle {
+        display: block;
+    }
 }
 
-
-/* --- Immutable Terminal Layout --- */
-.mobile-toggle {
-    display: none !important;
-}
-
-.sidebar {
-    transform: translateX(0) !important;
-}
-
-.main-container {
-    margin-left: var(--sidebar-width) !important;
-    width: calc(100% - var(--sidebar-width)) !important;
-}
-.modern-input[type='file'] {
-    padding: 0.4rem;
-    font-size: 0.65rem;
-    cursor: pointer;
+@media (max-width: 768px) {
+    .content-body {
+        padding: 1.5rem 1rem;
+    }
+    
+    .glass-card {
+        padding: 1.5rem;
+    }
+    
+    /* Auto-stack forms */
+    form {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+    
+    .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 /* --- Global Print Orchestration --- */

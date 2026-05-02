@@ -115,7 +115,7 @@
     </div>
 
     <div id="projectsList"
-        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 2.5rem;">
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 2.5rem;">
         <div
             style="padding: 10rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: var(--radius-md); grid-column: 1 / -1;">
             <div
@@ -159,9 +159,37 @@
     </div>
 </div>
 
+<!-- Modal: Project Editor -->
+<div id="editProjectModal" class="modal-overlay" onclick="closeEditProjectModal()">
+    <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; border-bottom: 1px solid var(--brand-red); padding-bottom: 1rem;">
+            <h3 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; margin: 0;">EDIT_PROJECT_METADATA</h3>
+            <button onclick="closeEditProjectModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        
+        <form id="editProjectForm">
+            <input type="hidden" id="editProjectId" name="project_id">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 0.75rem;">Designation</label>
+                <input type="text" id="editProjectName" name="name" required class="modern-input" style="font-weight: 800; text-transform: uppercase;">
+            </div>
+            <div style="margin-bottom: 2.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 0.75rem;">Summary</label>
+                <textarea id="editProjectDesc" name="description" class="modern-input" style="font-weight: 700; min-height: 100px; resize: vertical;"></textarea>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" onclick="closeEditProjectModal()" class="btn-modern btn-ghost" style="flex: 1;">CANCEL</button>
+                <button type="submit" class="btn-modern btn-primary" style="flex: 1;">SYNC_CHANGES</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     async function loadProjects() {
         try {
+            const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
             const uResp = await fetch('/api/v1/users/', { credentials: 'same-origin' });
             if (uResp.ok) {
                 const users = await uResp.json();
@@ -273,18 +301,25 @@
 
             container.innerHTML = projects.map((p, idx) => `
             <div class="glass-card reveal-text reveal-delay-${(idx % 4) + 1}" 
-                 style="padding: 2rem; background: var(--bg-card); border-top: 4px solid var(--brand-red); border: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s;" 
+                 style="padding: 2rem; background: var(--bg-card); border-top: 4px solid var(--brand-red); border: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s; position: relative;" 
                  onclick="selectProject(${p.id})">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <h4 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">${p.name}</h4>
-                    <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 900; background: var(--bg-deep); padding: 0.2rem 0.6rem; border-radius: 4px;">ID: ${p.id}</span>
+                
+                ${(['admin', 'director', 'manager'].includes(userRole)) ? `
+                    <button class="btn-modern btn-ghost" style="position: absolute; top: 1rem; right: 1rem; padding: 0.4rem; border-radius: 50%; width: 32px; height: 32px; justify-content: center;" 
+                            onclick="openEditProjectModal(event, ${p.id}, '${p.name.replace(/'/g, "\\'")}', '${(p.description || '').replace(/'/g, "\\'")}')">
+                        <i class="fas fa-edit" style="font-size: 0.7rem;"></i>
+                    </button>
+                ` : ''}
+
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; padding-right: 2.5rem;">
+                    <h4 class="serif-brand" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0;">${p.name}</h4>
                 </div>
                 <div style="font-size: 0.65rem; color: var(--brand-red); font-weight: 900; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.05em;">
                     ${p.bim_model_url ? `<i class="fas fa-check-circle"></i> ${p.bim_model_url.split(',').length} RESOURCE(S)_ACTIVE` : '<i class="fas fa-exclamation-triangle"></i> PENDING_DOCUMENTATION'}
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 1.5rem; font-weight: 500; line-height: 1.6; height: 3.2em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.description || 'Global infrastructure project managed by Vinicius Group.'}</p>
                 <div style="display: flex; gap: 0.75rem;">
-                    <button class="btn-modern btn-primary" style="padding: 0.6rem 1rem; font-size: 0.65rem; flex: 1; border-radius: 4px;" onclick="openSiteManager(event, ${p.id}, '${p.name}')">SITE MANAGER</button>
+                    <button class="btn-modern btn-primary" style="padding: 0.6rem 1rem; font-size: 0.65rem; flex: 1; border-radius: 4px;" onclick="openSiteManager(event, ${p.id}, '${p.name.replace(/'/g, "\\'")}')">SITE MANAGER</button>
                     <button class="btn-modern btn-ghost" style="padding: 0.6rem 1rem; font-size: 0.65rem; flex: 1; border-radius: 4px;" onclick="selectProject(${p.id})">SELECT_SITE</button>
                 </div>
             </div>
@@ -307,6 +342,18 @@
 
     window.closeSiteModal = function () {
         document.getElementById('stageModal').style.display = 'none';
+    }
+
+    window.openEditProjectModal = function(event, id, name, desc) {
+        if (event) event.stopPropagation();
+        document.getElementById('editProjectId').value = id;
+        document.getElementById('editProjectName').value = name;
+        document.getElementById('editProjectDesc').value = desc;
+        document.getElementById('editProjectModal').style.display = 'flex';
+    }
+
+    window.closeEditProjectModal = function() {
+        document.getElementById('editProjectModal').style.display = 'none';
     }
 
     async function loadStages(pid) {
@@ -351,6 +398,32 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        const userRole = "{{ user.role|string }}".replace("UserRole.", "").toLowerCase();
+        
+        const editForm = document.getElementById('editProjectForm');
+        if (editForm) {
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const pid = document.getElementById('editProjectId').value;
+                const fd = new FormData(e.target);
+                
+                try {
+                    const r = await fetch(`/api/v1/projects/${pid}`, {
+                        method: 'PATCH',
+                        credentials: 'same-origin',
+                        body: fd
+                    });
+                    if (r.ok) {
+                        closeEditProjectModal();
+                        showNotification("PROJECT_UPDATED: Registry synchronized.");
+                        loadProjects();
+                    } else {
+                        showNotification("UPDATE_REJECTED: Check clearance.", "error");
+                    }
+                } catch (e) { showNotification("SYNC_ERROR", "error"); }
+            });
+        }
+
         const stageForm = document.getElementById('createStageForm');
         if (stageForm) {
             stageForm.addEventListener('submit', async (e) => {
@@ -431,7 +504,6 @@
     }
 
     loadProjects();
-    loadPersonnel();
     loadResources();
     });
 </script>
