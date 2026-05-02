@@ -320,10 +320,15 @@ async function loadUpdates(projectId = null) {
                         </div>
                     </div>
                     ${u.photo_url ? `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem;">
                         ${u.photo_url.split(',').map(url => `
-                        <div onclick="window.open('${url}')" style="cursor: pointer; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-border); aspect-ratio: 1/1; box-shadow: var(--glow-red);">
-                            <img src="${url}" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-border); aspect-ratio: 1/1; box-shadow: var(--glow-red); group;">
+                            <img src="${url}" onclick="window.open('${url}')" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" />
+                            <button onclick="deletePhoto(event, ${u.id}, '${url}')" 
+                                    style="position: absolute; top: 5px; right: 5px; background: rgba(227, 30, 36, 0.85); color: white; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; transition: 0.2s; backdrop-filter: blur(4px);"
+                                    title="Decommission Photo">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                         `).join('')}
                     </div>` : ''}
@@ -532,6 +537,28 @@ editForm.onsubmit = async (e) => {
         showNotification("SYNC_ERROR: Failed to transmit correction.", "error");
     }
 };
+
+async function deletePhoto(event, updateId, photoUrl) {
+    if (event) event.stopPropagation();
+    if (!confirm("CONFIRM_DECOMMISSION: Remove this image from the telemetry record?")) return;
+    
+    try {
+        const resp = await fetch(`/api/v1/site-updates/${updateId}/photos?photo_url=${encodeURIComponent(photoUrl)}`, {
+            method: 'DELETE',
+            credentials: 'same-origin'
+        });
+        
+        if (resp.ok) {
+            showNotification("PHOTO_DECOMMISSIONED: Registry updated.");
+            loadUpdates(); // Refresh feed
+        } else {
+            const err = await resp.json();
+            showNotification(`SYNC_ERROR: ${err.detail || 'Registry Rejection'}`, "error");
+        }
+    } catch(err) {
+        showNotification("NETWORK_FAILURE: Connection lost during transmission.", "error");
+    }
+}
 
 let scurveChartInstance = null;
 function renderSCurveChart(updates) {

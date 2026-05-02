@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, Response, File, UploadFile, Form
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, File, UploadFile, Form, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -359,6 +359,13 @@ async def signup_submit(request: Request):
     try:
         # Use a fresh admin client to ensure no stale user sessions interfere
         admin_client = get_admin_client()
+        
+        # 0. Operational Integrity Check: Ensure Username Uniqueness
+        existing_user = with_retry(lambda: admin_client.table("user").select("id").eq("username", username).execute())
+        if existing_user.data:
+            return templates.TemplateResponse(request=request, name="signup.html", context={
+                "request": request, "error": f"Designation Rejection: Username '{username}' is already registered in the registry."
+            })
         
         # 1. Supabase Auth Enrollment (Administrative Ingest to bypass Domain Restrictions)
         auth_res = admin_client.auth.admin.create_user({
@@ -1232,7 +1239,7 @@ async def update_project(
     description: Optional[str] = Form(None),
     design_id: Optional[int] = Form(None),
     bim_model_url: Optional[str] = Form(None),
-    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director]))
+    user: models.User = Depends(auth.check_role([models.UserRole.admin, models.UserRole.director, models.UserRole.manager]))
 ):
     """Updates project metadata. Required to attach/detach designs."""
     update_data = {}
@@ -2158,6 +2165,44 @@ async def upload_site_photo(
     
     api_cache.clear()
     return {"message": "Photo uploaded successfully", "photo_url": photo_url, "update_id": result.data[0]["id"]}
+
+
+@app.delete("/api/v1/site-updates/{update_id}/photos")
+async def delete_site_photo(
+    update_id: int,
+    photo_url: str = Query(...),
+    user: models.User = Depends(auth.check_role([
+        models.UserRole.engineer, models.UserRole.manager, models.UserRole.director, models.UserRole.admin
+    ]))
+):
+    """Removes a specific photo from a site update record."""
+    # Fetch existing record
+    res = with_retry(lambda: supabase.table("siteupdate").select("photo_url, submitted_by_id").eq("id", update_id).single().execute())
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Telemetry record not found")
+    
+    # Ownership/Authority Check
+    if user.role == models.UserRole.engineer and res.data["submitted_by_id"] != user.id:
+        raise HTTPException(status_code=403, detail="Operational Restriction: Cannot delete telemetry from other agents.")
+    
+    current_urls = res.data.get("photo_url", "") or ""
+    url_list = [u.strip() for u in current_urls.split(",") if u.strip()]
+    
+    if photo_url not in url_list:
+        raise HTTPException(status_code=400, detail="Photo URL not found in record")
+    
+    url_list.remove(photo_url)
+    new_urls = ",".join(url_list) if url_list else None
+    
+    # Update Record
+    update_res = with_retry(lambda: supabase.table("siteupdate").update({"photo_url": new_urls}).eq("id", update_id).execute())
+    if not update_res.data:
+        raise HTTPException(status_code=500, detail="Registry synchronization failed")
+    
+    # Optional: Delete from storage? 
+    # For now, just remove link to keep audit trail in storage but clean UI
+    
+    return {"status": "success", "message": "Photo decommissioned from telemetry record"}
 
 
 @app.patch("/api/v1/site-updates/{update_id}")

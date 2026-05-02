@@ -306,6 +306,7 @@
                 
                 ${(['admin', 'director', 'manager'].includes(userRole)) ? `
                     <button class="btn-modern btn-ghost" style="position: absolute; top: 1rem; right: 1rem; padding: 0.4rem; border-radius: 50%; width: 32px; height: 32px; justify-content: center;" 
+                            title="Edit Project Name & Details"
                             onclick="openEditProjectModal(event, ${p.id}, '${p.name.replace(/'/g, "\\'")}', '${(p.description || '').replace(/'/g, "\\'")}')">
                         <i class="fas fa-edit" style="font-size: 0.7rem;"></i>
                     </button>
