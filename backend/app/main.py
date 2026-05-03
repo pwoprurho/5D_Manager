@@ -72,8 +72,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "media-src 'self' blob: https://*.supabase.co; "
             "frame-src 'self' https://*.supabase.co https://view.officeapps.live.com; "
             "frame-ancestors 'self'; "
-            "connect-src 'self' https://*.supabase.co; "
-            "upgrade-insecure-requests"
+            "connect-src 'self' https://*.supabase.co"
         )
         # Clickjacking Protection
         response.headers["X-Frame-Options"] = "SAMEORIGIN"

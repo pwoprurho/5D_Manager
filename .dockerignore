@@ -1,0 +1,48 @@
+# .dockerignore for outbound-caller-python
+
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv
+venv/
+env/
+.pytest_cache/
+
+# Tooling
+.vscode/
+
+# Local only — env vars are injected at runtime on the server
+.env
+
+# Test & debug scripts (not needed in production image)
+test_*.py
+debug_*.py
+diagnose_*.py
+tmp_*.py
+fix_*.py
+check_*.py
+inspect_*.py
+alter_*.py
+seed_*.py
+init_*.py
+verify_*.py
+update_*.py
+register_*.py
+recovery_*.py
+move_*.py
+manual_*.py
+sync_*.py
+reset_*.py
+scratch/
+tmp/
+roles_log.txt
+test_res.json
+*.sql
+NOTES.md
